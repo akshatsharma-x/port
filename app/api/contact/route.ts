@@ -38,7 +38,11 @@ async function sendWithResend(key: string, from: string, mail: Mail): Promise<{ 
     signal: AbortSignal.timeout(10_000),
   });
   const body = (await res.json().catch(() => null)) as { id?: string } | null;
-  if (!res.ok || !body?.id) throw new Error(`resend ${res.status}`);
+  if (!res.ok || !body?.id) {
+    // the status only, for the deployment's logs (an unverified domain is a 403): never the words or the key
+    console.error(`contact: Resend answered ${res.status}`);
+    throw new Error(`resend ${res.status}`);
+  }
   return { id: body.id };
 }
 
@@ -49,10 +53,20 @@ function deps(): ContactDeps {
   const rl = getLimiter();
   return {
     now: () => Date.now(),
-    limit: rl ? async (k) => ({ ok: (await rl.limit(k)).success }) : null,
+    limit: rl
+      ? async (k) => {
+          try {
+            return { ok: (await rl.limit(k)).success };
+          } catch (error) {
+            console.error("contact: the rate limiter didn't answer", (error as Error).name);
+            throw error;
+          }
+        }
+      : null,
     send: key ? (mail) => sendWithResend(key, from, mail) : null,
     to: process.env.CONTACT_TO ?? derived.profile.email,
-    subject: (input: ContactInput) => `${L.fallback.subject} · ${L.intents[input.intent]} · ${input.name}`,
+    // a crafted request's control characters stay out of the subject header
+    subject: (input: ContactInput) => `${L.fallback.subject} · ${L.intents[input.intent]} · ${input.name.replace(/\p{Cc}+/gu, " ")}`,
   };
 }
 

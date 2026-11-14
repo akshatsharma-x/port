@@ -29,6 +29,15 @@ const startViewTransition = (update: () => void): ViewTransitionLike | null => {
   const d = document as Document & { startViewTransition?: (cb: () => void) => ViewTransitionLike };
   return typeof d.startViewTransition === "function" ? d.startViewTransition(update) : null;
 };
+/**
+ * Whether a transition began. One started while another runs skips it: the skipped one's `ready`
+ * rejects but its update still runs, so the page's state is right and the newer transition has the
+ * screen. Nothing to animate then, and nothing thrown (an uncaught "Transition was skipped").
+ */
+const began = (vt: ViewTransitionLike): Promise<boolean> => vt.ready.then(
+  () => true,
+  () => false,
+);
 
 // ── the reduced-motion / no-WebGL cover ─────────────────────────────────────────────────
 
@@ -178,7 +187,7 @@ async function crossfade(update: () => void): Promise<void> {
     update();
     return;
   }
-  await vt.ready;
+  if (!(await began(vt))) return;
   animatePseudo("old", [{ opacity: 1 }, { opacity: 0 }], POWER.reducedMs);
   animatePseudo("new", [{ opacity: 0 }, { opacity: 1 }], POWER.reducedMs);
   await vt.finished;
@@ -206,7 +215,7 @@ export async function switchTheme(next: Theme): Promise<void> {
   const total = POWER.offFastMs + POWER.onFastMs;
   const vt = startViewTransition(() => applyTheme(next));
   if (vt) {
-    await vt.ready;
+    if (!(await began(vt))) return;
     if (toPaper) {
       animatePseudo("new", sampled(SCAN.ms, (t) => ({ clipPath: `inset(0 0 ${((1 - scanAt(t)) * 100).toFixed(2)}% 0)` })), SCAN.ms);
       void fx.play({ effect: "scan", ms: SCAN.ms, cutAt: ARTIFACT_FRAME_MS, onCut: NO_OP, uniforms: (t) => ({ uY: scanAt(t), uMask: 0, uBar: tokenSrgb("--bg-raised"), uCover: tokenSrgb("--bg") }) });
@@ -259,7 +268,7 @@ export async function powerOff(options: { cue?: "POWER" | "HALT" } = {}): Promis
   }
   const vt = startViewTransition(off);
   if (vt) {
-    await vt.ready;
+    if (!(await began(vt))) return;
     animatePseudo("old", sampled(POWER.offMs, (t) => raster(powerOffAt(t))), POWER.offMs);
     void beam(POWER.offMs, (t) => powerOffAt(t), false);
     await vt.finished;
@@ -279,8 +288,19 @@ export interface PowerOnOptions {
   onOpen?: () => void;
 }
 
-/** POWER ON (600 ms): dot → line → open; the stage holds its first frame underneath until 420 ms. */
-export async function powerOn({ fast = false, onOpen }: PowerOnOptions = {}): Promise<void> {
+let poweringOn: Promise<void> | null = null;
+
+/**
+ * POWER ON (600 ms): dot → line → open; the stage holds its first frame underneath until 420 ms.
+ * One at a time: asked again while one runs (input and HALT's scroll watch can ask in the same
+ * frame), the caller joins it — no second animation over the first, no second cue.
+ */
+export function powerOn(options: PowerOnOptions = {}): Promise<void> {
+  if (!poweringOn) poweringOn = runPowerOn(options).finally(() => (poweringOn = null));
+  return poweringOn;
+}
+
+async function runPowerOn({ fast = false, onOpen }: PowerOnOptions = {}): Promise<void> {
   cue("POWER", { variant: "on" });
   const on = () => {
     delete document.documentElement.dataset.tube;
@@ -305,7 +325,10 @@ export async function powerOn({ fast = false, onOpen }: PowerOnOptions = {}): Pr
     // Paper's power-on is the SCAN
     const vt = startViewTransition(on);
     if (vt) {
-      await vt.ready;
+      if (!(await began(vt))) {
+        open();
+        return;
+      }
       animatePseudo("new", sampled(SCAN.ms, (t) => ({ clipPath: `inset(0 0 ${((1 - scanAt(t)) * 100).toFixed(2)}% 0)` })), SCAN.ms);
       open();
       void fx.play({ effect: "scan", ms: SCAN.ms, uniforms: (t) => ({ uY: scanAt(t), uMask: 0, uBar: tokenSrgb("--bg-raised"), uCover: tokenSrgb("--bg") }) });
@@ -319,7 +342,10 @@ export async function powerOn({ fast = false, onOpen }: PowerOnOptions = {}): Pr
   const hold = fast ? POWER.stageHoldMs * (POWER.onFastMs / POWER.onMs) : POWER.stageHoldMs;
   const vt = startViewTransition(on);
   if (vt) {
-    await vt.ready;
+    if (!(await began(vt))) {
+      open();
+      return;
+    }
     animatePseudo("new", sampled(ms, (t) => raster(powerOnAt(t, fast))), ms);
     void beam(hold, (t) => powerOnAt(t, fast), false, undefined, watchBeam);
     await vt.finished;

@@ -45,7 +45,12 @@ export default function HaltBehavior({ halted }: { halted: string }) {
     const offTick = onTick(() => {
       const y = window.scrollY;
       if (y < end - REARM_PX) armed = true;
-      if (!armed || end <= 0 || y < end - 1 || html.dataset.tube === "off") return;
+      if (!armed || y < end - 1 || html.dataset.tube === "off") return;
+      // the cached end is only a candidate: the page may have grown since the last refresh (CONNECT's
+      // log, say), and 3 px above the true end isn't the last pixel. Read it now — once, here at the
+      // end of the page, never every frame.
+      measure();
+      if (end <= 0 || y < end - 1) return;
       armed = false;
       void powerOff({ cue: "HALT" });
     });

@@ -22,7 +22,7 @@ export function Chrome() {
     .filter((s) => s.index >= RAIL_RANGE.first && s.index <= RAIL_RANGE.last)
     .map(({ id, index, code, title }) => ({ id, index, code, title }));
   return (
-    <div id="hud">
+    <header id="hud">
       {/* the bezel: four corner brackets and hairline rules at the viewport edges (§2.9) */}
       <span className="hud-bezel" aria-hidden="true">
         <i className="hud-bezel__tl" />
@@ -56,7 +56,7 @@ export function Chrome() {
           offline: labels.shell.offline,
         }}
       />
-    </div>
+    </header>
   );
 }
 

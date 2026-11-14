@@ -10,7 +10,8 @@ import { Ledger, type LedgerRow } from "./Ledger";
 import { Metrics } from "./Metrics";
 import { QueryScope } from "./QueryScope";
 import { ShapeGlyph } from "./ShapeGlyph";
-import { SkyOverlay, type SkyLabel, type SkyNode } from "./SkyOverlay";
+import { SkyLayer } from "./SkyLayer";
+import type { SkyLabel, SkyNode } from "./SkyOverlay";
 import { SkySvg } from "./SkySvg";
 import { UnitChart } from "./UnitChart";
 
@@ -140,7 +141,7 @@ export function Archive() {
           {/* without a stage the drawing is the header, in the frame's flow under the query bar: it fills
               what the bar leaves (the bar's height varies with the width; a fixed offset collided at 360 px) */}
           <SkySvg label={L.sky.label} topics={labels.topic.map((l) => l.text)} className="archive-sky-svg" />
-          <SkyOverlay nodes={nodes} labels={labels} listLabel={L.sky.label} hint={L.sky.hint} />
+          <SkyLayer nodes={nodes} labels={labels} listLabel={L.sky.label} hint={L.sky.hint} />
           <p className="sr-only">{`${L.sky.stage} ${L.sky.keys}`}</p>
         </div>
       </StickyStack>

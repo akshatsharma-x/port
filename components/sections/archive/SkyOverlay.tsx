@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 import type { LayoutName } from "@/content/schema";
 import { skyView, useArchive } from "@/lib/archive";
+import { scrollGeometry, teleport } from "@/lib/scroll";
 import { onTick } from "@/lib/ticker";
 
 export interface SkyNode {
@@ -194,6 +195,7 @@ export function SkyOverlay({ nodes, labels, listLabel, hint }: { nodes: readonly
             onFocus: () => {
               setActive(n.i);
               point(n.i);
+              holdPin();
             },
             onBlur: () => point(null),
           };
@@ -221,4 +223,17 @@ export function SkyOverlay({ nodes, labels, listLabel, hint }: { nodes: readonly
       <p className="sky-hint t-micro">{hint}</p>
     </div>
   );
+}
+
+/**
+ * Focus arriving from the page (Tab in, Shift+Tab back): the pinned frame comes into view whole, so
+ * the stage can place the star on screen. A native focus scroll reveals only the button's box, before
+ * the pin has stuck: the star landed below the fold, its tooltip under the HUD (Part 14).
+ */
+function holdPin(): void {
+  const pin = scrollGeometry().pins.find((p) => p.id === "archive");
+  if (!pin) return;
+  const y = window.scrollY;
+  if (y < pin.start) teleport(pin.start);
+  else if (y > pin.start + pin.length) teleport(pin.start + pin.length);
 }

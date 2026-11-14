@@ -350,3 +350,22 @@
     text-shadow: 0 0 calc(var(--glow) * 8px) var(--fg-2);
   }
 }
+
+@layer components {
+  /* touch targets (WCAG 2.5.5, Part 14): on a coarse pointer a field is --target-touch tall —
+     padded, and its prompt with it, so the two still share a line — and the index's links are
+     rows of that height */
+  @media (pointer: coarse) {
+    .teletype__input:not(.teletype__area),
+    .teletype__prompt {
+      padding-block: calc((var(--target-touch) - 1lh) / 2);
+    }
+    .halt-index a,
+    .halt-top {
+      min-height: var(--target-touch);
+    }
+    .halt-index__group ul {
+      gap: 0;
+    }
+  }
+}

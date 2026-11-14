@@ -622,3 +622,20 @@
     }
   }
 }
+
+@layer components {
+  /* touch targets (WCAG 2.5.5, Part 14): on a coarse pointer a record's title is one box at least
+     --target-touch tall — not a few lines with gaps beside the last — and the sort keys are as tall.
+     The unit chart's cells stay 16 px: each is its record's ledger link, the equivalent target */
+  @media (pointer: coarse) {
+    .ledger__link {
+      display: inline-flex;
+      align-items: center;
+      min-height: var(--target-touch);
+    }
+    .ledger__sort {
+      align-items: center;
+      min-height: var(--target-touch);
+    }
+  }
+}

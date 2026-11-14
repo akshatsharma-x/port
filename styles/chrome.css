@@ -283,15 +283,18 @@
     color: var(--fg-1);
     box-shadow: inset 0 0 0 var(--hairline) var(--line-2);
   }
+  /* an LED says its state by its fill, not only its hue (WCAG 1.4.1, Part 14): hollow when off, lit
+     when on — the rail's own language (unvisited = hollow). GRID says it no other way */
   .fp-led {
     width: 6px;
     height: 6px;
     border-radius: 1px;
-    background: var(--line-2);
+    box-shadow: inset 0 0 0 1px var(--line-2);
   }
   .fp-pos:has(input:checked) .fp-led,
   .fp-switch[aria-pressed="true"] > .fp-led {
     background: var(--accent);
+    box-shadow: none;
   }
   .fp-state {
     color: var(--fg-3);
@@ -433,11 +436,14 @@
   }
 
   @media (forced-colors: active) {
-    .section-rail__node {
+    .section-rail__node,
+    .fp-led {
       border: 1px solid CanvasText;
       box-shadow: none;
     }
-    .section-rail__link[data-state="current"] .section-rail__node {
+    .section-rail__link[data-state="current"] .section-rail__node,
+    .fp-pos:has(input:checked) .fp-led,
+    .fp-switch[aria-pressed="true"] > .fp-led {
       background: Highlight;
     }
   }
@@ -542,6 +548,52 @@
   }
   @media (pointer: coarse), (forced-colors: active) {
     #cursor {
+      display: none;
+    }
+  }
+}
+
+@layer components {
+  /* the skip link (WCAG 2.4.1): the first stop on every page — above the screen until it's focused,
+     then at the HUD's corner and over it (z31: the HUD's own layer, one above, so the key that
+     skips the HUD is never under it, §4.1). A primary button: 44 px tall on every pointer */
+  .skip-link {
+    position: fixed;
+    top: var(--hud-inset);
+    left: var(--hud-inset);
+    z-index: 31;
+  }
+  .skip-link:not(:focus) {
+    translate: 0 calc(-100% - var(--hud-inset) - var(--spacing) * 4);
+  }
+}
+
+@layer components {
+  /* touch targets (WCAG 2.5.5, Part 14): on a coarse pointer each key's hit area reaches
+     --target-touch, centred on the key, which is drawn as before (§7.3's 24 px keys). The keys
+     sit far enough apart that no area reaches a neighbour's key: the nav's narrowest gap is 6 px
+     at 320 px, where only WORK (33 px) and ~ (24 px) grow sideways, and the panel's 40 px keys
+     grow 2 px a side into a 4 px gap */
+  @media (pointer: coarse) {
+    .hud-nav__link::after,
+    .fp-pos::after,
+    .fp-switch::after,
+    .section-rail__link::after {
+      content: "";
+      position: absolute;
+      inset: min(0px, calc((100% - var(--target-touch)) / 2));
+    }
+    /* the rail's nine nodes at the touch pitch where they fit between the bands, else as close as
+       fits: a tablet on its side gets ~25 px, still over 2.5.8's 24 */
+    .section-rail__link {
+      height: clamp(var(--target), calc((100svh - 2 * var(--hud-band-bottom) - var(--spacing) * 24) / 9), var(--target-touch));
+    }
+  }
+  /* …and on a phone there's no rail: it sat over the content's right margin, so its targets took taps
+     meant for the page (16 px of every row at 320 px, 26 with touch targets). The readout names the
+     section; HALT's index links all nine */
+  @media (pointer: coarse) and (max-width: 47.99rem) {
+    .section-rail {
       display: none;
     }
   }

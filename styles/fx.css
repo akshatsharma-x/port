@@ -94,7 +94,7 @@
   }
   @keyframes fx-roll {
     to {
-      transform: translate3d(0, calc(100vh + var(--roll-band)), 0);
+      transform: translate3d(0, calc(100lvh + var(--roll-band)), 0); /* past the largest viewport */
     }
   }
 

@@ -11,7 +11,9 @@
     inset: 0 0 0 auto;
     width: min(46rem, 62vw);
     max-width: none;
-    height: 100dvh;
+    /* the small viewport: the page under it is locked, so a phone's toolbar never retracts here,
+       and a dynamic height would relayout the record as it animated (§2.7: svh / lvh only) */
+    height: 100svh;
     max-height: none;
     margin: 0;
     padding: 0;

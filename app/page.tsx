@@ -52,7 +52,8 @@ function Stub({ id, counts, strip, children }: { id: SectionId; counts?: string[
 export default function Home() {
   const { research, labels } = { research: d.research, labels: d.site.labels };
   return (
-    <main>
+    <>
+    <main id="main" tabIndex={-1}>
       {/* 01 · SYSTEM — the hero: the A1 morph behind the typography layer (components/sections/hero) */}
       <Stub id="system" strip={false}>
         <Hero />
@@ -101,10 +102,13 @@ export default function Home() {
         <Connect d={d} />
       </Stub>
 
-      {/* 09 · HALT — the footer: the marquee, the index, the build line; the power-off on the last pixel */}
+    </main>
+    {/* 09 · HALT — the footer (contentinfo): the marquee, the index, the build line; the power-off on the last pixel */}
+    <footer>
       <Stub id="halt">
         <Halt d={d} />
       </Stub>
-    </main>
+    </footer>
+    </>
   );
 }

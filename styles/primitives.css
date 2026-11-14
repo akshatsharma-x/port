@@ -479,7 +479,7 @@
   }
   @media (pointer: coarse) {
     .chip--toggle {
-      min-height: 44px; /* touch target (Part 14) */
+      min-height: var(--target-touch); /* WCAG 2.5.5 on touch (Part 14) */
     }
   }
 

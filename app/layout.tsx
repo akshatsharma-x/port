@@ -43,12 +43,17 @@ export default function RootLayout({ children, modal }: LayoutProps<"/">) {
       </head>
       <body>
         <Providers labels={{ newTab: derived.site.labels.chrome.newTab }}>
+          {/* the first stop on every page: past the HUD to the page's <main id="main"> (WCAG 2.4.1) */}
+          <a href="#main" className="btn btn--primary skip-link" data-transition="skip">
+            {derived.site.labels.chrome.skip}
+          </a>
           {/* DESIGN.md §4.1: the stage (parked in #stage, docked in the live slot) and #fx-gl (z60)
-              live here, so they survive route changes; #hud (z30) sits outside #screen */}
+              live here, so they survive route changes. #hud (z30) sits outside #screen, and before it
+              in the document, so the keys meet the navigation first, as they see it */}
           <Stage />
+          <Chrome />
           <div id="screen">{children}</div>
           {modal}
-          <Chrome />
           <CursorLayer />
           <FxCss />
           {/* the boot (first visit to /) and POWER ON-fast (everything else): z45, chosen before first paint */}

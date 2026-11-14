@@ -154,6 +154,10 @@
   --content-max: 100%;
   /* §2.9 the baseline the "G" overlay draws and the hero's lattice lands on */
   --baseline: 8px;
+  /* targets: 24 px is every key's size (WCAG 2.5.8, §7.3); on a touch screen a key's hit area
+     reaches 44 px (WCAG 2.5.5, Part 14), the key itself unchanged */
+  --target: 24px;
+  --target-touch: 44px;
 
   /* §2.8 radii */
   --r-0: 0;

@@ -181,6 +181,16 @@ export async function navigate(href: string): Promise<void> {
 function onClick(e: MouseEvent): void {
   const a = (e.target as Element | null)?.closest?.("a[href]");
   if (!(a instanceof HTMLAnchorElement)) return;
+  // the skip link (WCAG 2.4.1): straight to the page's main, focus with it — no tear, no history entry
+  if (a.dataset.transition === "skip") {
+    const target = document.getElementById(new URL(a.href).hash.slice(1));
+    if (!target) return;
+    e.preventDefault();
+    e.stopPropagation();
+    teleport(target);
+    target.focus({ preventScroll: true });
+    return;
+  }
   const kind = classifyLink(
     {
       href: a.href,

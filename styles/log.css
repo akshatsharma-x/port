@@ -214,11 +214,8 @@
     .log-panel__label {
       display: none;
     }
-    .log-panel__stack {
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
+    /* the stack wraps here too: a row that scrolled, its scrollbar hidden, kept chips from the
+       keyboard and out of sight (axe: scrollable-region-focusable, Part 14) */
     .phone-card {
       width: 84%;
       right: auto;

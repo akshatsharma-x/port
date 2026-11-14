@@ -1,3 +1,4 @@
+import { track } from "@/lib/analytics";
 import { cue } from "./cues";
 import { isTextEntry } from "./keys";
 import { useUI } from "./store";
@@ -29,6 +30,7 @@ export function audioMayStart(): boolean {
 export async function setSoundOn(on: boolean): Promise<void> {
   useUI.getState().setSound(on);
   if (on) {
+    track("sound_enable");
     const engine = (await loadAudio()).getEngine();
     await engine.resume();
     cue("ENABLE");

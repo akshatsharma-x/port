@@ -28,6 +28,10 @@ export function ScrollProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const stopScroll = startScroll({ reduced: prefersReducedMotion() });
     const stopNav = installNavigation();
+    // analytics' routes, clicks and scripts after idle (lib/analytics-start.ts): not first-load JS
+    let stopAnalytics: (() => void) | null = null;
+    let live = true;
+    const cancelAnalytics = whenIdle(() => void import("@/lib/analytics-start").then((m) => live && (stopAnalytics = m.startAnalytics())));
     const loadedAt = performance.now();
     // a deep link lands once (after the first measure), as a jump: no SECTION cue, no glitch
     const offRefresh = onScrollRefresh(function landHash() {
@@ -42,6 +46,9 @@ export function ScrollProvider({ children }: { children: ReactNode }) {
     // the transition grammar (and its fx-gl programs) on idle, well before the first jump
     const cancelIdle = whenIdle(() => void loadTransitions());
     return () => {
+      live = false;
+      cancelAnalytics();
+      stopAnalytics?.();
       cancelIdle();
       offRefresh();
       stopNav();

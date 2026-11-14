@@ -53,7 +53,7 @@ export function Hero() {
                 {L.cta.research}
               </Button>
               {p.resumeUrl && (
-                <Button href={p.resumeUrl} variant="tertiary" icon="↗" target="_blank" rel="noopener">
+                <Button href={p.resumeUrl} variant="tertiary" icon="↗" target="_blank" rel="noopener" data-track="resume_download" data-track-id="hero">
                   {L.cta.resume}
                 </Button>
               )}

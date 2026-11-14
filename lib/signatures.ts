@@ -1,3 +1,4 @@
+import { track } from "@/lib/analytics";
 import type { Theme } from "./tokens";
 import type { PowerOnOptions, TearOptions } from "./transitions";
 import { setJumping } from "./scroll";
@@ -39,6 +40,7 @@ export async function tear(options: TearOptions): Promise<void> {
 
 /** Existence: the theme switch's POWER CYCLE (or an instant swap before the chunk lands). */
 export function switchTheme(next: Theme): Promise<void> {
+  if (useUI.getState().theme !== next) track("theme_switch", { theme: next });
   if (grammar) return grammar.switchTheme(next);
   void loadTransitions();
   document.documentElement.dataset.theme = next;

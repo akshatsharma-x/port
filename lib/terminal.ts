@@ -1,3 +1,4 @@
+import { track } from "@/lib/analytics";
 import { useUI } from "./store";
 
 /**
@@ -7,7 +8,10 @@ import { useUI } from "./store";
  */
 export const TERMINAL = { ready: true } as const;
 
-export const openTerminal = (): void => useUI.getState().setTerminalOpen(true);
+export const openTerminal = (): void => {
+  if (!useUI.getState().terminalOpen) track("terminal_open");
+  useUI.getState().setTerminalOpen(true);
+};
 
 const TEXT_INPUTS = new Set(["text", "search", "email", "url", "tel", "password", "number"]);
 

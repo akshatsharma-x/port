@@ -163,7 +163,7 @@ function Printout() {
           </div>
         </div>
         {d.profile.resumeUrl && (
-          <Button href={d.profile.resumeUrl} variant="secondary" icon="↗" target="_blank" rel="noopener" className="printout__resume">
+          <Button href={d.profile.resumeUrl} variant="secondary" icon="↗" target="_blank" rel="noopener" data-track="resume_download" data-track-id="log" className="printout__resume">
             {d.site.labels.hero.cta.resume}
           </Button>
         )}

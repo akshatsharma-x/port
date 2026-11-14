@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { useForm } from "react-hook-form";
+import { track } from "@/lib/analytics";
 import { CheckGlyph } from "@/components/research/CheckGlyph";
 import { CONTACT, ContactSchema, duration, mailtoFor, overlap, type ContactInput, type ErrorCode, type Intent } from "@/lib/contact";
 import { cue } from "@/lib/cues";
@@ -99,6 +100,8 @@ export default function ConnectBehavior({ labels, owner }: { labels: ConnectLabe
       }
       const status = res ? `${res.status} ${REASON[res.status] ?? res.statusText}`.trim() : "NO RESPONSE";
       setLog((l) => [...l, { key: "status", text: status, ok: res?.status === 202 }]);
+      // analytics: the outcome only — the status — never a field
+      track("contact_submit", { status: res?.status ?? 0, sent: res?.status === 202 });
       if (res?.status === 202) {
         if (body?.id) setLog((l) => [...l, { key: "id", text: `${labels.log.id} ${body?.id}` }]);
         el.dataset.state = "received";

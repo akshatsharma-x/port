@@ -1,3 +1,4 @@
+import { track as trackEvent } from "@/lib/analytics";
 import Lenis from "lenis";
 import type { ScrollTrigger as ScrollTriggerType } from "gsap/ScrollTrigger";
 import { createStore } from "zustand/vanilla";
@@ -144,6 +145,8 @@ function setSection(id: string | null, cause: ScrollSnapshot["cause"]): void {
   const effective = s.section === null && cause === "scroll" ? "init" : cause;
   const visited = id && !s.visited.includes(id) ? [...s.visited, id] : s.visited;
   scrollStore.setState({ section: id, cause: effective, seq: s.seq + 1, visited });
+  // a section seen for the first time this visit (analytics: once a section, never per scroll)
+  if (id && visited !== s.visited) trackEvent("section_view", { section: id });
   if (effective === "scroll" && id) {
     cue("SECTION");
     shallowHash(id);

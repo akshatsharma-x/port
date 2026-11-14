@@ -3,14 +3,15 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type SyntheticEvent } from "react";
 import { createPortal } from "react-dom";
 import type { SearchIndex } from "@/content/search-index";
+import { track } from "@/lib/analytics";
 import { cue } from "@/lib/cues";
 import { artifact } from "@/lib/motion";
 import { jumpToHash, navigate } from "@/lib/navigation";
 import { routes } from "@/lib/routes";
-import { complete, execute } from "@/lib/shell/commands";
+import { ALIASES, COMMANDS, complete, execute } from "@/lib/shell/commands";
 import { SHELL } from "@/lib/shell/config";
 import { rainCells, rainPool, startRain, stepRain, stillRain } from "@/lib/shell/rain";
-import { fill, seg } from "@/lib/shell/text";
+import { fill, seg, tokenize } from "@/lib/shell/text";
 import type { Context, Effect, Line } from "@/lib/shell/types";
 import { powerPanel, switchTheme } from "@/lib/signatures";
 import { setSoundOn } from "@/lib/sound";
@@ -431,6 +432,13 @@ export default function Terminal({ boot }: { boot: ShellBoot }) {
 
   const run = (text: string, index: SearchIndex) => {
     const result = execute(text, context(index));
+    // analytics: the command's name only — never its arguments (a grep term, an email)
+    const word = tokenize(text)[0]?.toLowerCase() ?? "";
+    if (word) {
+      const name = word in COMMANDS ? word : (ALIASES[word] ?? "unknown");
+      track("command_run", { command: name, ok: !result.error });
+      if (name === "cite" && result.effects?.some((e) => e.kind === "copy")) track("bibtex_copy", { from: "terminal" });
+    }
     cue("SHELL", { variant: result.error ? "error" : "enter" });
     print(result.lines);
     for (const e of result.effects ?? []) void apply(e, index);

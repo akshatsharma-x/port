@@ -112,7 +112,7 @@ export function IdCard({ c, L }: { c: Cert; L: Labels }) {
               {c.proves}
             </p>
             {c.verifyUrl && (
-              <a className="cred-verify" href={c.verifyUrl} target="_blank" rel="noopener noreferrer">
+              <a className="cred-verify" href={c.verifyUrl} target="_blank" rel="noopener noreferrer" data-track="cert_verify" data-track-id={c.slug}>
                 {`${L.back.verify} ↗`}
               </a>
             )}

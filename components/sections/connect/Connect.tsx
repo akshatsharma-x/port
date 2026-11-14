@@ -147,11 +147,11 @@ export function Connect({ d }: { d: Derived }) {
                 cross-origin download attribute is ignored) */}
             {ctas.map((c) =>
               c.href.startsWith("/") ? (
-                <Button key={c.key} href={c.href} variant="secondary" icon="↓" download="">
+                <Button key={c.key} href={c.href} variant="secondary" icon="↓" download="" {...(c.key === "resume" ? { "data-track": "resume_download", "data-track-id": "connect" } : {})}>
                   {c.label}
                 </Button>
               ) : (
-                <Button key={c.key} href={c.href} variant="secondary" icon="↗" target="_blank" rel="noopener noreferrer">
+                <Button key={c.key} href={c.href} variant="secondary" icon="↗" target="_blank" rel="noopener noreferrer" {...(c.key === "resume" ? { "data-track": "resume_download", "data-track-id": "connect" } : {})}>
                   {c.label}
                 </Button>
               ),

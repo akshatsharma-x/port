@@ -52,9 +52,11 @@ export function Hero() {
               <Button href="#archive" variant="secondary" icon="→">
                 {L.cta.research}
               </Button>
-              <Button href={p.resumeUrl} variant="tertiary" icon="↗" target="_blank" rel="noopener">
-                {L.cta.resume}
-              </Button>
+              {p.resumeUrl && (
+                <Button href={p.resumeUrl} variant="tertiary" icon="↗" target="_blank" rel="noopener">
+                  {L.cta.resume}
+                </Button>
+              )}
             </div>
           </div>
           <div className="hero__aside col-span-12 md:col-span-4 md:col-start-9">

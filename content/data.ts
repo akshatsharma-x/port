@@ -203,6 +203,41 @@ export const site = {
       transmissions: "Transmissions",
       empty: "Nothing on file yet.",
     },
+    connect: {
+      invitation: "Send a signal",
+      copy: "Copy",
+      copied: "Copied",
+      prompts: { name: "NAME>", email: "EMAIL>", intent: "INTENT>", message: "MESSAGE>" },
+      fields: { name: "Your name", email: "Your email", intent: "What it's about", message: "Your message" },
+      intents: { hire: "Hire", collaborate: "Collaborate", research: "Research", speak: "Speak", other: "Other" },
+      send: "Transmit",
+      trap: "Leave this field empty; it's here to catch bots.",
+      errors: {
+        required: "This one's needed.",
+        email: "That doesn't look like an email address.",
+        short: "A few more words, please: at least ten characters.",
+        long: "That's longer than the line takes; trim it a little.",
+        fast: "That was faster than anyone types. Give it a moment and send again.",
+        rate: "Three signals in ten minutes is the limit. Try again a little later.",
+        unavailable: "The line is down right now.",
+        failed: "The transmission didn't go through.",
+      },
+      log: { label: "Transmission log", validate: "Validate", id: "ID" },
+      received: { title: "Transmission received", note: "Your message is in my inbox. I'll reply to the address you gave.", again: "Send another" },
+      fallback: { note: "Your words are kept: send them from your own email instead.", link: "Open it in your email", subject: "A signal from the portfolio" },
+      availability: { label: "Availability", local: "My time", overlap: "Overlap", yours: "Your time", none: "No working hours in common; my day starts at", hours: "Working hours" },
+      channels: { label: "Channels", email: "Email", scholar: "Scholar", orcid: "ORCID" },
+      cta: { resume: "Download résumé", publications: "Download publication list (PDF)" },
+    },
+    halt: {
+      index: "Index",
+      sections: "Sections",
+      projects: "Projects",
+      publications: "Publications",
+      build: { deployed: "Deployed", built: "Built with" },
+      top: "Back to top",
+      halted: "System halted. Scroll up to resume.",
+    },
     chrome: { os: "RETROGRADE/OS", rail: "Sections" },
     nav: {
       label: "Primary",
@@ -267,7 +302,7 @@ export const profile = {
   location: { city: "Jaipur", country: "India", countryCode: "IN" },
   coordinates: { lat: 26.9124, lon: 75.7873 },
   timezone: "Asia/Kolkata",
-  // TODO(akshat): working hours aren't on the résumé
+  // working hours: confirmed by the owner (2026-11-14); CONNECT computes a visitor's overlap from them
   workingHours: { start: "10:00", end: "18:00" },
   // TODO(akshat): availability is inferred (interning now; the B.Tech ends July 2027)
   availability: { status: "limited", note: "Interning at United Airlines; graduating with a B.Tech in July 2027." },
@@ -286,8 +321,9 @@ export const profile = {
   },
   // TODO(akshat): no photo yet — this is a generated placeholder (scripts/bake/portrait.ts)
   avatar: { src: "/media/profile/portrait.png", alt: "A placeholder portrait: a soft-lit head-and-shoulders silhouette, until the real photo arrives." },
-  // TODO(akshat): put the résumé you want published here; it isn't copied in, because each version carries your phone number
-  resumeUrl: "/media/profile/akshat-sharma-resume.pdf",
+  // no résumé published for now (the owner's call, 2026-11-14): every version carries their phone
+  // number. A phone-free PDF dropped in public/media/profile/ and named here brings the buttons back
+  resumeUrl: null,
   email: "akshatsharma.data@gmail.com",
   socials: [
     { platform: "github", url: "https://github.com/akshatsharma-x", handle: "akshatsharma-x" },

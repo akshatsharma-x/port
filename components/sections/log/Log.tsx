@@ -162,9 +162,11 @@ function Printout() {
             <p className="printout__end">{`*** ${P.end} ***`.toUpperCase()}</p>
           </div>
         </div>
-        <Button href={d.profile.resumeUrl} variant="secondary" icon="↗" target="_blank" rel="noopener" className="printout__resume">
-          {d.site.labels.hero.cta.resume}
-        </Button>
+        {d.profile.resumeUrl && (
+          <Button href={d.profile.resumeUrl} variant="secondary" icon="↗" target="_blank" rel="noopener" className="printout__resume">
+            {d.site.labels.hero.cta.resume}
+          </Button>
+        )}
       </div>
     </Grid>
   );

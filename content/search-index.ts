@@ -79,7 +79,7 @@ export interface SearchIndex {
     workingHours: { start: string; end: string };
     availability: { status: string; note: string };
     email: string;
-    resumeUrl: string;
+    resumeUrl: string | null;
     socials: { platform: string; url: string; handle: string }[];
     scholarProfiles: { platform: string; url: string; id: string }[];
     currentFocus: { kind: string; title: string; detail: string | null; url: string | null }[];

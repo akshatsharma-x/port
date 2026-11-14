@@ -294,6 +294,39 @@ export const SiteSchema = z.strictObject({
       /** nothing on file at all: no certificate, no record */
       empty: sentence(80),
     }),
+    /** 08 · CONNECT (§7.4): the invitation, the email, the teletype form and its log, availability, channels */
+    connect: z.strictObject({
+      invitation: sentence(32),
+      copy: sentence(16),
+      copied: sentence(16),
+      /** the form's prompts, its intents, the send button and the honeypot (screen readers are told to skip it) */
+      prompts: z.strictObject({ name: z.string().regex(/^[A-Z]+>$/), email: z.string().regex(/^[A-Z]+>$/), intent: z.string().regex(/^[A-Z]+>$/), message: z.string().regex(/^[A-Z]+>$/) }),
+      fields: z.strictObject({ name: sentence(24), email: sentence(24), intent: sentence(24), message: sentence(24) }),
+      intents: z.strictObject({ hire: sentence(24), collaborate: sentence(24), research: sentence(24), speak: sentence(24), other: sentence(24) }),
+      send: sentence(16),
+      trap: sentence(60),
+      /** inline errors, by the code lib/contact.ts gives them */
+      errors: z.strictObject({ required: sentence(40), email: sentence(40), short: sentence(60), long: sentence(60), fast: sentence(80), rate: sentence(80), unavailable: sentence(80), failed: sentence(80) }),
+      /** the transmission log's lines: VALIDATE ✓ · POST /api/contact · status · id */
+      log: z.strictObject({ label: sentence(32), validate: sentence(24), id: sentence(8) }),
+      received: z.strictObject({ title: sentence(40), note: sentence(120), again: sentence(24) }),
+      /** the line is down: the visitor's text goes by email instead */
+      fallback: z.strictObject({ note: sentence(120), link: sentence(32), subject: sentence(40) }),
+      availability: z.strictObject({ label: sentence(32), local: sentence(16), overlap: sentence(16), yours: sentence(16), none: sentence(60), hours: sentence(24) }),
+      channels: z.strictObject({ label: sentence(32), email: sentence(16), scholar: sentence(16), orcid: sentence(16) }),
+      /** the download pair; a missing file shows no button */
+      cta: z.strictObject({ resume: sentence(32), publications: sentence(40) }),
+    }),
+    /** 09 · HALT (§7.4): the index, the build line, back to top, the power-off */
+    halt: z.strictObject({
+      index: sentence(24),
+      sections: sentence(24),
+      projects: sentence(24),
+      publications: sentence(24),
+      build: z.strictObject({ deployed: sentence(16), built: sentence(16) }),
+      top: sentence(24),
+      halted: sentence(60),
+    }),
     /** persistent chrome (DESIGN.md §7.3): the HUD readout's system name, the section rail's name */
     chrome: z.strictObject({ os: z.string().regex(/^[A-Z0-9/ .-]{2,24}$/, "uppercase system name"), rail: sentence(32) }),
     /** <Nav> (§7.3): four destinations and the terminal key; `section` is where each one lands */
@@ -375,7 +408,8 @@ export const ProfileSchema = z.strictObject({
       );
     }),
   avatar: z.strictObject({ src: assetPath, alt: sentence(160) }),
-  resumeUrl: z.union([assetPath, httpsUrl]),
+  /** null until the owner publishes one: every version of theirs carries a phone number (v2.3) */
+  resumeUrl: z.union([assetPath, httpsUrl]).nullable(),
   email: z.email(),
   socials: z.array(z.strictObject({ platform: z.enum(SOCIAL_PLATFORMS), url: httpsUrl, handle: text })),
   scholarProfiles: z.array(z.strictObject({ platform: z.enum(SCHOLAR_PLATFORMS), url: httpsUrl, id: text })),

@@ -7,6 +7,8 @@ import { useMagnetic } from "@/hooks/useMagnetic";
 import { springs } from "@/lib/motion";
 import { Spring } from "@/lib/spring";
 import { scrollStore } from "@/lib/scroll";
+import { useUI } from "@/lib/store";
+import { openTerminal } from "@/lib/terminal";
 import { onTick } from "@/lib/ticker";
 
 export interface NavItem {
@@ -22,10 +24,11 @@ const SETTLED = 0.05;
  * the section you're in. The indicator is a single bar measured against the list — the shared-
  * layout behaviour without Motion's layout bundle in first-load JS (§8.3). Each item is a plain
  * link (on / a #hash jump, elsewhere a route to it), so every click is a TRACKING TEAR. `~` is
- * the terminal's key (Part 13).
+ * the terminal's key (∞ SHELL).
  */
 export function Nav({ label, items, terminal }: { label: string; items: readonly NavItem[]; terminal: { glyph: string; label: string } }) {
   const current = useStore(scrollStore, (s) => s.section);
+  const terminalOpen = useUI((s) => s.terminalOpen);
   const home = usePathname() === "/";
   const listRef = useRef<HTMLUListElement>(null);
   const barRef = useRef<HTMLSpanElement>(null);
@@ -78,8 +81,8 @@ export function Nav({ label, items, terminal }: { label: string; items: readonly
           </li>
         ))}
         <li>
-          {/* the terminal opens in Part 13 (lib/terminal.ts): present (its place is real), not yet operable */}
-          <button type="button" className="hud-nav__link hud-nav__key" aria-label={terminal.label} aria-disabled="true">
+          {/* the terminal's key (∞ SHELL): it opens the panel, as ~ and / do */}
+          <button type="button" className="hud-nav__link hud-nav__key" aria-label={terminal.label} aria-haspopup="dialog" aria-expanded={terminalOpen} onClick={openTerminal}>
             <span className="hud-nav__label">{terminal.glyph}</span>
           </button>
         </li>

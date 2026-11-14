@@ -47,6 +47,7 @@ export function Stage() {
   const gfx = useUI((s) => s.gfx);
   const [decision, setDecision] = useState<TierDecision | null>(null);
   const [Overlay, setOverlay] = useState<ComponentType | null>(null);
+  const debug = useUI((s) => s.debug);
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fxRef = useRef<HTMLCanvasElement>(null);
@@ -59,16 +60,24 @@ export function Stage() {
   const viewport = useRef<Viewport>({ width: 0, height: 0, canvasHeight: 0, svh: 0 });
   const enabled = decision !== null && decision.tier !== "OFF";
 
+  // the dev overlay follows its switch: its chunk the first time it's on; shown only while it is
+  useEffect(() => {
+    if (!debug || Overlay) return;
+    let live = true;
+    void import("./DebugOverlay").then((m) => live && setOverlay(() => m.default));
+    return () => {
+      live = false;
+    };
+  }, [debug, Overlay]);
+
   // 1 · loop, docking, measurement, input — once
   useEffect(() => {
     const park = stageRef.current;
     const svh = svhRef.current;
     const lvh = lvhRef.current;
     if (!park || !svh || !lvh) return;
-    // ?debug=1: the overlay is its own chunk, fetched only when asked for
-    if (new URLSearchParams(window.location.search).get("debug") === "1") {
-      void import("./DebugOverlay").then((m) => setOverlay(() => m.default));
-    }
+    // ?debug=1 (or the terminal's `debug`): the overlay is its own chunk, fetched only when asked for
+    if (new URLSearchParams(window.location.search).get("debug") === "1") useUI.getState().setDebug(true);
 
     governor.configure({
       loaders: sceneLoaders,
@@ -237,7 +246,7 @@ export function Stage() {
       <div ref={svhRef} className="stage-probe stage-probe--svh" aria-hidden="true" />
       <div ref={lvhRef} className="stage-probe stage-probe--lvh" aria-hidden="true" />
       {enabled && <canvas ref={fxRef} id="fx-gl" aria-hidden="true" />}
-      {Overlay && <Overlay />}
+      {debug && Overlay && <Overlay />}
     </>
   );
 }

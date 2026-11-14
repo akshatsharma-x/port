@@ -49,3 +49,5 @@ export function switchTheme(next: Theme): Promise<void> {
 /** POWER OFF / ON are deliberate (the footer's halt, the boot): they wait for the grammar. */
 export const powerOff = (options?: { cue?: "POWER" | "HALT" }): Promise<void> => loadTransitions().then((m) => m.powerOff(options));
 export const powerOn = (options?: PowerOnOptions): Promise<void> => loadTransitions().then((m) => m.powerOn(options));
+/** A panel's own POWER CYCLE (the terminal): see lib/transitions.ts powerPanel(). */
+export const powerPanel = (el: HTMLElement, dir: "on" | "off"): Promise<Animation> => loadTransitions().then((m) => m.powerPanel(el, dir));

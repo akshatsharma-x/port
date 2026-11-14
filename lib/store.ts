@@ -13,6 +13,8 @@ export interface UIState {
   sound: boolean;
   boot: BootState;
   terminalOpen: boolean;
+  /** the dev overlay (?debug=1, or the terminal's `debug`); not persisted */
+  debug: boolean;
   grid: boolean;
   /** the "G" overlay shown for a moment (the hero's lattice landing); not persisted */
   gridFlash: boolean;
@@ -24,6 +26,7 @@ export interface UIState {
   setSound: (on: boolean) => void;
   setBoot: (boot: BootState) => void;
   setTerminalOpen: (open: boolean) => void;
+  setDebug: (on: boolean) => void;
   toggleGrid: (force?: boolean) => void;
   /** shows the "G" overlay for `ms`, unless it's already on */
   flashGrid: (ms: number) => void;
@@ -45,6 +48,7 @@ export const useUI = create<UIState>()(
       sound: false,
       boot: "pending",
       terminalOpen: false,
+      debug: false,
       grid: false,
       gridFlash: false,
       gfx: "auto",
@@ -57,6 +61,7 @@ export const useUI = create<UIState>()(
       setSound: (sound) => set({ sound }),
       setBoot: (boot) => set({ boot }),
       setTerminalOpen: (terminalOpen) => set({ terminalOpen }),
+      setDebug: (debug) => set({ debug }),
       toggleGrid: (force) => set((s) => ({ grid: force ?? !s.grid, gridFlash: false })),
       flashGrid: (ms) => {
         if (get().grid || get().gridFlash) return;

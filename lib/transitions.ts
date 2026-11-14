@@ -277,6 +277,21 @@ export async function powerOff(options: { cue?: "POWER" | "HALT" } = {}): Promis
   await beam(POWER.offMs, (t) => powerOffAt(t), true, { at: POWER.offMs - FRAME_MS, fn: off });
 }
 
+/**
+ * A panel's own POWER CYCLE (§3.6: the terminal opens and closes "scoped to the panel"): the
+ * screen's dot → line → open (ON) and collapse to a line, then a dot (OFF), on the panel's box
+ * alone, with no beam — the screen around it stays as it is. Paper's is its SCAN, down the panel
+ * (ON) and back up (OFF); reduced motion, the crossfade. Input interrupts: the caller can finish()
+ * or cancel() what's returned.
+ */
+export function powerPanel(el: HTMLElement, dir: "on" | "off"): Animation {
+  const back: PlaybackDirection = dir === "on" ? "normal" : "reverse";
+  if (isReduced()) return el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: POWER.reducedMs, fill: "both", direction: back });
+  if (isPaper()) return el.animate(sampled(SCAN.ms, (t) => ({ clipPath: `inset(0 0 ${((1 - scanAt(t)) * 100).toFixed(2)}% 0)` })), { duration: SCAN.ms, fill: "both", direction: back });
+  const ms = dir === "on" ? POWER.onMs : POWER.offMs;
+  return el.animate(sampled(ms, (t) => raster(dir === "on" ? powerOnAt(t) : powerOffAt(t))), { duration: ms, fill: "both" });
+}
+
 export interface PowerOnOptions {
   /** ON-fast (360 ms): deep links, a skipped boot */
   fast?: boolean;

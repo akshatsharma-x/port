@@ -1,0 +1,246 @@
+/*
+ * ∞ SHELL (DESIGN.md §7.4): the terminal's glass. Bottom-anchored, at most 960 px wide, 62 svh tall,
+ * --r-bezel corners, its own scanlines at α 0.10 over phosphor text (lib/shell/config.ts writes the
+ * alpha). Paper is a different machine (§5.4): ink on the sheet, no scanlines, no glow. A CSS module
+ * that arrives with the terminal's chunk, never in first-load CSS.
+ */
+.panel {
+  position: fixed;
+  inset: auto 0 var(--hud-inset) 0;
+  width: min(960px, calc(100% - 2 * var(--margin)));
+  max-width: none;
+  height: 62svh;
+  max-height: calc(100svh - 2 * var(--hud-inset));
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-bezel);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: var(--bg-sunken);
+  color: var(--accent);
+  font-family: var(--ff-mono);
+  font-size: var(--step--1);
+  line-height: var(--lh--1);
+  /* one glyph a cell: JetBrains Mono's contextual ligatures (== ++ ..) would merge the ASCII art */
+  font-variant-ligatures: none;
+  font-feature-settings: "calt" 0, "liga" 0;
+  box-shadow:
+    inset 0 0 0 var(--hairline) var(--line-2),
+    0 0 calc(var(--glow) * 48px) color-mix(in oklch, var(--accent) calc(var(--glow) * 16%), transparent);
+  isolation: isolate;
+}
+.panel:not([open]) {
+  display: none;
+}
+.panel::backdrop {
+  background: color-mix(in oklch, var(--bg) 62%, transparent);
+  cursor: auto;
+}
+/* its own scanlines, over the glass and the words (the pitch #fx-css snaps to the device isn't in the
+   top layer's reach: its own 1 px in 3) */
+.panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, var(--bg-sunken) 0 var(--scan-line, 1px), transparent var(--scan-line, 1px) var(--scan-pitch, 3px));
+  opacity: var(--shell-scan-alpha);
+}
+:global(html[data-theme="paper"]) .panel {
+  background: var(--bg-raised);
+  color: var(--fg-1);
+}
+:global(html[data-theme="paper"]) .panel::after {
+  display: none;
+}
+
+/* the title bar: what's running, and the way out for a pointer or a phone */
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--spacing) * 3);
+  padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2) calc(var(--spacing) * 1.5) calc(var(--spacing) * 4);
+  border-bottom: var(--hairline) solid var(--line-1);
+  color: var(--fg-3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.close {
+  display: grid;
+  place-items: center;
+  min-width: 32px;
+  min-height: 32px;
+  border: 0;
+  background: transparent;
+  color: var(--fg-2);
+  font: inherit;
+  font-size: var(--step-0);
+}
+.close:hover {
+  color: var(--fg-1);
+}
+.close:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* the screen: the scrollback, then the prompt, scrolling together like a terminal's */
+.screen {
+  position: relative;
+  grid-row: 2;
+  grid-column: 1;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: calc(var(--spacing) * 3) calc(var(--spacing) * 4) calc(var(--spacing) * 4);
+  cursor: text;
+  scrollbar-color: var(--line-2) transparent;
+  scrollbar-width: thin;
+}
+.line {
+  min-height: 1lh;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  text-shadow: 0 0 calc(var(--glow) * 6px) color-mix(in oklch, currentColor calc(var(--glow) * 45%), transparent);
+}
+/* a drawn line (a punch card, the portrait) keeps its shape and scrolls sideways */
+.line:has(.nowrap) {
+  white-space: pre;
+  overflow-wrap: normal;
+}
+.nowrap {
+  white-space: pre;
+}
+.dim {
+  color: var(--fg-3);
+}
+.accent {
+  color: var(--accent);
+}
+.hot {
+  color: var(--hot);
+}
+.warn {
+  color: var(--warn);
+}
+.bold {
+  color: var(--fg-1);
+  font-weight: 650;
+}
+.mark {
+  background: var(--accent-wash);
+  color: var(--fg-1);
+}
+:global(html[data-theme="paper"]) .accent,
+:global(html[data-theme="paper"]) .bold {
+  color: var(--fg-1);
+}
+:global(html[data-theme="paper"]) .line {
+  text-shadow: none;
+}
+.link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: var(--hairline);
+  text-underline-offset: 0.18em;
+}
+.link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.prompt {
+  display: flex;
+  white-space: pre;
+}
+.ps1 {
+  color: var(--accent);
+}
+.field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.input {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--fg-1);
+  font: inherit;
+  letter-spacing: normal;
+  caret-color: transparent;
+}
+/* the block caret: the cell under it in reverse video; hollow while focus is elsewhere */
+.caret {
+  position: absolute;
+  top: 0;
+  width: 1ch;
+  height: 1lh;
+  background: var(--accent);
+  color: var(--bg-sunken);
+  white-space: pre;
+  pointer-events: none;
+  animation: caret-blink var(--blink) steps(1) infinite;
+}
+.caret[data-idle] {
+  background: transparent;
+  box-shadow: inset 0 0 0 var(--hairline) var(--accent);
+  color: transparent;
+  animation: none;
+}
+:global(html[data-theme="paper"]) .caret {
+  background: var(--fg-1);
+  color: var(--bg-raised);
+}
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* rain covers the screen while it falls; the words wait underneath */
+.rain {
+  grid-row: 2;
+  grid-column: 1;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-sunken);
+  color: var(--accent);
+  font: inherit;
+}
+:global(html[data-theme="paper"]) .rain {
+  background: var(--bg-raised);
+  color: var(--fg-1);
+}
+
+/* measures a cell: ten of them */
+.probe {
+  position: absolute;
+  visibility: hidden;
+  white-space: pre;
+  pointer-events: none;
+}
+
+:global(html[data-motion="reduce"]) .caret {
+  animation: none;
+}
+@media (forced-colors: active) {
+  .panel {
+    border: 1px solid CanvasText;
+  }
+  .panel::after {
+    display: none;
+  }
+  .caret {
+    background: Highlight;
+    color: HighlightText;
+  }
+}

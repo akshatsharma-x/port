@@ -1,3 +1,4 @@
+import { ShellLauncher } from "@/components/shell/ShellLauncher";
 import { derived } from "@/content/derive";
 import { Cursor } from "./Cursor";
 import { FrontPanel } from "./FrontPanel";
@@ -40,6 +41,21 @@ export function Chrome() {
         <FrontPanel labels={labels.panel} />
       </div>
       <HudMetrics />
+      {/* ∞ SHELL: the keys that open it; the panel itself arrives on its first open */}
+      <ShellLauncher
+        boot={{
+          label: labels.shell.label,
+          close: labels.shell.close,
+          input: labels.shell.input,
+          output: labels.shell.output,
+          user: labels.shell.user,
+          host: labels.shell.host,
+          tty: labels.shell.tty,
+          os: labels.chrome.os,
+          loading: labels.shell.loading,
+          offline: labels.shell.offline,
+        }}
+      />
     </div>
   );
 }

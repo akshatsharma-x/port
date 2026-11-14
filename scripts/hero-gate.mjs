@@ -15,7 +15,8 @@
  * owner's city, the page's own grid), scroll owns the morph, a click goes to the next checkpoint,
  * the cursor's parallax and field, the tiers' post chains, the canvas meets the page with no seam,
  * the name fills the 12 columns on one line, the hints, the "G" flash, the reduced-motion and
- * Paper editions, the phone's portrait poster, a clean console. Report: .artifacts/hero-gate.json
+ * Paper editions, the phone's portrait poster, a P3 screen's colors (emulated), a clean console.
+ * Report: .artifacts/hero-gate.json
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { cpus } from "node:os";
@@ -37,7 +38,7 @@ function check(name, pass, detail) {
 const browser = await chromium.launch({ channel: "chrome" });
 const IGNORED = [/Download the React DevTools/];
 
-async function open({ tier = null, viewport = { width: 1440, height: 900 }, dpr = 2, mobile = false, theme = "phosphor", reduced = false, query = "", booted = true } = {}) {
+async function open({ tier = null, viewport = { width: 1440, height: 900 }, dpr = 2, mobile = false, theme = "phosphor", reduced = false, query = "", booted = true, gamut = null } = {}) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: dpr, isMobile: mobile, hasTouch: mobile, reducedMotion: reduced ? "reduce" : "no-preference" });
   await ctx.addInitScript(
     ({ theme, booted }) => {
@@ -55,6 +56,8 @@ async function open({ tier = null, viewport = { width: 1440, height: 900 }, dpr 
     { theme, booted },
   );
   const page = await ctx.newPage();
+  // a P3 screen, emulated: headless Chrome reports sRGB, so without this no gate takes §2.3's P3 path
+  if (gamut) await (await ctx.newCDPSession(page)).send("Emulation.setEmulatedMedia", { features: [{ name: "color-gamut", value: gamut }] });
   const logs = [];
   page.on("console", (m) => {
     if ((m.type() === "error" || m.type() === "warning") && !IGNORED.some((r) => r.test(m.text()))) logs.push(`${m.type()}: ${m.text()}`.slice(0, 240));
@@ -338,6 +341,30 @@ for (const [name, opts] of [
   const ground = await page.evaluate(() => window.__retrograde.governor.dev.postGround?.());
   check("Paper: ink stipple — no bloom, no persistence (points + one effect pass), the paper as the ground", r.calls === 2 && seamless(ground) && logs.length === 0, { calls: r.calls, lsb: lsbApart(ground), gpuP50: r.gpuP50, saturatedMs: r.saturatedMs });
   await ctx.close();
+}
+
+// a P3 screen (Part 15): the build writes §2.3's upgrades as lab() (Lightning CSS rewrites the authored
+// oklch()), and until Part 15 the GL colors read only oklch(), so on every P3 screen in any browser
+// (iPhones, most Macs' own displays, wide-gamut Android phones) the field drew the accent white. Its
+// colors must be the theme's: within 0.1 (linear) of an sRGB screen's, which is the P3 accent's own
+// clamp to sRGB; the white was 1.0 off.
+for (const theme of ["phosphor", "amber"]) {
+  const read = async (gamut) => {
+    const { ctx, page, logs } = await open({ tier: "HIGH", theme, gamut });
+    const r = await page.evaluate(() => {
+      const u = window.__retrograde.governor.dev.hero.material.uniforms;
+      const v = (k) => [u[k].value.x, u[k].value.y, u[k].value.z];
+      return { p3: matchMedia("(color-gamut: p3)").matches, accent: getComputedStyle(document.documentElement).getPropertyValue("--accent").trim(), base: v("uColorBase"), signal: v("uColorSignal") };
+    });
+    await ctx.close();
+    return { ...r, logs };
+  };
+  const s = await read("srgb");
+  const p = await read("p3");
+  const r3 = (x) => +x.toFixed(3);
+  const apart = Math.max(...[...s.base, ...s.signal].map((x, i) => Math.abs(x - [...p.base, ...p.signal][i])));
+  check(`P3 screen (emulated), ${theme}: the field's colors are the theme's, read from the build's lab() (≤ 0.1 linear from an sRGB screen's)`, p.p3 && !s.p3 && /^lab\(/.test(p.accent) && apart <= 0.1 && p.logs.length === 0 && s.logs.length === 0, { accent: p.accent, base: p.base.map(r3), srgbBase: s.base.map(r3), signal: p.signal.map(r3), apart: r3(apart), logs: [...s.logs, ...p.logs].slice(0, 3) });
+  report.scenarios[`p3-${theme}`] = { srgb: s, p3: p, apart };
 }
 
 await browser.close();

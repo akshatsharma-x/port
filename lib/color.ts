@@ -90,6 +90,44 @@ export function parseOklch(value: string): Oklch | null {
   return { L, C: Number(m[3]), H: Number(m[4]) };
 }
 
+// ── CIE Lab (D50): the form the build writes the P3 upgrades in ─────────────────────────
+
+/**
+ * Parses `lab(88.1362% -82.5776 39.2435)`. Next's CSS minifier (Lightning CSS) rewrites an authored
+ * oklch() for the browser targets as a hex fallback plus lab() under `@supports`, so lab() is what a
+ * P3 screen's computed style returns for §2.3's upgrades (measured, Part 15).
+ */
+export function parseLab(value: string): Vec3 | null {
+  const m = /^lab\(\s*(-?[\d.]+)%?\s+(-?[\d.]+)\s+(-?[\d.]+)/i.exec(value.trim());
+  return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null;
+}
+
+/** CIE Lab (D50) → linear-light sRGB, unclamped: CSS Color 4's Lab → XYZ, then Bradford to D65 and sRGB in one matrix. */
+export function labToLinear([L, a, b]: Vec3): Vec3 {
+  const e = 216 / 24389;
+  const k = 24389 / 27;
+  const fy = (L + 16) / 116;
+  const f = (t: number) => (t ** 3 > e ? t ** 3 : (116 * t - 16) / k);
+  const X = f(fy + a / 500) * (0.3457 / 0.3585);
+  const Y = L > k * e ? fy ** 3 : L / k;
+  const Z = f(fy - b / 200) * ((1 - 0.3457 - 0.3585) / 0.3585);
+  return [
+    3.1341359 * X - 1.617386 * Y - 0.4906622 * Z,
+    -0.9787955 * X + 1.9162544 * Y + 0.0334429 * Z,
+    0.0719554 * X - 0.2289768 * Y + 1.405386 * Z,
+  ];
+}
+
+/** Linear-light sRGB (unclamped) of a color as the stylesheet or the build writes it: hex, oklch() or lab(); null otherwise. */
+export function cssToLinear(value: string): Vec3 | null {
+  const v = value.trim();
+  if (v.startsWith("#")) return hexToLinear(v);
+  const ok = parseOklch(v);
+  if (ok) return oklchToLinear(ok);
+  const lab = parseLab(v);
+  return lab ? labToLinear(lab) : null;
+}
+
 // ── Display-P3 ────────────────────────────────────────────────────────────────────
 
 export function linearSrgbToLinearP3([r, g, b]: Vec3): Vec3 {
@@ -113,13 +151,11 @@ export const inP3 = (c: Oklch): boolean => inGamut(linearSrgbToLinearP3(oklchToL
 /** Luminance of any OKLCH color (wide-gamut colors included — Y is linear in RGB). */
 export const luminanceOfOklch = (c: Oklch): number => luminanceOfLinear(oklchToLinear(c));
 
-/** Luminance of a CSS color string we author: hex or oklch(). */
+/** Luminance of a CSS color string we author (hex or oklch()) or the build writes (lab()). */
 export function luminanceOf(value: string): number {
-  const v = value.trim();
-  if (v.startsWith("#")) return relativeLuminance(v);
-  const ok = parseOklch(v);
-  if (!ok) throw new Error(`Unsupported color: ${value}`);
-  return luminanceOfOklch(ok);
+  const lin = cssToLinear(value);
+  if (!lin) throw new Error(`Unsupported color: ${value}`);
+  return luminanceOfLinear(lin);
 }
 
 export const contrastOf = (a: string, b: string): number => contrastFromLuminance(luminanceOf(a), luminanceOf(b));

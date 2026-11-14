@@ -15,7 +15,7 @@
     "postbuild": "node scripts/boot-manifest.mjs",
     "start": "next start",
     "bake": "tsx scripts/bake.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",

@@ -78,7 +78,13 @@ export const TRANSMIT_CUE = { answer: [2100, 0.24], warble: { tones: [1650, 1850
  * SHELL (§6.4): a chirp for open (up) and close (down), 880 Hz square for 35 ms on Enter, 220 → 196 Hz
  * for an error. [from, to (Hz), ms]
  */
-export const SHELL_CUE = { chirp: [660, 1320, 60], enter: [880, 880, 35], error: [220, 196, 140] } as const;
+export const SHELL_CUE = {
+  chirp: [660, 1320, 60],
+  enter: [880, 880, 35],
+  error: [220, 196, 140],
+  /** a band-limited square overshoots its level at each edge (Gibbs): measured 1.4 dB over the sheet */
+  squareTrimDb: 1.5,
+} as const;
 /**
  * DEGAUSS (the Konami code, §3.6): the coil's thump, [from, to (Hz), ms], then the hum — 120 Hz, the
  * mains' second harmonic — ringing down over the degauss, [Hz, ms].
@@ -316,7 +322,8 @@ export function buildCue(ctx: Ctx, out: Out, cue: Cue, detail: CueDetail, at: nu
       const v = detail.variant;
       const [from, to, ms] = v === "error" ? SHELL_CUE.error : v === "enter" ? SHELL_CUE.enter : SHELL_CUE.chirp;
       const down = v === "close";
-      return tone(ctx, out, at, { from: down ? to : from, to: down ? from : to, ms, peakDb: PEAK_DB.SHELL, type: v === "error" ? "triangle" : "square", attack: 0.002 });
+      const square = v !== "error";
+      return tone(ctx, out, at, { from: down ? to : from, to: down ? from : to, ms, peakDb: PEAK_DB.SHELL - (square ? SHELL_CUE.squareTrimDb : 0), type: square ? "square" : "triangle", attack: 0.002 });
     }
     case "DEGAUSS": {
       const [from, to, ms] = DEGAUSS_CUE.thump;

@@ -6,11 +6,12 @@
  */
 .panel {
   position: fixed;
-  inset: auto 0 var(--hud-inset) 0;
+  /* --keyboard: what a phone's on-screen keyboard covers (Terminal.tsx), 0 everywhere else */
+  inset: auto 0 calc(var(--hud-inset) + var(--keyboard, 0px)) 0;
   width: min(960px, calc(100% - 2 * var(--margin)));
   max-width: none;
   height: 62svh;
-  max-height: calc(100svh - 2 * var(--hud-inset));
+  max-height: calc(100svh - 2 * var(--hud-inset) - var(--keyboard, 0px));
   margin: 0 auto;
   padding: 0;
   border: 0;

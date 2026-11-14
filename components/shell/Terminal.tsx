@@ -241,6 +241,23 @@ export default function Terminal({ boot }: { boot: ShellBoot }) {
     } else if (!open && d.open) void close();
   }, [open, measure, close]);
 
+  // a phone's keyboard covers the bottom of the screen, where the line is: the panel rides above it
+  // (visualViewport; touch only, so a desk's pinch-zoom isn't taken for a keyboard)
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const d = dialog.current;
+    if (!open || !vv || !d || !window.matchMedia("(pointer: coarse)").matches) return;
+    const fit = () => d.style.setProperty("--keyboard", `${Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop))}px`);
+    fit();
+    vv.addEventListener("resize", fit);
+    vv.addEventListener("scroll", fit);
+    return () => {
+      vv.removeEventListener("resize", fit);
+      vv.removeEventListener("scroll", fit);
+      d.style.removeProperty("--keyboard");
+    };
+  }, [open]);
+
   // the page behind doesn't scroll under the panel: wheels outside the screen stop here
   useEffect(() => {
     const d = dialog.current;

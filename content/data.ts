@@ -226,7 +226,7 @@ export const site = {
       received: { title: "Transmission received", note: "Your message is in my inbox. I'll reply to the address you gave.", again: "Send another" },
       fallback: { note: "Your words are kept: send them from your own email instead.", link: "Open it in your email", subject: "A signal from the portfolio" },
       availability: { label: "Availability", local: "My time", overlap: "Overlap", yours: "Your time", none: "No working hours in common; my day starts at", hours: "Working hours" },
-      channels: { label: "Channels", email: "Email", scholar: "Scholar", orcid: "ORCID" },
+      channels: { label: "Channels", email: "Email", linkedin: "LinkedIn", github: "GitHub", scholar: "Scholar", orcid: "ORCID", x: "X" },
       cta: { resume: "Download résumé", publications: "Download publication list (PDF)" },
     },
     halt: {

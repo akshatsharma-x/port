@@ -31,11 +31,11 @@ export function Connect({ d }: { d: Derived }) {
   // engineering and research side by side: EMAIL · LINKEDIN · GITHUB · SCHOLAR · ORCID · X
   const channels = [
     { key: "email", label: L.channels.email, href: `mailto:${p.email}` },
-    ...(social("linkedin") ? [{ key: "linkedin", label: "LinkedIn", href: social("linkedin")?.url as string }] : []),
-    ...(social("github") ? [{ key: "github", label: "GitHub", href: social("github")?.url as string }] : []),
+    ...(social("linkedin") ? [{ key: "linkedin", label: L.channels.linkedin, href: social("linkedin")?.url as string }] : []),
+    ...(social("github") ? [{ key: "github", label: L.channels.github, href: social("github")?.url as string }] : []),
     ...(scholar("googleScholar") ? [{ key: "scholar", label: L.channels.scholar, href: scholar("googleScholar")?.url as string }] : []),
     ...(scholar("orcid") ? [{ key: "orcid", label: L.channels.orcid, href: scholar("orcid")?.url as string }] : []),
-    ...(social("x") ? [{ key: "x", label: "X", href: social("x")?.url as string }] : []),
+    ...(social("x") ? [{ key: "x", label: L.channels.x, href: social("x")?.url as string }] : []),
   ];
   const ctas = [
     { key: "resume", label: L.cta.resume, href: published(p.resumeUrl) },
@@ -52,7 +52,8 @@ export function Connect({ d }: { d: Derived }) {
         <a className="connect-email__link" href={`mailto:${p.email}`}>
           {p.email}
         </a>
-        <button type="button" className="chip chip--toggle t-micro connect-email__copy" data-connect-copy={p.email} hidden>
+        {/* pending until its behaviour is in: its place kept, so its arrival moves nothing (CLS); gone without JS */}
+        <button type="button" className="chip chip--toggle t-micro connect-email__copy" data-connect-copy={p.email} data-pending="">
           {L.copy}
         </button>
         <span className="connect-email__toast t-micro" role="status" data-connect-toast="">
@@ -142,11 +143,19 @@ export function Connect({ d }: { d: Derived }) {
         </nav>
         {ctas.length > 0 && (
           <div className="connect-ctas">
-            {ctas.map((c) => (
-              <Button key={c.key} href={c.href} variant="secondary" icon="↗" target="_blank" rel="noopener">
-                {c.label}
-              </Button>
-            ))}
+            {/* a file of ours downloads, as its label says; one hosted elsewhere opens there (a
+                cross-origin download attribute is ignored) */}
+            {ctas.map((c) =>
+              c.href.startsWith("/") ? (
+                <Button key={c.key} href={c.href} variant="secondary" icon="↓" download="">
+                  {c.label}
+                </Button>
+              ) : (
+                <Button key={c.key} href={c.href} variant="secondary" icon="↗" target="_blank" rel="noopener noreferrer">
+                  {c.label}
+                </Button>
+              ),
+            )}
           </div>
         )}
       </aside>

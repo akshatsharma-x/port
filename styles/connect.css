@@ -40,6 +40,13 @@
   .connect-email__toast {
     color: var(--accent);
   }
+  /* COPY keeps its place until its behaviour is in (no shift when it arrives), and has none without JS */
+  .connect-email__copy[data-pending] {
+    visibility: hidden;
+  }
+  html:not(.js) .connect-email__copy {
+    display: none;
+  }
 
   /* the teletype: a prompt, a field, a block caret while it's empty, the error under it */
   .teletype {
@@ -243,7 +250,9 @@
   .availability__dot[data-status="limited"] {
     background: color-mix(in oklch, var(--accent) 55%, var(--fg-3));
   }
+  /* two lines kept: the server's hours and the visitor's overlap (or none) fill the same box (CLS) */
   .availability__overlap {
+    min-height: 2lh;
     color: var(--fg-1);
   }
   .channels ul {

@@ -313,7 +313,7 @@ export const SiteSchema = z.strictObject({
       /** the line is down: the visitor's text goes by email instead */
       fallback: z.strictObject({ note: sentence(120), link: sentence(32), subject: sentence(40) }),
       availability: z.strictObject({ label: sentence(32), local: sentence(16), overlap: sentence(16), yours: sentence(16), none: sentence(60), hours: sentence(24) }),
-      channels: z.strictObject({ label: sentence(32), email: sentence(16), scholar: sentence(16), orcid: sentence(16) }),
+      channels: z.strictObject({ label: sentence(32), email: sentence(16), linkedin: sentence(16), github: sentence(16), scholar: sentence(16), orcid: sentence(16), x: sentence(16) }),
       /** the download pair; a missing file shows no button */
       cta: z.strictObject({ resume: sentence(32), publications: sentence(40) }),
     }),

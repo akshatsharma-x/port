@@ -130,7 +130,9 @@ export default function ConnectBehavior({ labels, owner }: { labels: ConnectLabe
     el.addEventListener("submit", submit);
     const again = el.querySelector<HTMLElement>("[data-connect-again]");
     const reset = () => {
-      resetForm();
+      // keepFieldsRef: the fields are registered once, on the server's own elements — a plain reset
+      // forgets them (react-hook-form empties its field registry) and the next send never validates
+      resetForm(undefined, { keepFieldsRef: true });
       setLog([]);
       if (logEl) logEl.hidden = true;
       el.dataset.state = "";
@@ -167,7 +169,7 @@ export default function ConnectBehavior({ labels, owner }: { labels: ConnectLabe
     const button = root?.querySelector<HTMLButtonElement>("[data-connect-copy]");
     const copied = root?.querySelector<HTMLElement>("[data-connect-copied]");
     if (!button || !navigator.clipboard) return;
-    button.hidden = false;
+    delete button.dataset.pending;
     let timer = 0;
     const copy = async () => {
       try {
@@ -200,10 +202,13 @@ export default function ConnectBehavior({ labels, owner }: { labels: ConnectLabe
       const text = fmt.format(new Date());
       if (clock.textContent !== text) clock.textContent = text;
     });
-    const mine = { timeZone: out.dataset.zone ?? zone, start: out.dataset.start ?? "09:00", end: out.dataset.end ?? "17:00" };
+    // the server writes my hours beside the readout; without them it keeps saying them as they are
+    const { zone: myZone, start, end } = out.dataset;
+    const mine = myZone && start && end ? { timeZone: myZone, start, end } : null;
     const visitor = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const A = labels.availability;
     const write = () => {
+      if (!mine) return;
       const o = overlap(mine, visitor);
       out.textContent = "from" in o ? `${A.overlap} ${duration(o.minutes)} · ${o.from}–${o.to} ${A.yours}` : `${A.none} ${o.myStart} ${A.yours}`;
     };

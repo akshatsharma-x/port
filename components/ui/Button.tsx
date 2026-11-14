@@ -6,7 +6,7 @@ import { cx } from "@/lib/cx";
 import { useMagnetic } from "@/hooks/useMagnetic";
 
 export type ButtonVariant = "primary" | "secondary" | "tertiary";
-export type ButtonGlyph = "→" | "↗" | "←";
+export type ButtonGlyph = "→" | "↗" | "←" | "↓";
 
 interface BaseProps {
   variant?: ButtonVariant;
@@ -31,8 +31,10 @@ export function Button(props: ButtonProps) {
   const { variant = "secondary", icon, magnetic = true, children, className, ...rest } = props;
   const ref = useMagnetic<HTMLElement>(magnetic);
   const external = typeof props.href === "string" && isExternal(props.href);
-  // a site file opened in a new tab (the résumé) is a plain link too: not a route Next should prefetch
+  // a site file opened in a new tab or downloaded (the publication list) is a plain link too: not a
+  // route Next should prefetch
   const newTab = external || (rest as { target?: string }).target === "_blank";
+  const file = (rest as { download?: unknown }).download !== undefined;
   const glyph = icon === undefined ? (external ? "↗" : null) : icon;
   const classes = cx("btn bracket", `btn--${variant}`, className);
 
@@ -53,6 +55,13 @@ export function Button(props: ButtonProps) {
     if (newTab) {
       return (
         <a ref={ref as Ref<HTMLAnchorElement>} href={href} target="_blank" rel="noopener noreferrer" className={classes} data-drawn="" {...anchor}>
+          {label}
+        </a>
+      );
+    }
+    if (file) {
+      return (
+        <a ref={ref as Ref<HTMLAnchorElement>} href={href} className={classes} data-drawn="" {...anchor}>
           {label}
         </a>
       );

@@ -212,6 +212,12 @@ export const degauss = {
   samples: 48,
 } as const;
 
+/**
+ * §7.4 NO SIGNAL — the on-screen box drifts like an idle set's, a slow rate-based wander (outside the
+ * 900 ms rule, as the marquee is): a pass across in each, the two periods apart so its path wanders.
+ */
+export const noSignal = { driftXMs: 13_700, driftYMs: 8_900 } as const;
+
 /** §3.6 — the three signature transitions' timings (ms). lib/timelines.ts turns them into frames. */
 export const signature = {
   power: { onMs: 600, onStretchMs: 90, onOpenMs: 420, offMs: 450, offCollapseMs: 220, offPinchMs: 340, offFastMs: 240, onFastMs: 360, afterglowMs: 300, reducedMs: 200 },

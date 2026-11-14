@@ -7,6 +7,7 @@
  * it is one. Nothing here is invented to look complete. No phone number: the site doesn't
  * publish it.
  */
+import { noSignal } from "./no-signal";
 import type { ContentInput } from "./schema";
 
 export const IS_PLACEHOLDER = false;
@@ -424,7 +425,8 @@ export const site = {
       decode: { list: "Cards", header: "{title} · {holes} holes in {columns} columns", reads: "reads: {text}", unknown: "decode: no card called {name}" },
       debug: "The dev overlay is {state}.",
     },
-    chrome: { os: "RETROGRADE/OS", rail: "Sections", newTab: "(opens in a new tab)" },
+    chrome: { os: "RETROGRADE/OS", rail: "Sections", newTab: "(opens in a new tab)", skip: "Skip to content" },
+    noSignal,
     nav: {
       label: "Primary",
       items: [

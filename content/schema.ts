@@ -423,6 +423,18 @@ export const SiteSchema = z.strictObject({
       rail: sentence(32),
       /** what a screen reader hears after a link that opens a new tab (components/ui/Button) */
       newTab: sentence(32),
+      /** the skip link, the first stop on every page (WCAG 2.4.1) */
+      skip: sentence(32),
+    }),
+    /** 404 / 500 — NO SIGNAL (§7.4): an empty tube, a drifting on-screen box, the way back */
+    noSignal: z.strictObject({
+      title: sentence(24),
+      notFound: sentence(60),
+      error: sentence(60),
+      hint: sentence(24),
+      home: sentence(40),
+      terminal: sentence(60),
+      retry: sentence(24),
     }),
     /** <Nav> (§7.3): four destinations and the terminal key; `section` is where each one lands */
     nav: z.strictObject({

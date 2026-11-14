@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ComponentType } from "react";
+import { Component, useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { fx } from "@/lib/fxgl";
 import { bootHead, prefetchStageRuntime } from "@/lib/boot";
@@ -43,6 +43,33 @@ const OFF: TierDecision = { tier: "OFF", phone: false, reasons: ["WebGL2 context
  * motion or tier OFF no canvas exists at all, so no context is ever created.
  */
 export function Stage() {
+  return (
+    <StageBoundary>
+      <StageView />
+    </StageBoundary>
+  );
+}
+
+/**
+ * The stage is augmentative (§4.1): if it breaks while rendering, it goes, and the page stays —
+ * every slot back to its poster, as when the runtime fails to start — never the root's error page.
+ */
+class StageBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  override state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  override componentDidCatch(error: unknown) {
+    console.error("[stage] failed — posters only", error);
+    governor.setRuntimeStatus("failed");
+    governor.setTier({ ...OFF, reasons: ["stage failed"] }, true);
+  }
+  override render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
+function StageView() {
   const reduced = useReducedMotion();
   const gfx = useUI((s) => s.gfx);
   const [decision, setDecision] = useState<TierDecision | null>(null);

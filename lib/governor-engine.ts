@@ -341,6 +341,15 @@ class Scheduler implements SceneEngine {
     for (const e of this.all) if (!id || e.id === id) e.invalidated = true;
   }
 
+  /** A mounted scene threw while rendering (its boundary caught it): the same as a failed warm — its poster, for good. */
+  sceneFailed(id: SceneId, error: unknown): void {
+    const e = this.entries[id];
+    e.error = error instanceof Error ? error.message : String(error);
+    console.error(`[stage] scene "${id}" failed — its poster stays`, error);
+    this.evict(e);
+    this.publish();
+  }
+
   /** The tier decided: scenes it can't show go. */
   onTier(tier: Tier, final: boolean): void {
     if (final) for (const e of this.all) if (!liveAllowed(tier, e.id) && e.mounted) this.evict(e);

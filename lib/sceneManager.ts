@@ -330,6 +330,7 @@ export interface SceneEngine {
   scene(id: SceneId): { module: SceneModule | null; data: unknown };
   sceneMounted(id: SceneId): void;
   invalidate(id?: SceneId): void;
+  sceneFailed(id: SceneId, error: unknown): void;
   onTier(tier: Tier, final: boolean): void;
   markDirty(): void;
   contextLost(): void;
@@ -617,6 +618,11 @@ export class Governor {
   /** ScenePortal committed: its three objects exist — compile and upload them. */
   sceneMounted(id: SceneId): void {
     this.engine?.sceneMounted(id);
+  }
+
+  /** A scene's error boundary caught it rendering: its poster takes the slot. */
+  sceneFailed(id: SceneId, error: unknown): void {
+    this.engine?.sceneFailed(id, error);
   }
 
   /** A scene asks for one more frame (on-demand rendering). */

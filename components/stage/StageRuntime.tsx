@@ -2,7 +2,7 @@
 
 import { PerformanceMonitor } from "@react-three/drei/core/PerformanceMonitor";
 import { advance, createPortal, createRoot, useFrame, useThree } from "@react-three/fiber";
-import { Fragment, useLayoutEffect, useState, type ComponentType } from "react";
+import { Component as ReactComponent, Fragment, useLayoutEffect, useState, type ComponentType, type ReactNode } from "react";
 import {
   AdditiveBlending,
   BufferAttribute,
@@ -252,8 +252,16 @@ export async function startRuntime(canvas: HTMLCanvasElement, opts: RuntimeOptio
       core.timer.poll((ms) => governor.recordGpuMs(ms));
       renderer.info.reset();
       core.job = { handle, job };
-      advance(job.time);
-      core.job = null;
+      try {
+        advance(job.time);
+      } catch (error) {
+        // a scene's frame threw (useFrame never reaches React's boundaries): its poster takes the slot,
+        // and the rest of this frame — the site's whole ticker — carries on
+        governor.sceneFailed(job.id, error);
+        return ZERO;
+      } finally {
+        core.job = null;
+      }
       const r = renderer.info.render;
       return { calls: r.calls, triangles: r.triangles, points: r.points, lines: r.lines };
     },
@@ -407,11 +415,32 @@ function ScenePortal({ id, core }: { id: SceneId; core: RuntimeCore }) {
   if (!Component) return null;
   return createPortal(
     <SceneContext.Provider value={handle}>
-      <Component data={data} />
+      <SceneBoundary id={id}>
+        <Component data={data} />
+      </SceneBoundary>
     </SceneContext.Provider>,
     handle.scene,
     { camera: handle.camera },
   );
+}
+
+/**
+ * Every scene in its own error boundary (Part 14): one that throws while rendering takes only
+ * itself down — its slot keeps its poster (governor.sceneFailed), and the other scenes and the page
+ * carry on. Errors in its useFrame callbacks never reach React: the runtime's render() catches those
+ * and does the same.
+ */
+class SceneBoundary extends ReactComponent<{ id: SceneId; children: ReactNode }, { failed: boolean }> {
+  override state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  override componentDidCatch(error: unknown) {
+    governor.sceneFailed(this.props.id, error);
+  }
+  override render() {
+    return this.state.failed ? null : this.props.children;
+  }
 }
 
 /**
@@ -438,8 +467,11 @@ function DprMonitors() {
     governor.invalidate();
     setEpoch((e) => e + 1); // fresh windows after a resize
   };
+  // fresh windows after a resize, and when the target changes: frames counted under the 60 fps cap
+  // aren't a 120 Hz frame rate (Part 14: the windows carried over, so DPR stepped down 0.25 the
+  // moment a load ended, then climbed back a second later)
   return (
-    <Fragment key={epoch}>
+    <Fragment key={`${epoch}:${target}`}>
       <PerformanceMonitor ms={sampleMs} iterations={DPR_RULES.badFrames / SAMPLE_FRAMES} threshold={0.7} bounds={bounds} onDecline={() => step(-1)} />
       <PerformanceMonitor ms={sampleMs} iterations={DPR_RULES.goodFrames / SAMPLE_FRAMES} threshold={0.95} bounds={bounds} onIncline={() => step(1)} />
     </Fragment>

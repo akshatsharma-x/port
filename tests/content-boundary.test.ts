@@ -9,8 +9,11 @@ import { describe, expect, it } from "vitest";
  */
 const ROOT = resolve(__dirname, "..");
 const SCAN = ["app", "components", "hooks", "lib"];
-/** Small dev fixtures that are allowed on the client. */
-const ALLOWED = new Set(["content/kitchen-sink.ts", "content/dev-stage.ts"]);
+/**
+ * Allowed on the client: small dev fixtures, and NO SIGNAL's seven words — app/global-error.tsx
+ * replaces the root layout, so nothing can hand them to it (content/no-signal.ts imports nothing).
+ */
+const ALLOWED = new Set(["content/kitchen-sink.ts", "content/dev-stage.ts", "content/no-signal.ts"]);
 const EXT = ["", ".ts", ".tsx", "/index.ts", "/index.tsx"];
 
 function files(dir: string): string[] {

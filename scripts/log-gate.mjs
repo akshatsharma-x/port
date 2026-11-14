@@ -13,7 +13,7 @@
  * through the pin, the reduced-motion and Paper editions, the PRINTOUT's form, a clean console.
  * Report: .artifacts/log-gate.json
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { cpus } from "node:os";
 import { chromium } from "@playwright/test";
 
@@ -317,7 +317,10 @@ for (const [tier, spec] of Object.entries(TIERS)) {
   });
   const content = await page.evaluate(() => document.querySelectorAll(".log-pin .sticky-stack__frame").length);
   check("PRINTOUT: perforated every 11 in, tractor holes every ½ in, at the form's own scale", Math.abs(p.perforation - p.inch * 11) < 0.5 && Math.abs(p.holes - p.inch * 0.5) < 0.5, p);
-  check("…the condensed log and the education, and it ends with RESUME ↗", p.rows >= content + 1 && !!p.resume, { rows: p.rows, roles: content, resume: p.resume });
+  // RESUME ↗ only when a résumé is published: none is until one without the owner's phone exists (DESIGN.md §10 #49)
+  const resumeUrl = /^\s*resumeUrl:\s*(null|"([^"]*)")/m.exec(readFileSync(new URL("../content/data.ts", import.meta.url), "utf8"));
+  const published = resumeUrl && resumeUrl[1] !== "null" ? resumeUrl[2] : null;
+  check(published ? "…the condensed log and the education, and it ends with RESUME ↗" : "…the condensed log and the education, and no RESUME while no résumé is published", resumeUrl && p.rows >= content + 1 && (published ? p.resume === published : !p.resume), { rows: p.rows, roles: content, resume: p.resume, published });
   check("PRINTOUT: console clean", logs.length === 0, logs.slice(0, 3));
   await ctx.close();
 }

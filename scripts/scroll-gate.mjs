@@ -244,7 +244,8 @@ for (const vp of VIEWPORTS) {
           const mo = new MutationObserver(() => rec.labels.push(label.textContent));
           mo.observe(label, { childList: true, characterData: true, subtree: true });
           const lenis = R.lenis();
-          const max = document.documentElement.scrollHeight - innerHeight;
+          // two pixels short of the end: the last pixel is HALT's power-off (Part 12, scripts/connect-gate.mjs)
+          const max = document.documentElement.scrollHeight - innerHeight - 2;
           lenis.scrollTo(max, {
             duration: 14,
             easing: (t) => t,

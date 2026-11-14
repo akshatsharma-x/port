@@ -49,6 +49,10 @@ export const PEAK_DB = {
   TRANSMIT: -24,
   /** the footer's power-off on the last pixel */
   HALT: -22,
+  /** the terminal: open/close chirp, Enter, an error */
+  SHELL: -28,
+  /** the Konami code's degauss: the coil's thump, the hum under it */
+  DEGAUSS: -24,
 } as const;
 
 /**
@@ -70,6 +74,16 @@ export const STAMP_CUE = { slap: [1300, 0.9, 16], thump: [120, 48, 95], body: [5
  * tones, the scrambler's hiss — then a two-partial chime. [Hz] tones, [Hz, Q] noise, (s) times.
  */
 export const TRANSMIT_CUE = { answer: [2100, 0.24], warble: { tones: [1650, 1850], stepS: 0.03, startS: 0.26, endS: 0.56 }, hiss: { hz: 3000, q: 0.6, startS: 0.58, ms: 470 }, chime: { partials: [1320, 1980], startS: 1.08, ms: 320 } } as const;
+/**
+ * SHELL (§6.4): a chirp for open (up) and close (down), 880 Hz square for 35 ms on Enter, 220 → 196 Hz
+ * for an error. [from, to (Hz), ms]
+ */
+export const SHELL_CUE = { chirp: [660, 1320, 60], enter: [880, 880, 35], error: [220, 196, 140] } as const;
+/**
+ * DEGAUSS (the Konami code, §3.6): the coil's thump, [from, to (Hz), ms], then the hum — 120 Hz, the
+ * mains' second harmonic — ringing down over the degauss, [Hz, ms].
+ */
+export const DEGAUSS_CUE = { thump: [90, 40, 90], hum: [120, 1200] } as const;
 /** HALT (§6.4): the tube's sweep down, 2 kHz → 60 Hz in 400 ms, and the relay's click after it. */
 export const HALT_CUE = { sweep: [2000, 60, 400], click: [2200, 3, 6] } as const;
 /** FLIP (§6.4): [Hz, Q, ms] of the air and the landing tick, which comes this late (s); pitched ±6%. */
@@ -192,8 +206,7 @@ function tone(ctx: Ctx, out: Out, at: number, { from, to, ms, peakDb, type = "si
 }
 
 /**
- * The cues, built against `out` from time `at`. Returns the length in seconds (0 for a stub: SHELL
- * is named here and arrives with the terminal, Part 13). FLING is a
+ * The cues, built against `out` from time `at`. Returns the length in seconds. FLING is a
  * continuous voice in the engine (Engine.whir); built here it's its loudest stretch, for the peak
  * measurement.
  */
@@ -298,6 +311,19 @@ export function buildCue(ctx: Ctx, out: Out, cue: Cue, detail: CueDetail, at: nu
       burst(ctx, out, at, { hz: 1400, q: 1.6, ms: 300, peakDb: PEAK_DB.REPLOT - 10 });
       burst(ctx, out, at + 0.34, { hz: 2600, q: 4, ms: 6, peakDb: PEAK_DB.REPLOT });
       return 0.36;
+    }
+    case "SHELL": {
+      const v = detail.variant;
+      const [from, to, ms] = v === "error" ? SHELL_CUE.error : v === "enter" ? SHELL_CUE.enter : SHELL_CUE.chirp;
+      const down = v === "close";
+      return tone(ctx, out, at, { from: down ? to : from, to: down ? from : to, ms, peakDb: PEAK_DB.SHELL, type: v === "error" ? "triangle" : "square", attack: 0.002 });
+    }
+    case "DEGAUSS": {
+      const [from, to, ms] = DEGAUSS_CUE.thump;
+      tone(ctx, out, at, { from, to, ms, peakDb: PEAK_DB.DEGAUSS, type: "sine", attack: 0.002 });
+      // the hum rises as the thump decays, so the two never stack over the sheet's level
+      const [hz, humMs] = DEGAUSS_CUE.hum;
+      return Math.max(ms / 1000, tone(ctx, out, at + ms / 1000 / 2, { from: hz, to: hz, ms: humMs, peakDb: PEAK_DB.DEGAUSS - 4, type: "sawtooth", attack: 0.04 }) + ms / 1000 / 2);
     }
     default:
       return 0;
@@ -539,5 +565,5 @@ async function loadSamples(ctx: BaseAudioContext): Promise<void> {
 }
 
 /** Every cue the sheet names; the ones this part doesn't synthesize are stubs (0 s). */
-export const IMPLEMENTED: readonly Cue[] = ["ENABLE", "BOOT", "POWER", "TEAR", "SECTION", "COMMIT", "FLING", "GATE", "ARCHIVE", "REPLOT", "KEYCAP", "FLIP", "STAMP", "TRANSMIT", "HALT"];
+export const IMPLEMENTED: readonly Cue[] = ["ENABLE", "BOOT", "POWER", "TEAR", "SECTION", "COMMIT", "FLING", "GATE", "ARCHIVE", "REPLOT", "KEYCAP", "FLIP", "STAMP", "SHELL", "TRANSMIT", "HALT", "DEGAUSS"];
 export const STUBS: readonly Cue[] = CUES.filter((c) => !IMPLEMENTED.includes(c));

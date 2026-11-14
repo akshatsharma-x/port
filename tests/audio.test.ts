@@ -11,7 +11,7 @@ describe("sound engine", () => {
   });
 
   it("plays each cue at its sheet peak, all under the −6 dBFS ceiling", () => {
-    expect(PEAK_DB).toEqual({ ENABLE: -18, BOOT_HUM: -32, BOOT_TICK: -30, BOOT_THUNK: -20, POWER: -22, TEAR: -24, SECTION: -30, COMMIT: -30, ARCHIVE: -30, REPLOT: -28, FLING: -28, GATE: -22, KEYCAP: -20, FLIP: -28, STAMP: -18, TRANSMIT: -24, HALT: -22 });
+    expect(PEAK_DB).toEqual({ ENABLE: -18, BOOT_HUM: -32, BOOT_TICK: -30, BOOT_THUNK: -20, POWER: -22, TEAR: -24, SECTION: -30, COMMIT: -30, ARCHIVE: -30, REPLOT: -28, FLING: -28, GATE: -22, KEYCAP: -20, FLIP: -28, STAMP: -18, TRANSMIT: -24, HALT: -22, SHELL: -28, DEGAUSS: -24 });
     for (const db of Object.values(PEAK_DB)) expect(db).toBeLessThanOrEqual(MIX.masterPeakDb);
     expect(gainToDb(dbToGain(-24))).toBeCloseTo(-24);
   });
@@ -27,7 +27,9 @@ describe("sound engine", () => {
   });
 
   it("implements ENABLE, BOOT, POWER, TEAR, SECTION, COMMIT; every other cue is a named stub", () => {
-    expect([...IMPLEMENTED].sort()).toEqual(["ARCHIVE", "BOOT", "COMMIT", "ENABLE", "FLING", "FLIP", "GATE", "HALT", "KEYCAP", "POWER", "REPLOT", "SECTION", "STAMP", "TEAR", "TRANSMIT"]);
+    expect([...IMPLEMENTED].sort()).toEqual(["ARCHIVE", "BOOT", "COMMIT", "DEGAUSS", "ENABLE", "FLING", "FLIP", "GATE", "HALT", "KEYCAP", "POWER", "REPLOT", "SECTION", "SHELL", "STAMP", "TEAR", "TRANSMIT"]);
+    // Part 13: the last stub (SHELL) and the Konami code's DEGAUSS are synthesized: no stubs left
+    expect(STUBS).toEqual([]);
     expect([...IMPLEMENTED, ...STUBS].sort()).toEqual([...CUES].sort());
   });
 });

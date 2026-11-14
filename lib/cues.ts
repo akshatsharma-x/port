@@ -5,7 +5,7 @@ import { useUI } from "./store";
  * limit and the sound preference, then hands it to the engine. Part 5's lib/audio.ts registers the
  * engine (synthesis, samples, master chain); until then cues are counted, not heard.
  */
-export const CUES = ["ENABLE", "BOOT", "POWER", "TEAR", "SECTION", "COMMIT", "FLING", "GATE", "ARCHIVE", "REPLOT", "KEYCAP", "FLIP", "STAMP", "SHELL", "TRANSMIT", "HALT"] as const;
+export const CUES = ["ENABLE", "BOOT", "POWER", "TEAR", "SECTION", "COMMIT", "FLING", "GATE", "ARCHIVE", "REPLOT", "KEYCAP", "FLIP", "STAMP", "SHELL", "TRANSMIT", "HALT", "DEGAUSS"] as const;
 export type Cue = (typeof CUES)[number];
 
 /** Minimum spacing between plays (ms), from the cue sheet's Limit column. */

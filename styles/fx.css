@@ -12,6 +12,16 @@
     pointer-events: none;
     contain: strict;
   }
+  /* the Konami code's degauss (lib/degauss.ts): a band of hue swept across the picture — page and
+     chrome both, the shadow mask magnetized — under the glass (z49) */
+  .fx-degauss {
+    position: fixed;
+    inset: 0;
+    z-index: 49;
+    pointer-events: none;
+    -webkit-mask: linear-gradient(to right, transparent, #000 35%, #000 65%, transparent) -60% 0 / 60% 100% no-repeat;
+    mask: linear-gradient(to right, transparent, #000 35%, #000 65%, transparent) -60% 0 / 60% 100% no-repeat;
+  }
   #fx-css > i {
     position: absolute;
     display: block;

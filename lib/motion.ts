@@ -166,6 +166,12 @@ export const artifact = {
   caretBlinkMs: 1060,
   typewriterCps: 45,
   terminalLinesPerSec: 120,
+  /**
+   * the terminal's `rain` (§7.4 SHELL): rate-based text like the output's stream, so outside the
+   * 900 ms rule — it runs this long at most, and any input ends it
+   */
+  rainMs: 30_000,
+  rainStepsPerSec: 18,
   scrambleMaxChars: 40,
   scrambleMaxMs: 600,
   /** the HUD section label's glitch on continuous scroll (§3.6 ②: no full-screen effect) — 6 frames */
@@ -184,6 +190,26 @@ export const identity = {
   lampTauMs: 600,
   /** CURRENTLY types its next line this often; hover or focus holds it */
   currentlySwapMs: 6000,
+} as const;
+
+/**
+ * §3.6 — the Konami code's degauss: the one ungrammatical motion, hidden, so allowed past the
+ * 900 ms rule. A wobble that rings down (cycles over its length, decaying with τ), a hue sweep
+ * across the screen, the hum under both.
+ */
+export const degauss = {
+  ms: 1200,
+  wobbleCycles: 7,
+  tauMs: 380,
+  /** the wobble's peak: a twist, a shear and a breath of the raster, at t = 0 */
+  rotateDeg: 0.6,
+  skewDeg: 1.2,
+  scale: 0.006,
+  /** the hue band crosses the screen in this long, turning a full circle */
+  sweepMs: 900,
+  saturate: 1.8,
+  /** keyframes sampled over the wobble */
+  samples: 48,
 } as const;
 
 /** §3.6 — the three signature transitions' timings (ms). lib/timelines.ts turns them into frames. */

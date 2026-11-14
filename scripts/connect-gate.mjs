@@ -635,6 +635,16 @@ let words = null;
   await page.waitForTimeout(150);
   const byKey = await page.evaluate(() => document.documentElement.dataset.tube ?? null);
   check("back down after a real scroll up, it halts again; a key press turns it back on", offAgain === "off" && byKey !== "off", { offAgain, byKey });
+  // and with no input event at all — a scrollbar's drag, a script's scroll — leaving the end turns it on
+  await jumpTo(page, (await endOf(page)) - REARM_PX - 40);
+  await page.waitForTimeout(400);
+  await jumpTo(page, "end");
+  await page.waitForTimeout(POWER_OFF_MS + 300);
+  const offThird = await page.evaluate(() => document.documentElement.dataset.tube);
+  await jumpTo(page, (await endOf(page)) - 300);
+  await page.waitForTimeout(250);
+  const byScroll = await page.evaluate(() => document.documentElement.dataset.tube ?? null);
+  check("…and leaving the end with no input event at all (a scrollbar's drag, a script) turns it back on too", offThird === "off" && byScroll !== "off", { offThird, byScroll });
   const cls = await page.evaluate(() => window.__cls);
   check("HALT on a desk: CLS 0 and the console clean", cls < 0.001 && logs.length === 0, { cls, logs: logs.slice(0, 4) });
   await ctx.close();

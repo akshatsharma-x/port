@@ -1,0 +1,624 @@
+/* ==========================================================================
+   RETROGRADE · styles/archive.css — 04 ARCHIVE (DESIGN.md §7.4, §4.3 A3): the query
+   bar and shape legend, the sky's HTML layer, the SVG constellation (the stage-less
+   editions), the metrics, the unit chart and the ledger. Sizes from lib/archive.ts.
+   ========================================================================== */
+
+@layer components {
+  /* the pin: the content layer (query bar + the sky's HTML) spans the pinned frame, over the stage */
+  html.js:not([data-motion="reduce"]) .archive-pin > .sticky-stack__content {
+    align-self: stretch;
+  }
+  .archive-backdrop {
+    display: grid;
+  }
+  .archive-backdrop > * {
+    grid-area: 1 / 1;
+  }
+  .archive-frame {
+    position: relative;
+    height: 100%;
+    min-height: 100svh;
+  }
+  html:not(.js) .archive-frame,
+  html[data-motion="reduce"] .archive-frame {
+    min-height: 0;
+  }
+
+  /* ── the ARCHIVE QUERY bar: counts ▸ layout ▸ the shape legend, always on screen in the pin ── */
+  .archive-query {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--spacing) * 2) calc(var(--spacing) * 5);
+    padding: calc(var(--hud-inset) + var(--spacing) * 14) var(--margin) calc(var(--spacing) * 3);
+    background: linear-gradient(to bottom, color-mix(in oklab, var(--bg) 86%, transparent) 60%, transparent);
+    pointer-events: auto;
+  }
+  .archive-query__counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--spacing) * 2);
+    margin: 0;
+    color: var(--fg-1);
+  }
+  .archive-query__item {
+    display: inline-flex;
+    gap: calc(var(--spacing) * 2);
+  }
+  .archive-query__item > [aria-hidden] {
+    color: var(--accent);
+  }
+  .layout-chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--spacing) * 2);
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .layout-chips > legend {
+    float: left;
+    margin-inline-end: calc(var(--spacing) * 1);
+    padding: 0;
+    color: var(--fg-3);
+  }
+  .layout-chips__chip {
+    cursor: pointer;
+  }
+  /* without a stage there's nothing to re-plot (components/sections/archive/LayoutChips.tsx) */
+  .layout-chips[hidden],
+  html[data-motion="reduce"] .layout-chips,
+  html:not(.js) .layout-chips {
+    display: none;
+  }
+  @media (pointer: coarse) and (max-width: 47.99rem) {
+    .layout-chips {
+      display: none;
+    }
+  }
+  /* a keyword from a dossier: the bar says so, and CLEAR goes back to all */
+  .archive-query:focus {
+    outline: none;
+  }
+  .archive-query__clear {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    margin-block: calc(var(--spacing) * -1);
+    padding: 0 calc(var(--spacing) * 2);
+    border: 0;
+    background: none;
+    color: var(--accent);
+    box-shadow: inset 0 0 0 var(--hairline) var(--accent);
+    cursor: pointer;
+  }
+  .archive-query__clear:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .layout-chips__chip:has(input:checked) {
+    color: var(--accent);
+    box-shadow: inset 0 0 0 var(--hairline) var(--accent);
+  }
+  .layout-chips__chip:has(input:focus-visible) {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .shape-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--spacing) * 1) calc(var(--spacing) * 4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--fg-2);
+  }
+  .shape-legend__item {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 1.5);
+  }
+  .shape-legend__item--key {
+    color: var(--fg-3);
+  }
+  .shape-glyph {
+    width: 1.15em;
+    height: 1.15em;
+    flex: none;
+    overflow: visible;
+  }
+  .shape-glyph__fill {
+    fill: currentColor;
+  }
+  .shape-glyph__dash {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-dasharray: 2.6 2.1;
+  }
+  .shape-glyph--faint {
+    opacity: 0.45;
+  }
+
+  /* ── the sky's HTML layer: the slot's own box, so the stage's slot px are its px ── */
+  .sky-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: clip;
+  }
+  .sky-label,
+  .sky-tip,
+  .sky-node {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    will-change: transform;
+  }
+  .sky-label {
+    translate: -50% calc(-100% - var(--spacing) * 2);
+    color: var(--fg-2);
+    white-space: nowrap;
+    pointer-events: none;
+    transition: opacity var(--dur-micro) var(--ease-relay);
+  }
+  .sky-label--year,
+  .sky-label--venue {
+    translate: -50% 0;
+    color: var(--fg-3);
+  }
+  .sky-tip {
+    display: grid;
+    gap: calc(var(--spacing) * 1);
+    max-width: 36ch;
+    padding: calc(var(--spacing) * 2) calc(var(--spacing) * 3);
+    translate: -50% calc(-100% - var(--spacing) * 3);
+    background: color-mix(in oklab, var(--bg-raised) 92%, transparent);
+    box-shadow: inset 0 0 0 var(--hairline) var(--line-2);
+    font-family: var(--ff-mono);
+    font-size: var(--step--1);
+    line-height: 1.35;
+    color: var(--fg-1);
+    pointer-events: none;
+  }
+  .sky-tip__meta {
+    color: var(--fg-3);
+  }
+  .sky-nodes {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  /* a star's button is invisible until the keyboard is on it; then it sits over the glyph and the
+     focus brackets frame it */
+  .sky-node {
+    display: block;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+  .sky-node:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .sky-hint {
+    position: absolute;
+    left: var(--margin);
+    bottom: calc(var(--hud-band-bottom) + var(--spacing) * 4);
+    margin: 0;
+    color: var(--fg-3);
+    pointer-events: none;
+  }
+  /* the HTML layer only means something while a stage draws the sky */
+  html[data-motion="reduce"] .sky-overlay,
+  html:not(.js) .sky-overlay {
+    display: none;
+  }
+
+  /* ── the SVG constellation: phones, reduced motion, no JS (the stage's own poster otherwise) ── */
+  .archive-sky-svg {
+    display: none;
+  }
+  @media (pointer: coarse) and (max-width: 47.99rem) {
+    /* the pinned frame as a column: the query bar, then the drawing in what's left above the HUD's
+       bottom band — a size container, so the drawing is fitted to that room whatever the bar's height */
+    html.js:not([data-motion="reduce"]) .archive-frame {
+      display: flex;
+      flex-direction: column;
+    }
+    .archive-sky-svg {
+      display: grid;
+      place-items: center;
+      flex: 1 1 0;
+      min-height: 0;
+      container-type: size;
+      padding: 0 var(--margin) calc(var(--hud-band-bottom) + var(--spacing) * 4);
+    }
+    .archive-backdrop > [data-stage-slot] {
+      visibility: hidden;
+    }
+    .sky-overlay {
+      display: none;
+    }
+  }
+  html[data-motion="reduce"] .archive-sky-svg,
+  html:not(.js) .archive-sky-svg {
+    display: grid;
+    container-type: normal;
+    padding: calc(var(--spacing) * 8) var(--margin);
+  }
+  html[data-motion="reduce"] .archive-backdrop > [data-stage-slot],
+  html:not(.js) .archive-backdrop > [data-stage-slot] {
+    display: none;
+  }
+  /* the drawing at about 1:1 (--w is its own width): wide from 48rem, tall below it */
+  .sky-svg__figure {
+    position: relative;
+    width: min(100%, var(--w));
+  }
+  .sky-svg__figure--tall {
+    display: none;
+    /* in the pinned frame, no taller than the room the query bar leaves; elsewhere, the screen */
+    width: min(100%, var(--w), 100cqh * var(--ar));
+  }
+  @media (max-width: 47.99rem) {
+    .sky-svg__figure--wide {
+      display: none;
+    }
+    .sky-svg__figure--tall {
+      display: block;
+    }
+  }
+  .sky-svg__drawing {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  /* a TOPIC cluster's label, over its anchor; anchored by its own share across, so a label near
+     an edge stays inside the drawing */
+  .sky-svg__label {
+    position: absolute;
+    left: calc(var(--x) * 100%);
+    top: calc(var(--y) * 100%);
+    translate: calc(var(--x) * -100%) calc(-100% - var(--spacing) * 2);
+    color: var(--fg-2);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .sky-svg__edge {
+    fill: none;
+    stroke: var(--line-2);
+    stroke-width: 1;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+  .sky-svg__edge--cited {
+    stroke: var(--line-1);
+  }
+  [data-plotted] .sky-svg__edge {
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset calc(var(--dur-element) * 0.85) var(--ease-settle) var(--d, 0ms);
+  }
+  html[data-motion="reduce"] .sky-svg__edge,
+  html:not(.js) .sky-svg__edge {
+    stroke-dashoffset: 0;
+    transition: none;
+  }
+  .sky-svg__node {
+    fill: var(--fg-1);
+  }
+  .sky-svg__node--cited {
+    fill: var(--fg-3);
+  }
+  .sky-svg__node--dashed {
+    fill: none;
+    stroke: var(--fg-1);
+    stroke-width: 1.2;
+    stroke-dasharray: 2.2 1.8;
+  }
+
+  /* ── the document after the pin: the interlock ARCHIVE → WORK, at least a screen ── */
+  .archive-doc {
+    min-height: 100svh;
+    align-content: start;
+    gap: calc(var(--spacing) * 12) var(--gutter);
+    padding-block: var(--section-y);
+  }
+
+  /* the metrics: one LED figure, then the tiles, every figure with its provenance */
+  .archive-metrics {
+    display: grid;
+    gap: calc(var(--spacing) * 6);
+  }
+  .archive-metrics__lead {
+    display: grid;
+    gap: calc(var(--spacing) * 2);
+    margin: 0;
+  }
+  .archive-metrics__figure {
+    margin: 0;
+    color: var(--accent);
+    line-height: 0.9;
+  }
+  .archive-metrics__caption {
+    display: grid;
+    gap: calc(var(--spacing) * 1);
+    color: var(--fg-1);
+  }
+  .archive-metrics__from {
+    color: var(--fg-3);
+  }
+  .archive-metrics__tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+    gap: calc(var(--spacing) * 4);
+    margin: 0;
+  }
+  .archive-metrics__tile {
+    display: grid;
+    gap: calc(var(--spacing) * 1);
+    padding-block-start: calc(var(--spacing) * 3);
+    box-shadow: inset 0 var(--hairline) 0 var(--line-1);
+  }
+  .archive-metrics__tile > dt {
+    color: var(--fg-2);
+  }
+  .archive-metrics__tile > dd {
+    margin: 0;
+  }
+  .archive-metrics__value {
+    font-size: var(--step-3);
+    color: var(--fg-1);
+  }
+  .archive-metrics__note {
+    margin: 0;
+    color: var(--fg-3);
+  }
+
+  /* the unit chart: a cell per paper, a 2 px surface gap, hollow when not yet published */
+  .unit-chart {
+    display: grid;
+    gap: calc(var(--spacing) * 3);
+    margin: 0;
+  }
+  .unit-chart__title {
+    color: var(--fg-2);
+  }
+  .unit-chart__plot {
+    position: relative;
+    justify-self: start;
+  }
+  .unit-chart__svg {
+    display: block;
+    overflow: visible;
+  }
+  .unit-chart__fill {
+    fill: var(--accent-fill);
+  }
+  .unit-chart__hollow {
+    fill: none;
+    stroke: var(--accent-fill);
+    stroke-width: 1.5;
+    stroke-dasharray: 3 2;
+  }
+  .unit-chart__cell:hover .unit-chart__fill,
+  .unit-chart__cell:focus-visible .unit-chart__fill {
+    fill: var(--accent);
+  }
+  .unit-chart__cell:focus-visible {
+    outline: none;
+  }
+  .unit-chart__cell:focus-visible rect {
+    stroke: var(--focus);
+    stroke-width: 2;
+  }
+  .unit-chart__baseline,
+  .unit-chart__tick {
+    stroke: var(--line-2);
+    stroke-width: 1;
+  }
+  .unit-chart__year {
+    fill: var(--fg-3);
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+  .unit-chart__tip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 3;
+    width: max-content;
+    max-width: 32ch;
+    padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2.5);
+    translate: -50% calc(-100% - var(--spacing) * 2);
+    background: var(--bg-raised);
+    box-shadow: inset 0 0 0 var(--hairline) var(--line-2);
+    color: var(--fg-1);
+    pointer-events: none;
+  }
+  .unit-chart__note {
+    margin: 0;
+    color: var(--fg-3);
+  }
+
+  /* ── THE LEDGER: a real table, green-bar banded, grouped by year under sticky headers ── */
+  .ledger {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--step--1);
+  }
+  .ledger__caption {
+    padding-block-end: calc(var(--spacing) * 3);
+    text-align: start;
+    color: var(--fg-2);
+  }
+  .ledger th,
+  .ledger td {
+    padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 3);
+    text-align: start;
+    vertical-align: baseline;
+    font-weight: inherit;
+  }
+  .ledger thead th {
+    color: var(--fg-3);
+    font-family: var(--ff-mono);
+    font-size: var(--step--1);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    box-shadow: inset 0 calc(var(--hairline) * -1) 0 var(--line-2);
+  }
+  .ledger__sort {
+    display: inline-flex;
+    align-items: baseline;
+    gap: calc(var(--spacing) * 1.5);
+    min-height: 24px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    cursor: pointer;
+  }
+  .ledger [aria-sort="ascending"],
+  .ledger [aria-sort="descending"] {
+    color: var(--accent);
+  }
+  .ledger__year-head {
+    position: sticky;
+    top: calc(var(--hud-inset) + var(--spacing) * 14);
+    z-index: 1;
+    background: var(--bg);
+    color: var(--accent);
+  }
+  .ledger__row:nth-child(even) {
+    background: var(--bg-band);
+  }
+  .ledger__row:hover,
+  .ledger__row[data-lit] {
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+  /* a keyword's records, lit as they are in the sky */
+  .ledger__row[data-lit] .ledger__link {
+    color: var(--accent);
+  }
+  .ledger__year,
+  .ledger__cites {
+    white-space: nowrap;
+    color: var(--fg-2);
+  }
+  .ledger__cites {
+    text-align: end;
+  }
+  .ledger__cell-label {
+    display: none;
+  }
+  .ledger__venue {
+    white-space: nowrap;
+    color: var(--fg-2);
+  }
+  .ledger__title {
+    min-width: 24ch;
+  }
+  .ledger__link {
+    color: var(--fg-1);
+    text-decoration: none;
+  }
+  .ledger__link:hover {
+    color: var(--accent);
+  }
+  .ledger__status {
+    margin-inline-start: calc(var(--spacing) * 2);
+    color: var(--warn);
+  }
+  .ledger__authors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 calc(var(--spacing) * 2);
+  }
+  .author-me {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .author-co {
+    color: var(--fg-2);
+    font-family: var(--ff-mono);
+  }
+
+  /* phones: the ledger as record cards, each scanning in as it arrives */
+  @media (max-width: 47.99rem) {
+    .ledger,
+    .ledger tbody,
+    .ledger tr,
+    .ledger th,
+    .ledger td {
+      display: block;
+    }
+    .ledger thead tr {
+      display: flex;
+      flex-wrap: wrap;
+      gap: calc(var(--spacing) * 3);
+    }
+    .ledger thead th:not([aria-sort]) {
+      display: none;
+    }
+    .ledger .ledger__row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: calc(var(--spacing) * 1) calc(var(--spacing) * 3);
+      margin-block: calc(var(--spacing) * 3);
+      padding: calc(var(--spacing) * 3);
+      box-shadow: inset 0 0 0 var(--hairline) var(--line-1);
+    }
+    .ledger__row > * {
+      padding: 0;
+    }
+    .ledger__row > .ledger__title,
+    .ledger__row > .ledger__authors {
+      grid-column: 1 / -1;
+    }
+    .ledger .ledger__row[data-lit] {
+      box-shadow:
+        inset 2px 0 0 var(--accent),
+        inset 0 0 0 var(--hairline) var(--accent);
+    }
+    /* the count on the card's first line, after the year and the venue, under its own label */
+    .ledger .ledger__row > .ledger__cites {
+      grid-row: 1;
+      grid-column: 3;
+    }
+    .ledger__cell-label {
+      display: inline;
+      margin-inline-end: calc(var(--spacing) * 2);
+      color: var(--fg-3);
+    }
+    @supports (animation-timeline: view()) {
+      html.js:not([data-motion="reduce"]) .ledger__row {
+        animation: ledger-scan linear both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 60%;
+      }
+    }
+  }
+  @keyframes ledger-scan {
+    from {
+      clip-path: inset(0 0 100% 0);
+      box-shadow:
+        inset 0 calc(var(--hairline) * -2) 0 var(--accent),
+        inset 0 0 0 var(--hairline) var(--line-1);
+    }
+    to {
+      clip-path: inset(0);
+    }
+  }
+}

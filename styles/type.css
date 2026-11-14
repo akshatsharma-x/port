@@ -1,0 +1,152 @@
+/* ==========================================================================
+   RETROGRADE · styles/type.css — the 8 steps (DESIGN.md §2.6) as utilities.
+   Each step owns size, line height, tracking, face, weight and width.
+   Modifiers (t-sans, numeral, led) set non-inheriting --t-* variables that
+   the step reads, so class order never matters and nothing leaks to children.
+   --t-size lets a component set a step's size where its layout needs it (the
+   hero name's fit, LOG's phone panel) without fighting the utilities layer.
+   ========================================================================== */
+
+@property --t-face { syntax: "*"; inherits: false; }
+@property --t-weight { syntax: "*"; inherits: false; }
+@property --t-wdth { syntax: "*"; inherits: false; }
+@property --t-track { syntax: "*"; inherits: false; }
+@property --t-feat { syntax: "*"; inherits: false; }
+@property --t-case { syntax: "*"; inherits: false; }
+@property --t-trim { syntax: "*"; inherits: false; }
+@property --t-size { syntax: "*"; inherits: false; }
+
+@utility t-micro {
+  font-family: var(--t-face, var(--ff-mono));
+  font-size: var(--t-size, var(--step--2));
+  line-height: var(--lh--2);
+  letter-spacing: var(--t-track, var(--tr--2));
+  font-weight: var(--t-weight, var(--wght-micro));
+  text-transform: var(--t-case, uppercase);
+  font-feature-settings: var(--t-feat, "calt" 0);
+}
+
+@utility t-small {
+  font-family: var(--t-face, var(--ff-mono));
+  font-size: var(--t-size, var(--step--1));
+  line-height: var(--lh--1);
+  letter-spacing: var(--t-track, var(--tr--1));
+  font-weight: var(--t-weight, var(--wght-small));
+  font-feature-settings: var(--t-feat, "calt" 0);
+}
+
+@utility t-body {
+  font-family: var(--t-face, var(--ff-body));
+  font-size: var(--t-size, var(--step-0));
+  line-height: var(--lh-0);
+  letter-spacing: var(--t-track, var(--tr-0));
+  font-weight: var(--t-weight, var(--wght-body));
+}
+
+@utility t-lead {
+  font-family: var(--t-face, var(--ff-body));
+  font-size: var(--t-size, var(--step-1));
+  line-height: var(--lh-1);
+  letter-spacing: var(--t-track, var(--tr-1));
+  font-weight: var(--t-weight, var(--wght-lead));
+}
+
+@utility t-heading {
+  font-family: var(--t-face, var(--ff-display-face), "Hubot Sans Fallback heading", ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--t-size, var(--step-2));
+  line-height: var(--lh-2);
+  letter-spacing: var(--t-track, var(--tr-2));
+  font-weight: var(--t-weight, var(--wght-heading));
+  font-stretch: var(--t-wdth, var(--wdth-heading));
+}
+
+@utility t-title {
+  font-family: var(--t-face, var(--ff-display-face), "Hubot Sans Fallback title", ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--t-size, var(--step-3));
+  line-height: var(--lh-3);
+  letter-spacing: var(--t-track, var(--tr-3));
+  font-weight: var(--t-weight, var(--wght-title));
+  font-stretch: var(--t-wdth, var(--wdth-title));
+}
+
+@utility t-display {
+  font-family: var(--t-face, var(--ff-display-face), "Hubot Sans Fallback display", ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--t-size, var(--step-4));
+  line-height: var(--lh-4);
+  letter-spacing: var(--t-track, var(--tr-4));
+  font-weight: var(--t-weight, var(--wght-display));
+  font-stretch: var(--t-wdth, var(--wdth-display));
+  text-transform: var(--t-case, uppercase);
+  --trim-lh: var(--lh-4);
+  --trim-k: var(--t-trim, 1);
+}
+
+@utility t-mega {
+  font-family: var(--t-face, var(--ff-display-face), "Hubot Sans Fallback mega", ui-sans-serif, system-ui, sans-serif);
+  /* --t-size: the hero name's fit, once wdth 125 can't fill the measure (styles/hero.css) */
+  font-size: var(--t-size, var(--step-5));
+  line-height: var(--lh-5);
+  letter-spacing: var(--t-track, var(--tr-5));
+  font-weight: var(--t-weight, var(--wght-mega));
+  /* --fit-wdth: the hero name's solved width (components/sections/hero/HeroName); H-HOLD's --t-wdth rides on top */
+  font-stretch: var(--t-wdth, var(--fit-wdth, var(--wdth-mega)));
+  text-transform: var(--t-case, uppercase);
+  --trim-lh: var(--lh-5);
+  --trim-k: var(--t-trim, 1);
+}
+
+/* The cap trim (DESIGN.md §2.5): a display or mega box runs from the cap line to the baseline, so
+   caps sit on grid lines. It's computed from Hubot's own metrics (styles/font-fallbacks-display.css),
+   so the box is the same in the fallback and in Hubot and the face's arrival moves nothing —
+   text-box-trim's `cap` edge reads the drawing face's caps, and a width-matched Arial's are 1.2–1.3×
+   Hubot's. Zero-height tables take back the line box above the cap line and below the baseline.
+   The baseline sits where line layout puts it: Blink rounds the ascent and descent to whole pixels
+   and floors the half-leading above (measured to 1/64 px at six sizes; within ½ px elsewhere).
+   Block-level tags only (an inline run has no box to trim); the mono modifiers opt out. */
+:is(h1, h2, h3, h4, h5, h6, p, div):is(.t-display, .t-mega)::before,
+:is(h1, h2, h3, h4, h5, h6, p, div):is(.t-display, .t-mega)::after {
+  content: "";
+  display: table;
+  --trim-asc: round(calc(var(--display-ascent) * 1em), 1px);
+  --trim-desc: round(calc(var(--display-descent) * 1em), 1px);
+  --trim-base: calc(var(--trim-asc) + round(down, (var(--trim-lh) * 1em - var(--trim-asc) - var(--trim-desc)) / 2, 1px));
+}
+:is(h1, h2, h3, h4, h5, h6, p, div):is(.t-display, .t-mega)::before {
+  margin-block-end: calc(var(--trim-k) * (var(--display-cap) * 1em - var(--trim-base)));
+}
+:is(h1, h2, h3, h4, h5, h6, p, div):is(.t-display, .t-mega)::after {
+  margin-block-start: calc(var(--trim-k) * (var(--trim-base) - var(--trim-lh) * 1em));
+}
+
+/* Small step in Mona Sans (captions) instead of mono. */
+@utility t-sans {
+  --t-face: var(--ff-body);
+  --t-track: var(--tr--1-sans);
+  --t-feat: normal;
+}
+
+/* Numbers that change are mono (DESIGN.md §2.5): fixed pitch, nothing jitters mid-count. */
+@utility numeral {
+  --t-face: var(--ff-mono);
+  --t-trim: 0;
+  --t-wdth: 100%;
+  --t-feat: "calt" 0, "tnum" 1, "lnum" 1;
+  --t-case: none;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* LED material (§2.6): glyphs move under a fixed dot grid. Mono numerals ≥ --step-3 only. */
+@utility led {
+  --t-face: var(--ff-mono);
+  --t-trim: 0;
+  --t-weight: var(--wght-led);
+  --t-wdth: 100%;
+  --t-case: none;
+  font-variant-numeric: tabular-nums lining-nums;
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 var(--led-dot), transparent calc(var(--led-dot) + 6%));
+  mask-image: radial-gradient(circle closest-side, #000 var(--led-dot), transparent calc(var(--led-dot) + 6%));
+  -webkit-mask-size: var(--led-pitch) var(--led-pitch);
+  mask-size: var(--led-pitch) var(--led-pitch);
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+}

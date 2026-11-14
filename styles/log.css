@@ -1,0 +1,398 @@
+/* ==========================================================================
+   RETROGRADE · styles/log.css — 03 LOG (DESIGN.md §7.4, §4.3 A2): the pinned deck's
+   HTML — the mirror panel, the year scale, the phone edition — and the PRINTOUT.
+   Sizes from lib/log.ts arrive as custom properties on the elements.
+   ========================================================================== */
+
+@layer components {
+  /* the backdrop: the stage slot, with the phone edition laid over it under the phone policy */
+  .log-backdrop {
+    display: grid;
+  }
+  .log-backdrop > * {
+    grid-area: 1 / 1;
+  }
+
+  /* the layer that holds still (the year scale) spans the whole pinned frame; only its buttons
+     take the pointer, so the stage below still gets the cursor */
+  .log-pin > .sticky-stack__content {
+    pointer-events: none;
+  }
+  html.js:not([data-motion="reduce"]) .log-pin > .sticky-stack__content {
+    align-self: stretch;
+  }
+
+  /* the mirror panel: the active card, crisp, on the right — centered in the pinned frame */
+  html.js:not([data-motion="reduce"]) .log-pin > .sticky-stack__frame {
+    align-self: center;
+  }
+  /* the active frame is a full-width grid over the year scale and the stage: only its panel takes
+     the pointer, so the years stay clickable wherever the panel's row crosses them */
+  html.js:not([data-motion="reduce"]) .log-pin > .sticky-stack__frame[data-active] {
+    pointer-events: none;
+  }
+  html.js:not([data-motion="reduce"]) .log-pin > .sticky-stack__frame[data-active] .log-panel {
+    pointer-events: auto;
+  }
+  .log-panel {
+    display: grid;
+    gap: calc(var(--spacing) * 3);
+    align-content: start;
+    padding: calc(var(--spacing) * 6);
+    background: color-mix(in oklab, var(--bg) 82%, transparent);
+    box-shadow: inset 0 0 0 var(--hairline) var(--line-1);
+  }
+  .log-panel > * {
+    margin: 0;
+  }
+  .log-panel__dates {
+    color: var(--accent);
+  }
+  .log-panel__where {
+    color: var(--fg-2);
+    font-family: var(--ff-mono);
+  }
+  .log-panel__blurb {
+    color: var(--fg-2);
+  }
+  .log-panel__label {
+    margin-block-start: calc(var(--spacing) * 2);
+    color: var(--fg-3);
+  }
+  .log-panel__highlights {
+    display: grid;
+    gap: calc(var(--spacing) * 2);
+    padding: 0;
+    list-style: none;
+  }
+  .log-panel__highlights > li {
+    position: relative;
+    padding-inline-start: calc(var(--spacing) * 5);
+    color: var(--fg-1);
+  }
+  /* a punched hole for a bullet */
+  .log-panel__highlights > li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.45em;
+    width: 0.32em;
+    height: 0.72em;
+    background: var(--accent);
+  }
+  .log-panel__stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--spacing) * 2);
+    padding: 0;
+    margin-block-start: calc(var(--spacing) * 2);
+    list-style: none;
+  }
+
+  /* the year scale: the pinned frame's left edge, newest at the top */
+  .year-scale {
+    position: absolute;
+    top: 24%;
+    bottom: 24%;
+    left: calc(var(--hud-inset) + var(--spacing) * 3);
+    width: calc(var(--spacing) * 14);
+    pointer-events: none;
+    --rule-x: calc(var(--spacing) * 3);
+    /* the playhead moves by transform against the scale's own height: moving it by `top` was a
+       layout shift every frame (CLS 0.00002 in the scroll gate) */
+    container-type: size;
+  }
+  .year-scale__rule {
+    position: absolute;
+    inset-block: 0;
+    right: var(--rule-x);
+    width: var(--hairline);
+    background: var(--line-1);
+  }
+  .year-scale__tick {
+    position: absolute;
+    right: 0;
+    top: calc(var(--at) * 100%);
+    width: calc(var(--spacing) * 1.5);
+    height: var(--hairline);
+    background: var(--line-2);
+  }
+  .year-scale__role,
+  .year-scale__year {
+    pointer-events: auto;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+  /* a role's span on the rule; its hit area is a 24 px column (WCAG 2.5.8) */
+  .year-scale__role {
+    position: absolute;
+    right: calc(var(--rule-x) - 12px);
+    width: 24px;
+    top: calc(var(--from) * 100%);
+    height: max(24px, calc((var(--to) - var(--from)) * 100%));
+  }
+  .year-scale__role::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    left: calc(50% - 1.5px);
+    width: 3px;
+    background: var(--fg-3);
+    transition: background var(--dur-micro) var(--ease-relay);
+  }
+  .year-scale__role:hover::before,
+  .year-scale__role[data-active]::before {
+    background: var(--accent);
+  }
+  .year-scale__year {
+    position: absolute;
+    left: 0;
+    top: calc(var(--at) * 100%);
+    min-height: 24px;
+    translate: 0 -50%;
+    color: var(--fg-3);
+    transition: color var(--dur-micro) var(--ease-relay);
+  }
+  .year-scale__year:hover {
+    color: var(--fg-1);
+  }
+  .year-scale__playhead {
+    position: absolute;
+    right: calc(var(--rule-x) - var(--spacing) * 2);
+    top: -1px;
+    width: calc(var(--spacing) * 4);
+    height: 2px;
+    translate: 0 calc(var(--playhead) * 100cqh);
+    background: var(--accent);
+    pointer-events: none;
+  }
+
+  /* ── the phone edition (§4.2: phones run Hero and Projects only) ───────────────────────────
+     The same card faces, from the same atlas: its alpha cuts the card and its holes, its
+     luminance is the print (the top-edge words brighter than the digits). The light behind shows
+     through the holes. Cards rise through the pin: the next one comes up from below and lies
+     over the stack; the passed ones step back, smaller and dimmer. */
+  .phone-deck {
+    display: none;
+  }
+  @media (pointer: coarse) and (max-width: 47.99rem) {
+    .year-scale {
+      display: none;
+    }
+    .phone-deck {
+      display: block;
+      position: relative;
+      z-index: 2;
+      background: var(--bg);
+    }
+    html.js:not([data-motion="reduce"]) .phone-deck {
+      overflow: clip;
+    }
+  }
+  /* phones: a card on top, a compact panel under it — the same content, set smaller */
+  @media (pointer: coarse) and (max-width: 47.99rem) {
+    html.js:not([data-motion="reduce"]) .log-pin > .sticky-stack__frame {
+      align-self: end;
+    }
+    .log-panel {
+      gap: calc(var(--spacing) * 2);
+      padding: 0 0 calc(var(--hud-band-bottom) + var(--spacing) * 4);
+      background: none;
+      box-shadow: none;
+    }
+    .log-panel > h3 {
+      --t-size: var(--step-1);
+    }
+    .log-panel__blurb,
+    .log-panel__highlights > li {
+      --t-size: var(--step--1);
+    }
+    .log-panel__label {
+      display: none;
+    }
+    .log-panel__stack {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .phone-card {
+      width: 84%;
+      right: auto;
+    }
+  }
+  .phone-deck__badge {
+    position: absolute;
+    top: calc(var(--hud-band-bottom) + var(--spacing) * 14);
+    right: var(--margin);
+    display: grid;
+    color: var(--accent);
+  }
+  .phone-deck__badge > span {
+    grid-area: 1 / 1;
+    --d: calc(var(--i) - var(--step, 0));
+    opacity: calc(1 - min(1, max(var(--d), -1 * var(--d))));
+  }
+  .phone-card {
+    position: absolute;
+    top: calc(var(--hud-band-bottom) + var(--spacing) * 14);
+    left: var(--margin);
+    right: var(--margin);
+    aspect-ratio: var(--card-aspect);
+    container-type: inline-size;
+    z-index: calc(var(--i) + 1);
+    --d: calc(var(--i) - var(--step, 0));
+    /* passed: a step up the stack per card; upcoming: a whole screen down, under the pin's clip */
+    translate: 0 calc(min(0, var(--d)) * 7% + max(0, var(--d)) * 100svh);
+    scale: calc(1 + min(0, var(--d)) * 0.05);
+    opacity: calc(1 + min(0, var(--d)) * 0.35);
+    transition:
+      translate var(--dur-element) var(--ease-settle),
+      scale var(--dur-element) var(--ease-settle),
+      opacity var(--dur-element) var(--ease-settle);
+    /* the light behind the card, seen through its holes */
+    background: radial-gradient(farthest-side at 35% 50%, color-mix(in oklab, var(--accent) 78%, transparent), transparent);
+  }
+  [data-theme="paper"] .phone-card {
+    background: radial-gradient(closest-side, var(--bg-raised), transparent);
+  }
+  .phone-card__face,
+  .phone-card__print {
+    position: absolute;
+    inset: 0;
+    --px: calc(100cqi / var(--card-px));
+    -webkit-mask-image: var(--atlas);
+    mask-image: var(--atlas);
+    -webkit-mask-size: calc(var(--atlas-w) * var(--px)) calc(var(--atlas-h) * var(--px));
+    mask-size: calc(var(--atlas-w) * var(--px)) calc(var(--atlas-h) * var(--px));
+    -webkit-mask-position: calc(var(--x0) * var(--px) * -1) calc(var(--y0) * var(--px) * -1);
+    mask-position: calc(var(--x0) * var(--px) * -1) calc(var(--y0) * var(--px) * -1);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+  }
+  .phone-card__face {
+    background: color-mix(in oklab, var(--bg-raised) 90%, var(--fg-2));
+    mask-mode: alpha;
+  }
+  [data-theme="paper"] .phone-card__face {
+    background: color-mix(in oklab, var(--bg-sunken) 84%, var(--fg-2));
+  }
+  .phone-card__print {
+    background: var(--fg-1);
+    mask-mode: luminance;
+  }
+  /* the static edition (no JS, reduced motion): the cards as a column, no pin to rise through */
+  html:not(.js) .phone-card,
+  html[data-motion="reduce"] .phone-card {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+    translate: none;
+    scale: none;
+    opacity: 1;
+    margin: calc(var(--spacing) * 6) var(--margin);
+  }
+  html:not(.js) .phone-deck__badge,
+  html[data-motion="reduce"] .phone-deck__badge {
+    display: none;
+  }
+
+  /* ── PRINTOUT: continuous-feed tractor paper, 9½ in wide, perforated every 11 in ──────────── */
+  /* the interlock LOG → ARCHIVE: at least a screen of DOM between the two stages (§4.2) */
+  .printout-wrap {
+    min-height: 100svh;
+    align-content: center;
+    padding-block: var(--section-y);
+  }
+  .printout {
+    display: grid;
+    gap: calc(var(--spacing) * 8);
+    justify-items: start;
+    container-type: inline-size;
+    /* one inch of the form: its 9½ in across this column */
+    --in: calc(100cqi / 9.5);
+    --bar: color-mix(in oklab, var(--bg-raised) 88%, var(--accent));
+  }
+  [data-theme="paper"] .printout {
+    --bar: color-mix(in oklab, var(--bg-raised) 82%, var(--accent));
+  }
+  .printout__sheet {
+    position: relative;
+    width: 100%;
+    padding: calc(var(--in) * 0.55) calc(var(--in) * 0.95);
+    background-color: var(--bg-raised);
+    background-image:
+      /* the perforation at each 11 in */
+      radial-gradient(circle, var(--line-2) 0 0.6px, transparent 1px),
+      /* green-bar: a band every other half inch */
+      repeating-linear-gradient(to bottom, var(--bar) 0 calc(var(--in) * 0.5), transparent calc(var(--in) * 0.5) var(--in));
+    background-size:
+      6px calc(var(--in) * 11),
+      100% var(--in);
+    background-position:
+      0 calc(var(--in) * 11 - 1px),
+      0 0;
+    background-repeat: repeat, repeat;
+    box-shadow: inset 0 0 0 var(--hairline) var(--line-1);
+  }
+  /* the tractor strips: a hole every half inch, down both edges, then a perforated tear line */
+  .printout__sheet::before,
+  .printout__sheet::after {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    width: calc(var(--in) * 0.5);
+    background: radial-gradient(circle closest-side, var(--bg) 0 58%, transparent 64%) 50% calc(var(--in) * 0.25) / 100% calc(var(--in) * 0.5) repeat-y;
+  }
+  .printout__sheet::before {
+    left: 0;
+    border-inline-end: var(--hairline) dashed var(--line-2);
+  }
+  .printout__sheet::after {
+    right: 0;
+    border-inline-start: var(--hairline) dashed var(--line-2);
+  }
+  /* dot-matrix: the mono print under a fine dot mask */
+  .printout__text {
+    display: grid;
+    gap: calc(var(--spacing) * 4);
+    color: var(--fg-1);
+    font-family: var(--ff-mono);
+    font-size: var(--step--1);
+    line-height: 1.5;
+    letter-spacing: 0.04em;
+    -webkit-mask: radial-gradient(circle closest-side, #000 75%, transparent 100%) 0 0 / 2px 2px repeat;
+    mask: radial-gradient(circle closest-side, #000 75%, transparent 100%) 0 0 / 2px 2px repeat;
+  }
+  .printout__text > * {
+    margin: 0;
+  }
+  .printout__head,
+  .printout__end {
+    color: var(--fg-2);
+  }
+  .printout__h {
+    color: var(--accent);
+  }
+  .printout__rows {
+    display: grid;
+    gap: calc(var(--spacing) * 1);
+    padding: 0;
+    list-style: none;
+  }
+  .printout__rows > li {
+    display: grid;
+    grid-template-columns: 20ch 1fr;
+    gap: calc(var(--spacing) * 4);
+  }
+  @media (max-width: 47.99rem) {
+    .printout__rows > li {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+  }
+}

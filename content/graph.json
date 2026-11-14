@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "inputHash": "8aff35e5",
+  "seed": 3203956627,
+  "nodes": [
+    {
+      "id": "food-waste-cold-chain-sci-2026",
+      "kind": "record",
+      "layouts": {"topic":[1.443,-3.831,9.123],"year":[0,-10,0],"venue":[0,-7.071,7.071]}
+    },
+    {
+      "id": "pm25-forecasting-sci-2026",
+      "kind": "record",
+      "layouts": {"topic":[-1.443,3.831,-9.123],"year":[0,10,0],"venue":[0,7.071,7.071]}
+    }
+  ],
+  "edges": [
+    {"source":"food-waste-cold-chain-sci-2026","target":"pm25-forecasting-sci-2026","kinds":["topic"],"weight":1}
+  ],
+  "labels": {
+    "topic": [{"id":"ml-for-sustainability","position":[0,4.831,0]}],
+    "year": [{"id":"2026","position":[0,-30,0]}],
+    "venue": [{"id":"conference","position":[0,-21.213,0]}]
+  }
+}

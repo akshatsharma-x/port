@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "covers": {
+    "cognivault-ai": {
+      "source": "title-card",
+      "inputHash": "c941b9c4",
+      "bytes": {"640":9447,"768":12676,"1024":17309,"master":39238,"og":53396}
+    },
+    "quizmuj": {
+      "source": "title-card",
+      "inputHash": "e70cc0e0",
+      "bytes": {"640":8599,"768":12201,"1024":15886,"master":36671,"og":44587}
+    },
+    "resume-screening": {
+      "source": "title-card",
+      "inputHash": "97fae4aa",
+      "bytes": {"640":12459,"768":16461,"1024":21608,"master":48496,"og":62784}
+    },
+    "churn-prediction": {
+      "source": "title-card",
+      "inputHash": "a9342009",
+      "bytes": {"640":12760,"768":16332,"1024":20921,"master":46643,"og":60306}
+    },
+    "wcag-analyzer": {
+      "source": "title-card",
+      "inputHash": "05a08a43",
+      "bytes": {"640":12980,"768":16254,"1024":21128,"master":48999,"og":60969}
+    }
+  }
+}

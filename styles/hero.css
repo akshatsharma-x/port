@@ -1,0 +1,162 @@
+/* ==========================================================================
+   RETROGRADE · styles/hero.css — 01 SYSTEM, the typography layer (DESIGN.md §7.4)
+   over the stage slot; bottom-aligned in the pinned frame (styles/scroll.css)
+   ========================================================================== */
+
+@layer components {
+  .hero {
+    /* the name's measure, as a container: 100cqi is the 12 columns' width, scrollbars and all */
+    container-type: inline-size;
+    row-gap: calc(var(--spacing) * 6);
+    align-items: end;
+    /* clear of the bottom band by its token height (styles/chrome.css), not the measured band:
+       that arrives after hydration, and the bottom-aligned hero moved 11 px when it did (CLS
+       0.0081 on Lighthouse's phone load) */
+    padding-block-end: calc(var(--hud-band-bottom) + var(--spacing) * 8);
+  }
+
+  /* fixed-width, one line: H-HOLD's jump to 125 — and the instant before the face arrives — is
+     clipped by the box, never by the page */
+  .hero-name {
+    overflow-x: clip;
+    /* fit, then grow (DESIGN.md §2.5): wdth fills the measure at --step-5 up to its 125 cap; past
+       that, the size grows so the one line (--fit-em-max em at 125, content/name-fit.json) still
+       fills the 12 columns. Only on screens wider than the axis serves — 1,658 px for this name */
+    --t-size: max(var(--step-5), 100cqi / var(--fit-em-max, 1e9));
+  }
+
+  .hero__lede {
+    display: grid;
+    align-content: end;
+    gap: calc(var(--spacing) * 3);
+  }
+  .hero__lede > .hero-strip {
+    margin-block-start: calc(var(--spacing) * 3);
+  }
+  .hero__lede > .hero-ctas {
+    margin-block-start: calc(var(--spacing) * 3);
+  }
+  .hero__aside {
+    align-self: end;
+  }
+  .hero__tagline {
+    max-width: 52ch;
+    text-wrap: pretty;
+  }
+
+  /* the micro-block: label / value rows on the mono grid */
+  .hero-micro {
+    --cell: calc(0.6em + var(--tr--2));
+    display: grid;
+    gap: calc(var(--spacing) * 1);
+    margin: 0;
+  }
+  .hero-micro__row {
+    display: grid;
+    grid-template-columns: calc(7 * var(--cell)) 1fr;
+    align-items: baseline;
+  }
+  .hero-micro dt {
+    color: var(--fg-3);
+  }
+  .hero-micro dd {
+    margin: 0;
+    color: var(--fg-1);
+  }
+  .hero-micro__time {
+    display: inline-block;
+    min-width: calc(var(--clock-n, 13) * var(--cell));
+  }
+  .hero-micro__note {
+    grid-column: 2;
+    color: var(--fg-3);
+    text-transform: none;
+  }
+  .hero-micro__dot {
+    display: inline-block;
+    width: 0.6em;
+    height: 0.6em;
+    margin-inline-end: calc(var(--spacing) * 2);
+    border-radius: var(--r-dot);
+    background: var(--accent);
+    vertical-align: 0;
+    animation: hero-pulse var(--dur-scene) var(--ease-settle) infinite alternate;
+  }
+  .hero-micro__dot[data-status="limited"] {
+    background: var(--warn);
+  }
+  .hero-micro__dot[data-status="closed"] {
+    background: var(--fg-3);
+    animation: none;
+  }
+  @keyframes hero-pulse {
+    to {
+      opacity: 0.35;
+    }
+  }
+
+  /* the spec strip: tabular mono, one row */
+  .hero-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--spacing) * 2) calc(var(--spacing) * 6);
+    margin: 0;
+  }
+  .hero-strip__item {
+    display: flex;
+    align-items: baseline;
+    gap: calc(var(--spacing) * 2);
+  }
+  .hero-strip dt {
+    color: var(--fg-2);
+  }
+  .hero-strip dd {
+    margin: 0;
+    color: var(--fg-1);
+  }
+
+  .hero-ctas {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--spacing) * 3) calc(var(--spacing) * 4);
+  }
+
+  /* the hints: the scroll hint leaves on the first scroll; the idle hint arrives once */
+  .hero-hint {
+    position: absolute;
+    left: 50%;
+    translate: -50% 0;
+    margin: 0;
+    color: var(--fg-3);
+    pointer-events: none;
+    transition: opacity var(--dur-element) var(--ease-settle);
+  }
+  .hero-hint--scroll {
+    bottom: calc(var(--hud-band-bottom) + var(--spacing) * 1);
+    display: flex;
+    gap: calc(var(--spacing) * 2);
+  }
+  .hero-hint--scroll[data-gone] {
+    opacity: 0;
+  }
+  .hero-hint--idle {
+    bottom: calc(var(--hud-band-bottom) + var(--spacing) * 6);
+    opacity: 0;
+    color: var(--fg-2);
+  }
+  .hero-hint--idle[data-shown] {
+    opacity: 1;
+  }
+  .hero .layout-grid,
+  .hero {
+    position: relative;
+  }
+
+  html[data-motion="reduce"] .hero-micro__dot {
+    animation: none;
+  }
+  html[data-motion="reduce"] .hero-hint {
+    transition: none;
+  }
+}

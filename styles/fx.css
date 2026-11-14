@@ -1,0 +1,104 @@
+/* ==========================================================================
+   RETROGRADE · styles/fx.css — #fx-css (z50): the glass (DESIGN.md §5.1–§5.3)
+   grain + scanlines + the refresh roll; compositor-only; the stage never draws its own
+   ========================================================================== */
+
+@layer components {
+  #fx-css {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    overflow: hidden;
+    pointer-events: none;
+    contain: strict;
+  }
+  #fx-css > i {
+    position: absolute;
+    display: block;
+  }
+
+  /* grain: one alpha tile (made at runtime, seeded), colored by the tube's own ink — a P1 tube
+     can only emit its phosphor — stepped at 24 fps by a held transform jitter */
+  .fx-grain {
+    inset: calc(var(--grain-tile) * -1);
+    background: var(--fg-1);
+    -webkit-mask: var(--grain-dark) 0 0 / var(--grain-tile) var(--grain-tile) repeat;
+    mask: var(--grain-dark) 0 0 / var(--grain-tile) var(--grain-tile) repeat;
+    opacity: var(--grain-peak-dark);
+    visibility: hidden;
+    animation: fx-grain var(--grain-cycle) steps(1, end) infinite;
+    will-change: transform;
+  }
+  #fx-css[data-grain] .fx-grain {
+    visibility: visible;
+  }
+  html[data-theme="paper"] .fx-grain {
+    -webkit-mask-image: var(--grain-paper);
+    mask-image: var(--grain-paper);
+    opacity: var(--grain-peak-paper);
+  }
+  /* 12 held positions per cycle (an artifact steps — law 5), fractions of the tile */
+  @keyframes fx-grain {
+    0% { transform: translate3d(0, 0, 0); }
+    8.33% { transform: translate3d(calc(var(--grain-tile) * -0.37), calc(var(--grain-tile) * 0.21), 0); }
+    16.67% { transform: translate3d(calc(var(--grain-tile) * 0.13), calc(var(--grain-tile) * -0.44), 0); }
+    25% { transform: translate3d(calc(var(--grain-tile) * 0.41), calc(var(--grain-tile) * 0.08), 0); }
+    33.33% { transform: translate3d(calc(var(--grain-tile) * -0.19), calc(var(--grain-tile) * -0.29), 0); }
+    41.67% { transform: translate3d(calc(var(--grain-tile) * 0.27), calc(var(--grain-tile) * 0.37), 0); }
+    50% { transform: translate3d(calc(var(--grain-tile) * -0.46), calc(var(--grain-tile) * -0.07), 0); }
+    58.33% { transform: translate3d(calc(var(--grain-tile) * 0.06), calc(var(--grain-tile) * 0.47), 0); }
+    66.67% { transform: translate3d(calc(var(--grain-tile) * 0.33), calc(var(--grain-tile) * -0.18), 0); }
+    75% { transform: translate3d(calc(var(--grain-tile) * -0.08), calc(var(--grain-tile) * 0.29), 0); }
+    83.33% { transform: translate3d(calc(var(--grain-tile) * -0.31), calc(var(--grain-tile) * -0.41), 0); }
+    91.67% { transform: translate3d(calc(var(--grain-tile) * 0.22), calc(var(--grain-tile) * 0.14), 0); }
+  }
+
+  /* scanlines: α 0.07 on the dark tubes at a device-snapped pitch (--scan-pitch, written by JS);
+     none on Paper — paper is not a screen */
+  .fx-scan {
+    inset: 0;
+    background: repeating-linear-gradient(to bottom, var(--bg-sunken) 0 var(--scan-line, 1px), transparent var(--scan-line, 1px) var(--scan-pitch, 3px));
+    opacity: var(--scan-alpha);
+  }
+  html[data-theme="paper"] .fx-scan {
+    display: none;
+  }
+
+  /* the refresh roll: a +2.5% band, 140 px, every 9 s — dark tubes, HIGH/MID only */
+  .fx-roll {
+    top: calc(var(--roll-band) * -1);
+    left: 0;
+    right: 0;
+    height: var(--roll-band);
+    background: linear-gradient(to bottom, transparent, var(--fg-1), transparent);
+    opacity: var(--roll-lift);
+    display: none;
+    animation: fx-roll var(--roll-period) linear infinite;
+    will-change: transform;
+  }
+  #fx-css[data-roll="on"] .fx-roll {
+    display: block;
+  }
+  html[data-theme="paper"] .fx-roll {
+    display: none !important;
+  }
+  @keyframes fx-roll {
+    to {
+      transform: translate3d(0, calc(100vh + var(--roll-band)), 0);
+    }
+  }
+
+  /* reduced motion: static grain, no roll (scanlines stay — they don't move) */
+  html[data-motion="reduce"] .fx-grain {
+    animation: none;
+  }
+  html[data-motion="reduce"] .fx-roll {
+    display: none !important;
+  }
+  /* every FX layer off when asked for more contrast, or in forced colors (§2.4, §5.3) */
+  @media (prefers-contrast: more), (forced-colors: active) {
+    #fx-css {
+      display: none;
+    }
+  }
+}

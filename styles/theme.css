@@ -1,0 +1,89 @@
+/* ==========================================================================
+   RETROGRADE · styles/theme.css — Tailwind v4 theme.
+   Defaults are reset so the only utilities that exist are DESIGN.md values.
+   `@theme inline` makes utilities reference the runtime token directly
+   (bg-bg → var(--bg)), so a [data-theme] swap repaints everything, no JS.
+   ========================================================================== */
+
+@theme {
+  --color-*: initial;
+  --font-*: initial;
+  --text-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-shadow-*: initial;
+  --ease-*: initial;
+  --animate-*: initial;
+
+  /* DESIGN.md §2.7 breakpoints: 480 / 768 / 1024 / 1440 / 2200 */
+  --breakpoint-*: initial;
+  --breakpoint-sm: 30rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 90rem;
+  --breakpoint-2xl: 137.5rem;
+
+  /* 4 px base unit; the lint rule restricts which multiples may be used */
+  --spacing: 0.25rem;
+}
+
+@theme inline {
+  /* §2.2 semantic colors */
+  --color-bg: var(--bg);
+  --color-bg-raised: var(--bg-raised);
+  --color-bg-sunken: var(--bg-sunken);
+  --color-bg-band: var(--bg-band);
+  --color-fg-1: var(--fg-1);
+  --color-fg-2: var(--fg-2);
+  --color-fg-3: var(--fg-3);
+  --color-line-1: var(--line-1);
+  --color-line-2: var(--line-2);
+  --color-accent: var(--accent);
+  --color-accent-fill: var(--accent-fill);
+  --color-accent-wash: var(--accent-wash);
+  --color-on-accent: var(--on-accent);
+  --color-hot: var(--hot);
+  --color-warn: var(--warn);
+  --color-focus: var(--focus);
+
+  /* §2.5 families (next/font writes --ff-*) */
+  --font-display: var(--ff-display);
+  --font-body: var(--ff-body);
+  --font-mono: var(--ff-mono);
+  --default-font-family: var(--ff-body);
+  --default-mono-font-family: var(--ff-mono);
+
+  /* §2.6 sizes (the t-* utilities in type.css carry face, weight and width too) */
+  --text-micro: var(--step--2);
+  --text-micro--line-height: var(--lh--2);
+  --text-small: var(--step--1);
+  --text-small--line-height: var(--lh--1);
+  --text-body: var(--step-0);
+  --text-body--line-height: var(--lh-0);
+  --text-lead: var(--step-1);
+  --text-lead--line-height: var(--lh-1);
+  --text-heading: var(--step-2);
+  --text-heading--line-height: var(--lh-2);
+  --text-title: var(--step-3);
+  --text-title--line-height: var(--lh-3);
+  --text-display: var(--step-4);
+  --text-display--line-height: var(--lh-4);
+  --text-mega: var(--step-5);
+  --text-mega--line-height: var(--lh-5);
+
+  /* §2.7 fluid spacing tokens → p-gutter, px-margin, gap-block, py-section-y … */
+  --spacing-gutter: var(--gutter);
+  --spacing-margin: var(--margin);
+  --spacing-block: var(--block);
+  --spacing-section-y: var(--section-y);
+  --spacing-hud-inset: var(--hud-inset);
+
+  /* §2.8 radii */
+  --radius-0: var(--r-0);
+  --radius-1: var(--r-1);
+  --radius-card: var(--r-card);
+  --radius-bezel: var(--r-bezel);
+  --radius-dot: var(--r-dot);
+}

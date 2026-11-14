@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "inputHash": "5c2e7bff",
+  "fontHash": "59a9966ba6f23301",
+  "cards": [
+    {
+      "slug": "united-airlines-2026",
+      "text": "UNITED AIRLINES 2026-PRESENT",
+      "form": "RETROGRADE/OS LOG · CARD 01/04",
+      "cell": 0
+    },
+    {"slug":"ernst-and-young-ey-2026","text":"ERNST & YOUNG (EY) 2026","form":"RETROGRADE/OS LOG · CARD 02/04","cell":1},
+    {
+      "slug": "truechip-solutions-2025",
+      "text": "TRUECHIP SOLUTIONS 2025-2026",
+      "form": "RETROGRADE/OS LOG · CARD 03/04",
+      "cell": 2
+    },
+    {
+      "slug": "walkingtree-technologies-2025",
+      "text": "WALKINGTREE TECHNOLOGIES 2025",
+      "form": "RETROGRADE/OS LOG · CARD 04/04",
+      "cell": 3
+    },
+    {"slug":"leader","text":"","form":"RETROGRADE/OS LOG","cell":15}
+  ]
+}

@@ -1,0 +1,151 @@
+/* ==========================================================================
+   RETROGRADE · styles/about.css — 02 IDENTITY (DESIGN.md §7.4): the dot-matrix
+   portrait, the bio, the spec sheet and CURRENTLY. The portrait's cell grid
+   (--cols × --rows) comes from lib/identity.ts on the element.
+   ========================================================================== */
+
+@layer components {
+  .identity {
+    row-gap: calc(var(--spacing) * 12);
+    align-items: start;
+    padding-block: var(--section-y);
+  }
+  .identity__body {
+    display: grid;
+    align-content: start;
+    gap: calc(var(--spacing) * 6);
+  }
+  /* the first paragraph leads (≤ 38ch, §2.5); the rest read at the body measure */
+  .identity__bio {
+    margin: 0;
+    max-width: 38ch;
+    text-wrap: pretty;
+  }
+  .identity__bio + .identity__bio {
+    max-width: 64ch;
+  }
+  .identity__accent {
+    color: var(--accent);
+  }
+  .identity__spec {
+    margin-block-start: calc(var(--spacing) * 4);
+  }
+
+  /* the portrait: the canvas is the cell grid, pixelated; a mask makes each cell a round dot */
+  .portrait {
+    display: grid;
+    gap: calc(var(--spacing) * 3);
+    margin: 0;
+    --dot: radial-gradient(circle closest-side, #000 70%, transparent 76%);
+    --cell: calc(100% / var(--cols)) calc(100% / var(--rows));
+  }
+  .portrait__frame {
+    position: relative;
+    aspect-ratio: var(--cols) / var(--rows);
+    overflow: hidden;
+    background: var(--bg-sunken);
+  }
+  .portrait__rest,
+  .portrait__dots {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .portrait__dots {
+    image-rendering: pixelated;
+    touch-action: pan-y;
+    -webkit-touch-callout: none;
+    user-select: none;
+    -webkit-mask: var(--dot) 0 0 / var(--cell) repeat;
+    mask: var(--dot) 0 0 / var(--cell) repeat;
+  }
+  /* before the canvas draws, and without JS: the photo itself through the same dots, tinted */
+  .portrait__rest {
+    background: var(--fg-1);
+    opacity: 0.4;
+    -webkit-mask-image: var(--portrait), var(--dot);
+    mask-image: var(--portrait), var(--dot);
+    -webkit-mask-size: 100% 100%, var(--cell);
+    mask-size: 100% 100%, var(--cell);
+    -webkit-mask-repeat: no-repeat, repeat;
+    mask-repeat: no-repeat, repeat;
+    mask-mode: luminance, alpha;
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+  .portrait__frame:has(> .portrait__dots[data-drawn]) > .portrait__rest {
+    visibility: hidden;
+  }
+  .portrait__hint {
+    color: var(--fg-3);
+  }
+  .portrait__hint--touch {
+    display: none;
+  }
+  @media (hover: none) {
+    .portrait__hint--pointer {
+      display: none;
+    }
+    .portrait__hint--touch {
+      display: inline;
+    }
+  }
+  html[data-motion="reduce"] .portrait__hint {
+    display: none;
+  }
+
+  /* CURRENTLY: the list for screen readers; one typed line on screen, in a cell sized to the tallest */
+  .currently {
+    display: grid;
+    gap: calc(var(--spacing) * 2);
+    margin-block-start: calc(var(--spacing) * 2);
+  }
+  .currently__label {
+    margin: 0;
+    color: var(--fg-3);
+  }
+  .currently__list {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .currently__lines {
+    display: grid;
+  }
+  .currently__lines > * {
+    grid-area: 1 / 1;
+    margin: 0;
+  }
+  .currently__line--reserve {
+    visibility: hidden;
+  }
+  .currently__kind {
+    margin-inline-end: calc(var(--spacing) * 2);
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .currently__detail {
+    color: var(--fg-3);
+  }
+  /* reduced motion: no swap — the three items, as a list */
+  html[data-motion="reduce"] .currently__lines {
+    display: none;
+  }
+  html[data-motion="reduce"] .currently__list {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+    display: grid;
+    gap: calc(var(--spacing) * 2);
+  }
+}

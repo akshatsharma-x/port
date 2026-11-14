@@ -1,0 +1,119 @@
+/* ==========================================================================
+   RETROGRADE · styles/scroll.css — pins, the transition layers' DOM side (DESIGN.md §3.6, §3.8)
+   ========================================================================== */
+
+@layer components {
+  /* StickyStack. The static edition (no JS, reduced motion) is the default: backdrop, then every
+     frame, stacked as static frames (§3.9). The motion edition pins natively: the block is sticky
+     inside a track 100 svh + the pin tall, so the browser holds it (no fixed/in-flow swap, no
+     layout shift, no lag behind a native touch scroll). The backdrop (a stage slot) and every frame
+     share one cell; the active frame wipes in from its left edge (RAIL REVEAL); the others are
+     clipped to nothing, still in the accessibility tree — focus inside one scrolls to it. */
+  .sticky-stack {
+    position: relative;
+  }
+  html.js:not([data-motion="reduce"]) .pin-track {
+    height: calc(100svh + var(--pin));
+  }
+  html.js:not([data-motion="reduce"]) .sticky-stack {
+    position: sticky;
+    top: 0;
+    display: grid;
+    height: 100svh;
+    overflow: clip;
+  }
+  html.js:not([data-motion="reduce"]) .sticky-stack > * {
+    grid-area: 1 / 1;
+    min-width: 0;
+  }
+  /* --overlay: the content lies over the backdrop in every edition, pinned or not (the hero: its
+     name and its poster share the first screen with reduced motion and without JS too) */
+  .sticky-stack--overlay {
+    display: grid;
+  }
+  .sticky-stack--overlay > * {
+    grid-area: 1 / 1;
+    min-width: 0;
+  }
+  .sticky-stack--overlay > .sticky-stack__content {
+    align-self: end;
+  }
+  .sticky-stack__backdrop {
+    position: relative;
+    z-index: 0;
+  }
+  .sticky-stack__content,
+  .sticky-stack__frame {
+    position: relative;
+    z-index: 1;
+  }
+  html.js:not([data-motion="reduce"]) .sticky-stack__content {
+    align-self: end;
+  }
+  html.js:not([data-motion="reduce"]) .sticky-stack__frame {
+    align-self: end;
+    clip-path: inset(0 100% 0 0);
+    pointer-events: none;
+  }
+  html.js:not([data-motion="reduce"]) .sticky-stack__frame[data-active] {
+    clip-path: inset(0);
+    pointer-events: auto;
+    transition: clip-path var(--dur-element) var(--ease-settle);
+  }
+
+  /* Lenis's rules, re-stated without html as their subject — lenis/dist/lenis.css isn't imported.
+     Its html.lenis and .lenis.lenis-stopped rules made html the subject of the lenis classes, and
+     Lenis rewrites those at construction (inside the hydration commit) and at every scroll's
+     start and end (lenis-scrolling, lenis-smooth): each rewrite restyled html, and in Chrome a
+     restyle of html is a restyle of every element (~870; Part 7 trace). Here the classes only
+     reach descendants. html and body are height: auto already, and stop() is only ever a reset
+     (stop + start in one task, lib/scroll.ts), never a lock, so neither rule is missed. */
+  .lenis [data-lenis-prevent],
+  .lenis [data-lenis-prevent-wheel],
+  .lenis [data-lenis-prevent-touch],
+  .lenis [data-lenis-prevent-vertical],
+  .lenis [data-lenis-prevent-horizontal] {
+    overscroll-behavior: contain;
+  }
+  .lenis.lenis-smooth iframe {
+    pointer-events: none;
+  }
+
+  /* The reduced-motion / no-WebGL TRACKING TEAR: a solid --bg cover, 160 ms (lib/transitions.ts). */
+  #fx-cover {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: var(--bg);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* POWER CYCLE in a View Transition: the root snapshots are animated from the timelines by WAAPI
+     (lib/transitions.ts), never by the UA's default crossfade. #fx-gl is its own group, so its live
+     drawing (the beam, the scan bar) sits above the snapshots. */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+  #fx-gl {
+    view-transition-name: fx-gl;
+  }
+  ::view-transition-old(fx-gl) {
+    display: none;
+  }
+  ::view-transition-new(fx-gl),
+  ::view-transition-group(fx-gl) {
+    animation: none;
+  }
+
+  /* The tube is off (POWER OFF ended): the picture is gone, the glass stays. */
+  html[data-tube="off"] #screen,
+  html[data-tube="off"] #hud {
+    visibility: hidden;
+  }
+  html[data-tube="off"] body {
+    background: var(--bg-sunken);
+  }
+}

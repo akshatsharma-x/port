@@ -1,0 +1,148 @@
+/* ==========================================================================
+   RETROGRADE · styles/stage.css — the layer stack (DESIGN.md §4.1) and Tier-A slots
+   the stage canvas lives in the live slot's dock (v1.5) · #screen z10 (all DOM) · #fx-gl z60
+   ========================================================================== */
+
+@layer components {
+  /* The parking bay: where the canvas waits between slots and across routes (still rendering-capable). */
+  #stage {
+    display: none;
+  }
+
+  /* Held by the browser, not by JS: sticky inside the slot's dock (DESIGN.md §4.2, v1.5). */
+  .stage-canvas {
+    display: block;
+    position: sticky;
+    top: 0;
+    width: 100%;
+    height: 100lvh;
+    pointer-events: none;
+  }
+
+  #screen {
+    position: relative;
+    z-index: 10;
+  }
+
+  /* Idle = not composited at all; shown only for the frames it draws. */
+  #fx-gl {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 60;
+    pointer-events: none;
+    visibility: hidden;
+  }
+  #fx-gl[data-active] {
+    visibility: visible;
+  }
+
+  /* 100svh / 100lvh in px, for the interlock and the canvas size (read on resize, never per frame) */
+  .stage-probe {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .stage-probe--svh {
+    height: 100svh;
+  }
+  .stage-probe--lvh {
+    height: 100lvh;
+  }
+
+  /* PROJECTION (§7.4 WORK; lib/sceneManager.ts takeover()): the canvas docks here for a moment and
+     holds the whole viewport, over the page (#screen z10) and under the HUD (z30), so the bezel
+     frames the projected slide. It takes the clicks while it's up: nothing under it can be hit. */
+  .stage-takeover {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    pointer-events: auto;
+  }
+  .stage-takeover[hidden] {
+    display: none;
+  }
+
+  /* `clip`, not `hidden`: a scroll container would break the canvas's sticky. */
+  .stage-slot {
+    position: relative;
+    overflow: clip;
+    isolation: isolate;
+  }
+  .stage-dock {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* Gap protection: an opaque ground (no stale canvas frame shows through) carrying the scene's
+     1-bit poster, colorized by a mask so one PNG serves every theme. It leaves in one frame: the
+     stage resolves from the same 1-bit look in-shader (DITHER RESOLVE), so no crossfade. */
+  .stage-poster {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: var(--bg);
+  }
+  .stage-poster::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--fg-3);
+    -webkit-mask: var(--poster) center / cover no-repeat;
+    mask: var(--poster) center / cover no-repeat;
+  }
+  /* a portrait screen gets the portrait capture, where the scene has one (it frames differently) */
+  @media (orientation: portrait) {
+    .stage-poster::before {
+      -webkit-mask-image: var(--poster-portrait, var(--poster));
+      mask-image: var(--poster-portrait, var(--poster));
+    }
+  }
+  /* …and a portrait tablet the 3:4 one: the phone-shaped capture sat 110 px high there */
+  @media (orientation: portrait) and (min-aspect-ratio: 3/5) {
+    .stage-poster::before {
+      -webkit-mask-image: var(--poster-tablet, var(--poster-portrait, var(--poster)));
+      mask-image: var(--poster-tablet, var(--poster-portrait, var(--poster)));
+    }
+  }
+  .stage-poster[data-live] {
+    visibility: hidden;
+  }
+
+  /* ?debug=1 */
+  .stage-debug {
+    position: fixed;
+    left: var(--hud-inset);
+    bottom: var(--hud-inset);
+    z-index: 70;
+    max-width: calc(100vw - 2 * var(--hud-inset));
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--r-1);
+    background: color-mix(in oklch, var(--bg-raised) 94%, transparent);
+    box-shadow: inset 0 0 0 var(--hairline) var(--line-2);
+    color: var(--fg-1);
+    font-family: var(--ff-mono);
+    font-size: var(--step--2);
+    line-height: var(--lh--2);
+    font-feature-settings: "calt" 0;
+    pointer-events: none;
+    contain: content;
+  }
+  .stage-debug__fps {
+    margin: 0;
+    color: var(--accent);
+    white-space: pre;
+  }
+  .stage-debug__text {
+    margin: 0;
+    font: inherit;
+    white-space: pre-wrap;
+  }
+}
+

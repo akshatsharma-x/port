@@ -1,0 +1,294 @@
+/* ==========================================================================
+   RETROGRADE · styles/boot.css — the boot (DESIGN.md §7.4 POST) and POWER ON-fast
+   z45: above #hud (30) and #cursor (40); below #fx-css (50, the glass) and #fx-gl (60, the beam)
+   Decided before first paint by the head script: html[data-boot="run" | "fast"]
+   ========================================================================== */
+
+@layer components {
+  .boot-root {
+    display: contents;
+  }
+
+  /* ── the boot overlay: the first visit to / in a session ───────────────────────────── */
+  .boot,
+  .boot-shutter {
+    display: none;
+  }
+  html[data-boot="run"]:not([data-boot-skip]) .boot:not([data-gone]) {
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    display: block;
+    padding: calc(var(--hud-inset) * 3) var(--margin);
+    background: var(--bg-sunken);
+    color: var(--fg-2);
+    /* the hard cap (§7.4): gone at 2.2 s even if no script ever runs — or if the one that took
+       over stalls (P3 hides the overlay sooner, so a running boot never meets it). The fade runs
+       on the compositor, so it lands on time while a slow phone's main thread is still parsing or
+       hydrating; the visibility step (main thread) follows when it can, so a faded overlay never
+       catches a click. The step must not touch opacity: Chrome won't composite an opacity
+       animation beside a non-compositable one on the same property ("Target has another
+       animation which is incompatible" — measured). */
+    animation:
+      boot-cap-fade 1ms linear var(--boot-cap) both,
+      boot-cap-hide 1ms linear var(--boot-cap) forwards;
+  }
+  @keyframes boot-cap-fade {
+    to {
+      opacity: 0;
+    }
+  }
+  /* a step, hidden at every progress: a 1 ms animation's last frame lands a hair under p = 1
+     (measured: opacity 1.1e-13, not 0), where `visible → hidden` still interpolates to visible.
+     Filled forwards only, so the delay before it changes nothing. */
+  @keyframes boot-cap-hide {
+    from,
+    to {
+      visibility: hidden;
+    }
+  }
+  /* the boot is clickable (a press skips): it keeps a visible pointer under the custom cursor's rule */
+  html[data-reticle="on"] .boot,
+  html[data-reticle="on"] .boot * {
+    cursor: default !important;
+  }
+  /* §5.2 flicker: boot only, ≤ 3% luminance, never a flash (WCAG 2.3.1) */
+  .boot__screen {
+    animation: boot-flicker var(--boot-flicker) steps(1, end) infinite;
+  }
+  @keyframes boot-flicker {
+    0%, 100% { opacity: 1; }
+    37% { opacity: 0.97; }
+    41% { opacity: 1; }
+    73% { opacity: 0.98; }
+    76% { opacity: 1; }
+  }
+  html[data-motion="reduce"] .boot__screen {
+    animation: none;
+  }
+
+  /* rows are reserved, so printing never moves a line that's already there (no layout shift) */
+  .boot__screen {
+    display: grid;
+    gap: 0;
+    max-width: 72ch;
+    margin: 0;
+    line-height: var(--lh--2);
+  }
+  .boot__screen > * {
+    margin: 0;
+    min-height: 1lh;
+  }
+  .boot__head {
+    color: var(--fg-1);
+  }
+  .boot[data-phase="p1"] .boot__head {
+    visibility: hidden;
+  }
+  .boot__log {
+    min-height: 11lh;
+    padding: 0;
+    padding-block: 1lh 0;
+    list-style: none;
+  }
+  .boot__row {
+    display: grid;
+    grid-template-columns: 6ch auto 1fr auto;
+    gap: 1ch;
+    align-items: baseline;
+    white-space: nowrap;
+  }
+  .boot__tag {
+    color: var(--fg-3);
+  }
+  .boot__text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--fg-1);
+  }
+  .boot__leader {
+    height: 2px;
+    background: radial-gradient(circle, var(--line-2) 0 0.75px, transparent 1.1px) 0 0 / 6px 2px repeat-x;
+  }
+  .boot__status {
+    color: var(--accent);
+  }
+  .boot__progress {
+    color: var(--fg-1);
+    white-space: pre;
+    font-variant-numeric: tabular-nums;
+  }
+  .boot__banner {
+    padding-block-start: 1lh;
+    color: var(--accent);
+    white-space: pre-wrap;
+  }
+  /* P1: a block caret alone, blinking 530/530, where the first line prints */
+  .boot__caret {
+    position: absolute;
+    top: calc(var(--hud-inset) * 3);
+    left: var(--margin);
+    width: 1ch;
+    height: 1lh;
+    background: var(--accent);
+    animation: boot-caret var(--caret-ms) steps(1, end) infinite;
+  }
+  .boot:not([data-phase="p1"]) .boot__caret {
+    display: none;
+  }
+  @keyframes boot-caret {
+    50% {
+      opacity: 0;
+    }
+  }
+  .boot__skip {
+    position: absolute;
+    right: var(--margin);
+    bottom: calc(var(--hud-inset) * 3);
+    min-height: 24px;
+    padding: 0.25rem 0.5rem;
+    border: 0;
+    border-radius: var(--r-1);
+    background: transparent;
+    box-shadow: inset 0 0 0 var(--hairline) var(--line-2);
+    color: var(--fg-2);
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    cursor: pointer;
+  }
+  .boot__skip:hover,
+  .boot__skip:focus-visible {
+    color: var(--fg-1);
+  }
+
+  /* ── POWER ON-fast in CSS: deep links, later visits, a boot skipped before any script ran,
+        a boot whose grammar hadn't landed. Compositor-only (two shutters and a beam), from the
+        first paint, so it never waits on JS. The timings come from the POWER timeline. ── */
+  html[data-boot="fast"] .boot-shutter,
+  html[data-boot-skip] .boot-shutter,
+  html[data-boot-fallback] .boot-shutter {
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    display: block;
+    pointer-events: none;
+    animation: boot-cap-hide 1ms linear var(--on-fast) forwards;
+  }
+  .boot-shutter__top,
+  .boot-shutter__bottom {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 50.5%;
+    background: var(--bg-sunken);
+    animation: shutter-open var(--on-open) var(--ease-settle) var(--on-stretch) both;
+  }
+  .boot-shutter__top {
+    top: 0;
+    transform-origin: top;
+  }
+  .boot-shutter__bottom {
+    bottom: 0;
+    transform-origin: bottom;
+  }
+  @keyframes shutter-open {
+    to {
+      transform: scaleY(0);
+    }
+  }
+  /* the beam: a dot that stretches to a full-width line, then fades as the picture opens */
+  .boot-shutter__beam {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 2px;
+    margin-top: -1px;
+    background: var(--fg-1);
+    animation:
+      beam-stretch var(--on-stretch) var(--ease-settle) both,
+      beam-fade var(--on-open) var(--ease-decay) var(--on-stretch) both;
+  }
+  @keyframes beam-stretch {
+    from {
+      transform: scaleX(0.004);
+    }
+  }
+  @keyframes beam-fade {
+    to {
+      opacity: 0;
+    }
+  }
+  /* Paper — the SCAN: one sheet lifts top → bottom behind a bright bar */
+  html[data-theme="paper"] .boot-shutter__top {
+    height: 100%;
+    transform-origin: bottom;
+    animation: shutter-open var(--scan-fast) var(--ease-transit) both;
+  }
+  html[data-theme="paper"] .boot-shutter__bottom {
+    display: none;
+  }
+  html[data-theme="paper"] .boot-shutter__beam {
+    top: 0;
+    height: 3px;
+    margin-top: 0;
+    background: var(--bg-raised);
+    animation: scan-bar var(--scan-fast) var(--ease-transit) both;
+  }
+  @keyframes scan-bar {
+    to {
+      transform: translateY(100vh);
+    }
+  }
+  /* reduced motion: a crossfade, no flash, no movement */
+  html[data-motion="reduce"] .boot-shutter__top,
+  html[data-motion="reduce"] .boot-shutter__bottom {
+    top: 0;
+    height: 100%;
+    animation: beam-fade var(--reduced) linear both;
+  }
+  html[data-motion="reduce"] .boot-shutter__bottom,
+  html[data-motion="reduce"] .boot-shutter__beam {
+    display: none;
+  }
+  html[data-motion="reduce"] .boot-shutter {
+    animation-duration: 1ms;
+    animation-delay: var(--reduced);
+  }
+  /* an opacity crossfade isn't motion: exempt from base.css's 1 ms rule for the reduced edition */
+  html[data-motion="reduce"] .boot-shutter__top {
+    animation-duration: var(--reduced) !important;
+  }
+
+  @media (forced-colors: active) {
+    .boot-shutter {
+      display: none !important;
+    }
+  }
+}
+
+/* the hero name's rise (components/boot/NameRise.tsx): a per-character copy over the kerned text */
+@layer components {
+  .name-rise {
+    position: relative;
+    display: block;
+  }
+  .name-rise[data-rising] > .name-rise__text {
+    visibility: hidden;
+  }
+  .name-rise__layer {
+    position: absolute;
+    inset: 0;
+  }
+  .name-rise__word {
+    display: inline-block;
+    overflow: clip;
+    overflow-clip-margin: 0.08em;
+    vertical-align: top;
+  }
+  .name-rise__char {
+    display: inline-block;
+    will-change: transform;
+  }
+}

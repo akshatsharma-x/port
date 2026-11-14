@@ -1,0 +1,505 @@
+/* ==========================================================================
+   RETROGRADE · styles/primitives.css — component styles for components/ui/*.
+   ========================================================================== */
+
+@keyframes reveal-failsafe {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Typed custom properties: the one-lamp model (DESIGN.md §4.4) and bracket draw-in. */
+@property --mx { syntax: "<number>"; inherits: true; initial-value: 0.5; }
+@property --my { syntax: "<number>"; inherits: true; initial-value: 0.5; }
+@property --tilt-x { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@property --tilt-y { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@property --bracket-arm-now { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --bracket-color { syntax: "<color>"; inherits: true; initial-value: transparent; }
+
+@layer components {
+  /* ── §2.9 Brackets: solid = live, dashed = provisional, none = static ─────────────
+     One pseudo-element, eight gradient arms. Draw-in animates the arm length. */
+  .bracket {
+    position: relative;
+    --bracket-color: var(--line-2);
+    transition: --bracket-color var(--dur-micro) var(--ease-relay);
+  }
+  .bracket[data-size="lg"] {
+    --bracket-arm: var(--bracket-arm-lg);
+  }
+  .bracket::before {
+    --a: var(--bracket-arm-now);
+    --s: var(--bracket-stroke);
+    --c: var(--bracket-color);
+    content: "";
+    position: absolute;
+    inset: calc(var(--bracket-inset, 0px) * -1);
+    z-index: 1;
+    pointer-events: none;
+    background:
+      linear-gradient(var(--c), var(--c)) left top / var(--a) var(--s) no-repeat,
+      linear-gradient(var(--c), var(--c)) left top / var(--s) var(--a) no-repeat,
+      linear-gradient(var(--c), var(--c)) right top / var(--a) var(--s) no-repeat,
+      linear-gradient(var(--c), var(--c)) right top / var(--s) var(--a) no-repeat,
+      linear-gradient(var(--c), var(--c)) left bottom / var(--a) var(--s) no-repeat,
+      linear-gradient(var(--c), var(--c)) left bottom / var(--s) var(--a) no-repeat,
+      linear-gradient(var(--c), var(--c)) right bottom / var(--a) var(--s) no-repeat,
+      linear-gradient(var(--c), var(--c)) right bottom / var(--s) var(--a) no-repeat;
+    transition: --bracket-arm-now var(--dur-micro) var(--ease-relay);
+  }
+  .bracket[data-variant="dashed"]::before {
+    --h: repeating-linear-gradient(90deg, var(--c) 0 3px, transparent 3px 5px);
+    --v: repeating-linear-gradient(180deg, var(--c) 0 3px, transparent 3px 5px);
+    background:
+      var(--h) left top / var(--a) var(--s) no-repeat,
+      var(--v) left top / var(--s) var(--a) no-repeat,
+      var(--h) right top / var(--a) var(--s) no-repeat,
+      var(--v) right top / var(--s) var(--a) no-repeat,
+      var(--h) left bottom / var(--a) var(--s) no-repeat,
+      var(--v) left bottom / var(--s) var(--a) no-repeat,
+      var(--h) right bottom / var(--a) var(--s) no-repeat,
+      var(--v) right bottom / var(--s) var(--a) no-repeat;
+  }
+  .bracket[data-drawn]::before,
+  html:not(.js) .bracket::before {
+    --bracket-arm-now: var(--bracket-arm);
+  }
+  .bracket[data-active],
+  .bracket:hover,
+  .bracket:focus-visible,
+  .bracket:focus-within {
+    --bracket-color: var(--accent);
+  }
+
+  /* Focus overlay: the same bracket set snaps to whatever has keyboard focus. */
+  .focus-brackets {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+    z-index: 2147483000;
+    pointer-events: none;
+    opacity: 0;
+    --bracket-color: var(--focus);
+  }
+  .focus-brackets[data-visible="true"] {
+    opacity: 1;
+  }
+  .focus-brackets.is-snapping {
+    transition:
+      transform var(--dur-micro) var(--ease-relay),
+      width var(--dur-micro) var(--ease-relay),
+      height var(--dur-micro) var(--ease-relay);
+  }
+
+  /* ── Button ───────────────────────────────────────────────────────────────────── */
+  .btn {
+    --mag-x: 0px;
+    --mag-y: 0px;
+    --bracket-inset: 4px;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding-inline: 1.5rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--fg-1);
+    font-family: var(--ff-mono);
+    font-size: var(--step--1);
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    font-feature-settings: "calt" 0;
+    cursor: pointer;
+    user-select: none;
+    transform: translate3d(var(--mag-x), var(--mag-y), 0);
+    transition:
+      --bracket-color var(--dur-micro) var(--ease-relay),
+      background-color var(--dur-micro) var(--ease-settle),
+      color var(--dur-micro) var(--ease-settle),
+      box-shadow var(--dur-micro) var(--ease-settle);
+  }
+  .btn__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75em;
+    /* label travels 1.5× the button (DESIGN.md §3.7 magnetic parallax) */
+    transform: translate3d(calc(var(--mag-x) * 0.5), calc(var(--mag-y) * 0.5), 0);
+  }
+  .btn:active .btn__label {
+    scale: 0.97; /* same-frame press feedback, no transition */
+  }
+  .btn__icon {
+    display: inline-block;
+    transition: translate var(--dur-micro) var(--ease-settle);
+  }
+  .btn:hover .btn__icon[data-glyph="→"] { translate: 3px 0; }
+  .btn:hover .btn__icon[data-glyph="↗"] { translate: 2px -2px; }
+  .btn:hover .btn__icon[data-glyph="←"] { translate: -3px 0; }
+
+  .btn--primary {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  .btn--primary:hover,
+  .btn--primary:focus-visible {
+    /* phosphor glow on tubes only: --glow is 0 on Paper */
+    box-shadow:
+      0 0 0 1px var(--accent),
+      0 0 24px color-mix(in oklch, var(--accent) calc(var(--glow) * 45%), transparent);
+  }
+  .btn--secondary {
+    box-shadow: inset 0 0 0 1px var(--line-2);
+  }
+  .btn--secondary:hover,
+  .btn--secondary:focus-visible {
+    color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+  .btn--tertiary {
+    padding-inline: 0.5rem;
+    color: var(--fg-2);
+  }
+  .btn--tertiary:hover,
+  .btn--tertiary:focus-visible {
+    color: var(--accent);
+  }
+  .btn:disabled,
+  .btn[aria-disabled="true"] {
+    cursor: not-allowed;
+    background: transparent;
+    color: var(--fg-3);
+    box-shadow: inset 0 0 0 1px var(--line-1);
+    --bracket-color: var(--line-1);
+  }
+
+  /* ── Section + header strip (§2.9) ────────────────────────────────────────────── */
+  .section {
+    position: relative;
+    width: 100%;
+  }
+  .section-strip {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-block: 0.75rem;
+    padding-inline: var(--margin);
+    border-top: var(--hairline) solid var(--line-1);
+  }
+  .section-strip > * {
+    margin: 0;
+    white-space: nowrap;
+  }
+  .section-strip__rule {
+    flex: 1 1 2rem;
+    min-width: 1rem;
+    height: var(--hairline);
+    background: var(--line-1);
+  }
+  @media (max-width: 47.99rem) {
+    .section-strip {
+      flex-wrap: wrap;
+      row-gap: 0.25rem;
+    }
+    .section-strip__rule:nth-of-type(2) {
+      display: none;
+    }
+    .section-strip__counts {
+      flex-basis: 100%;
+      white-space: normal;
+    }
+  }
+
+  /* ── 12-column layout grid (§2.7) + the "G" overlay ───────────────────────────── */
+  .layout-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--gutter);
+    box-sizing: border-box;
+    width: 100%;
+    max-width: calc(var(--content-max) + 2 * var(--margin));
+    margin-inline: auto;
+    padding-inline: var(--margin);
+  }
+  .grid-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2147482000;
+    pointer-events: none;
+    /* The blend sits on the fixed layer itself: a fixed, z-indexed element is an isolated
+       stacking context, so blend modes on its children would only blend inside it (opaque). */
+    mix-blend-mode: screen;
+  }
+  [data-theme="paper"] .grid-overlay {
+    mix-blend-mode: multiply;
+  }
+  .grid-overlay::before {
+    /* the baseline (--baseline, 8 px) */
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(to bottom, var(--line-1) 0 var(--hairline), transparent var(--hairline) var(--baseline));
+  }
+  .grid-overlay .layout-grid {
+    height: 100%;
+  }
+  .grid-overlay__col {
+    background: var(--accent-wash);
+  }
+  .grid-overlay__num {
+    display: block;
+    padding: 0.25rem;
+    color: var(--fg-3);
+  }
+
+  /* ── Marquee ──────────────────────────────────────────────────────────────────── */
+  .marquee {
+    display: flex;
+    width: 100%;
+    overflow: hidden;
+    contain: content;
+  }
+  .marquee__track {
+    display: flex;
+    flex: none;
+    will-change: transform;
+  }
+  .marquee__copy {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--marquee-gap, 2rem);
+    padding-inline-end: var(--marquee-gap, 2rem);
+    white-space: nowrap;
+  }
+  [data-motion="reduce"] .marquee__track {
+    transform: none !important;
+    will-change: auto;
+  }
+
+  /* ── RAIL REVEAL (§3.7) ───────────────────────────────────────────────────────────
+     The pre-reveal state is a static opacity 0, not a clip: Chrome's IntersectionObserver
+     honours the target's own clip-path, so a clipped element would never report as visible
+     and never reveal. Opacity is invisible to IntersectionObserver and keeps the text in the
+     accessibility tree. The wipe itself is the clip-path animation (components/ui/Reveal).
+     Hidden only when JS can reveal it, and never in the reduced-motion edition. The 3 s
+     failsafe applies only while the app has not hydrated (UIEffects sets data-hydrated):
+     if JS fails, content shows; if it hydrates, reveals wait for their trigger as designed. */
+  .js [data-reveal]:not([data-revealed]):not([data-revealing]) {
+    opacity: 0;
+  }
+  .js:not([data-hydrated]) [data-reveal]:not([data-revealed]):not([data-revealing]) {
+    animation: reveal-failsafe 0s linear 3s forwards;
+  }
+  [data-motion="reduce"] [data-reveal],
+  [data-motion="reduce"] [data-reveal] * {
+    opacity: 1 !important;
+    clip-path: none !important;
+  }
+
+  /* ── Tilt (Tier B, one lamp) ──────────────────────────────────────────────────── */
+  .tilt {
+    transform: perspective(var(--perspective, 900px)) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+    transform-style: preserve-3d;
+    contain: layout style;
+  }
+
+  /* One-lamp shading helpers for Tier-B objects inside <Tilt> (they read --mx/--my and the
+     shadow vector). Shadows exist only on paper; on a tube a shadow is invisible anyway. */
+  .lamp-shadow {
+    box-shadow: var(--shadow-x, 0px) var(--shadow-y, 10px) var(--shadow-blur, 18px)
+      color-mix(in oklch, var(--fg-1) calc((1 - var(--glow)) * 30%), transparent);
+  }
+  .lamp-highlight {
+    --lamp: color-mix(in oklch, var(--fg-1) 10%, transparent);
+    background-image: radial-gradient(circle at calc(var(--mx) * 100%) calc(var(--my) * 100%), var(--lamp), transparent 60%);
+  }
+  [data-theme="paper"] .lamp-highlight {
+    --lamp: color-mix(in oklch, var(--bg-raised) 90%, transparent);
+  }
+
+  /* ── DataRow: LABEL ......... VALUE ───────────────────────────────────────────── */
+  .datalist {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+  }
+  .datarow {
+    display: flex;
+    align-items: baseline;
+    gap: 1ch;
+    font-family: var(--ff-mono);
+    font-size: var(--step--1);
+    line-height: var(--lh--1);
+    font-feature-settings: "calt" 0;
+  }
+  .datarow > dt {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: baseline;
+    min-width: 0;
+    color: var(--fg-3);
+    font-size: var(--step--2);
+    letter-spacing: var(--tr--2);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .datarow > dt::after {
+    content: "";
+    flex: 1 1 2ch;
+    min-width: 2ch;
+    height: 2px;
+    margin-inline-start: 1ch;
+    background: radial-gradient(circle, var(--line-2) 0 0.75px, transparent 1.1px) 0 0 / 6px 2px repeat-x;
+  }
+  .datarow > dd {
+    flex: 0 1 auto;
+    min-width: 0;
+    margin: 0;
+    color: var(--fg-1);
+    text-align: end;
+    overflow-wrap: anywhere;
+  }
+  /* a row with more to say: the label ···· value line, then each further <dd> on its own line */
+  .datarow--more {
+    flex-wrap: wrap;
+  }
+  .datarow--more > dd ~ dd {
+    flex-basis: 100%;
+    text-align: start;
+  }
+
+  /* ── Table: the ledger (DESIGN.md §7.4) ───────────────────────────────────────── */
+  .table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+    border-radius: var(--r-1);
+    box-shadow: inset 0 0 0 var(--hairline) var(--line-1);
+    overscroll-behavior-x: contain;
+  }
+  .table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    color: var(--fg-1);
+    font-family: var(--ff-mono);
+    font-size: var(--step--2);
+    line-height: var(--lh--1);
+    font-feature-settings: "calt" 0;
+  }
+  .table__caption {
+    padding: 0.75rem 0.75rem 0.5rem;
+    color: var(--fg-3);
+    letter-spacing: var(--tr--2);
+    text-align: start;
+    text-transform: uppercase;
+  }
+  .table th,
+  .table td {
+    padding: 0.5rem 0.75rem;
+    border-top: var(--hairline) solid var(--line-1);
+    background: var(--bg);
+    text-align: start;
+    vertical-align: top;
+    white-space: nowrap;
+  }
+  .table thead th {
+    background: var(--bg-raised);
+    color: var(--fg-3);
+    font-weight: 500;
+    letter-spacing: var(--tr--2);
+    text-transform: uppercase;
+  }
+  .table tbody tr:nth-child(even) > * {
+    background: var(--bg-band); /* green-bar banding */
+  }
+  .table tbody th {
+    font-weight: 600;
+  }
+  .table [data-numeric] {
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+  }
+  .table [data-wide] {
+    min-width: 32ch;
+    max-width: 64ch;
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+  .table[data-row-header] tr > :first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    box-shadow: inset calc(-1 * var(--hairline)) 0 0 var(--line-1);
+  }
+
+  /* ── Chip ─────────────────────────────────────────────────────────────────────── */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5em;
+    min-height: 1.75rem;
+    padding-inline: 0.5rem;
+    border: 0;
+    border-radius: var(--r-1);
+    background: transparent;
+    box-shadow: inset 0 0 0 1px var(--line-2);
+    color: var(--fg-2);
+    font-family: var(--ff-mono);
+    font-size: var(--step--2);
+    line-height: 1;
+    font-weight: 500;
+    letter-spacing: var(--tr--2);
+    text-transform: uppercase;
+    font-feature-settings: "calt" 0;
+    white-space: nowrap;
+  }
+  .chip--toggle {
+    cursor: pointer;
+    transition:
+      color var(--dur-micro) var(--ease-relay),
+      background-color var(--dur-micro) var(--ease-relay),
+      box-shadow var(--dur-micro) var(--ease-relay);
+  }
+  .chip--toggle:hover {
+    color: var(--fg-1);
+    box-shadow: inset 0 0 0 1px var(--fg-2);
+  }
+  .chip--toggle[aria-pressed="true"] {
+    color: var(--accent);
+    background: var(--accent-wash);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+  @media (pointer: coarse) {
+    .chip--toggle {
+      min-height: 44px; /* touch target (Part 14) */
+    }
+  }
+
+  /* ── Counter ──────────────────────────────────────────────────────────────────── */
+  .counter {
+    display: inline-flex;
+    align-items: baseline;
+  }
+  .counter__digits {
+    display: inline-block;
+    text-align: end;
+  }
+
+  /* ── Forced colors: brackets become outlines, fills become system colors ──────── */
+  @media (forced-colors: active) {
+    .bracket::before {
+      background: none;
+      border: var(--bracket-stroke) solid CanvasText;
+    }
+    .focus-brackets::before {
+      border-color: Highlight;
+    }
+  }
+}

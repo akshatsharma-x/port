@@ -1,0 +1,406 @@
+/* ==========================================================================
+   RETROGRADE · styles/dossier.css — a record's DOSSIER (DESIGN.md §7.4): the dialog
+   over home (a reader panel; a full-screen sheet on phones), its own page, and the
+   microfiche frame both share.
+   ========================================================================== */
+
+@layer components {
+  /* the dialog over home: a reader at the right, the sky still there at the left */
+  .dossier-dialog {
+    position: fixed;
+    inset: 0 0 0 auto;
+    width: min(46rem, 62vw);
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* opaque: at 95% the page behind ghosted through the record's text (the ledger's titles under
+       the TLDR, the phone review, Part 8); the sky stays in view beside the panel, through the backdrop */
+    background: var(--bg);
+    box-shadow: inset var(--hairline) 0 0 var(--line-2);
+    color: var(--fg-1);
+  }
+  .dossier-dialog::backdrop {
+    background: color-mix(in oklab, var(--bg) 35%, transparent);
+  }
+  .dossier-dialog__sheet {
+    position: relative;
+    min-height: 100%;
+    padding: calc(var(--hud-inset) + var(--spacing) * 16) clamp(1.25rem, 4vw, 3.5rem) calc(var(--hud-band-bottom) + var(--spacing) * 10);
+  }
+  .dossier-dialog__close {
+    position: absolute;
+    top: calc(var(--hud-inset) + var(--spacing) * 4);
+    right: clamp(1.25rem, 4vw, 3.5rem);
+    display: inline-flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 2);
+    min-height: 24px;
+    padding: 0 calc(var(--spacing) * 2);
+    border: 0;
+    background: none;
+    color: var(--fg-2);
+    cursor: pointer;
+  }
+  .dossier-dialog__close:hover {
+    color: var(--fg-1);
+  }
+  @media (max-width: 47.99rem) {
+    /* phones: the dossier as a full-screen sheet */
+    .dossier-dialog {
+      width: 100vw;
+      box-shadow: none;
+    }
+    .dossier-dialog[open] {
+      animation: sheet-up var(--dur-element) var(--ease-settle);
+    }
+  }
+  @keyframes sheet-up {
+    from {
+      translate: 0 12%;
+      opacity: 0;
+    }
+  }
+
+  /* the dossier's own page */
+  .dossier-page {
+    max-width: 52rem;
+    margin-inline: auto;
+    /* the fiche's 3D entrance must never overflow sideways: on a phone, overflow widens the layout
+       viewport and every fixed element shifts with it (CLS 0.14 on Lighthouse's phone load, Part 8) */
+    overflow-x: clip;
+    padding: calc(var(--hud-inset) + var(--spacing) * 20) var(--margin) var(--section-y);
+  }
+  .dossier-page__back {
+    margin: 0 0 calc(var(--spacing) * 8);
+  }
+  .dossier-page__back a {
+    color: var(--fg-2);
+    text-decoration: none;
+  }
+
+  /* ── the microfiche frame: it settles flat (rotateX 8° → 0) under a scan bar ── */
+  .dossier__fiche {
+    position: relative;
+    display: grid;
+    gap: calc(var(--spacing) * 6);
+    transform-origin: 50% 0;
+    overflow: clip;
+  }
+  html.js:not([data-motion="reduce"]) .dossier__fiche {
+    animation: fiche-in calc(var(--dur-element) * 1.5) var(--ease-settle) both;
+  }
+  /* the scan bar: a layer the fiche's size with the bar on its top edge, swept down by transform
+     (sweeping `top` was a layout shift every frame) */
+  html.js:not([data-motion="reduce"]) .dossier__fiche::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, var(--accent) 0 2px, color-mix(in oklab, var(--accent) 28%, transparent) 2px, transparent calc(var(--spacing) * 4));
+    pointer-events: none;
+    animation: fiche-scan calc(var(--dur-element) * 1.5) var(--ease-settle) both;
+  }
+  @keyframes fiche-in {
+    from {
+      transform: perspective(1200px) rotateX(8deg);
+      clip-path: inset(0 0 100% 0);
+    }
+    to {
+      transform: none;
+      clip-path: inset(0);
+    }
+  }
+  @keyframes fiche-scan {
+    from {
+      translate: 0 0;
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    to {
+      translate: 0 100%;
+      opacity: 0;
+    }
+  }
+
+  /* the reversed-type header strip: ID · YEAR · VENUE · TITLE… */
+  .dossier__strip {
+    display: flex;
+    gap: calc(var(--spacing) * 3);
+    margin: 0;
+    padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 3);
+    background: var(--fg-1);
+    color: var(--bg);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .dossier__strip > span + span::before {
+    content: "·";
+    margin-inline-end: calc(var(--spacing) * 3);
+  }
+  .dossier__strip-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* not yet published: dashed brackets and a STATUS stamp in --warn */
+  .dossier--pending .dossier__fiche {
+    outline: var(--hairline) dashed var(--warn);
+    outline-offset: calc(var(--spacing) * 3);
+  }
+  .dossier__stamp {
+    justify-self: start;
+    margin: 0;
+    padding: calc(var(--spacing) * 1) calc(var(--spacing) * 3);
+    color: var(--warn);
+    box-shadow: inset 0 0 0 var(--hairline) var(--warn);
+    rotate: -2deg;
+  }
+
+  .dossier__title {
+    --t-size: var(--step-3);
+    margin: 0;
+    font-family: var(--ff-display);
+    font-size: var(--t-size);
+    line-height: 1.1;
+    text-wrap: balance;
+  }
+  /* the TLDR: the second read, a quoted callout right under the title */
+  .dossier__tldr {
+    display: grid;
+    gap: calc(var(--spacing) * 2);
+    margin: 0;
+    padding-inline-start: calc(var(--spacing) * 5);
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+  .dossier__tldr blockquote {
+    margin: 0;
+  }
+  .dossier__tldr p {
+    margin: 0;
+    font-size: var(--step-2);
+    line-height: 1.3;
+    color: var(--fg-1);
+    text-wrap: pretty;
+  }
+  .dossier__tldr p::before {
+    content: "“";
+  }
+  .dossier__tldr p::after {
+    content: "”";
+  }
+  .dossier__tldr figcaption {
+    color: var(--fg-3);
+  }
+  .dossier__authors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 calc(var(--spacing) * 1);
+    margin: 0;
+  }
+  .dossier__badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--spacing) * 2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .dossier__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 1.5);
+    min-height: 24px;
+    /* block padding, so a venue that wraps to three lines on a phone still clears its frame */
+    padding: calc(var(--spacing) * 1) calc(var(--spacing) * 2.5);
+    color: var(--fg-2);
+    box-shadow: inset 0 0 0 var(--hairline) var(--line-2);
+  }
+  .dossier__badge--venue {
+    color: var(--fg-1);
+  }
+  .dossier__section {
+    display: grid;
+    gap: calc(var(--spacing) * 3);
+  }
+  .dossier__label {
+    margin: 0;
+    color: var(--fg-3);
+  }
+  .dossier__pending {
+    margin: 0;
+    color: var(--fg-3);
+  }
+  .dossier__abstract-body {
+    display: grid;
+    gap: calc(var(--spacing) * 2);
+  }
+  .dossier__abstract-text {
+    margin: 0;
+    color: var(--fg-2);
+  }
+  .dossier__abstract-body:not([data-open]) .dossier__abstract-text {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    overflow: hidden;
+  }
+  .dossier__more {
+    justify-self: start;
+    min-height: 24px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    cursor: pointer;
+  }
+  .dossier__keywords {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--spacing) * 2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .dossier__metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+    gap: calc(var(--spacing) * 4);
+    margin: 0;
+  }
+  .dossier__metrics > div {
+    display: grid;
+    gap: calc(var(--spacing) * 1);
+    padding-block-start: calc(var(--spacing) * 3);
+    box-shadow: inset 0 var(--hairline) 0 var(--line-1);
+  }
+  .dossier__metrics dt {
+    color: var(--fg-2);
+  }
+  .dossier__metrics dd {
+    margin: 0;
+  }
+  /* the count-up (an inline-flex Counter) and a plain figure share one baseline */
+  .dossier__figure {
+    display: flex;
+    align-items: baseline;
+    font-size: var(--step-3);
+    line-height: 1;
+  }
+  .dossier__from {
+    color: var(--fg-3);
+  }
+  .dossier__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--spacing) * 3);
+  }
+  .copy-bibtex {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 3);
+  }
+  .copy-bibtex__toast {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 1);
+    min-width: 10ch;
+    color: var(--accent);
+  }
+  .dossier__built {
+    display: grid;
+    gap: calc(var(--spacing) * 2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .dossier__project {
+    display: grid;
+    gap: calc(var(--spacing) * 1);
+    padding: calc(var(--spacing) * 3);
+    color: var(--fg-1);
+    text-decoration: none;
+    box-shadow: inset 0 0 0 var(--hairline) var(--line-1);
+  }
+  .dossier__project:hover {
+    box-shadow: inset 0 0 0 var(--hairline) var(--accent);
+  }
+  .dossier__pager {
+    display: flex;
+    justify-content: space-between;
+    gap: calc(var(--spacing) * 6);
+    padding-block-start: calc(var(--spacing) * 6);
+    box-shadow: inset 0 var(--hairline) 0 var(--line-1);
+  }
+  .dossier__step {
+    display: grid;
+    gap: calc(var(--spacing) * 1);
+    max-width: 48%;
+    color: var(--fg-1);
+    text-decoration: none;
+  }
+  .dossier__step > .t-micro {
+    color: var(--fg-3);
+  }
+  .dossier__step--next {
+    margin-inline-start: auto;
+    text-align: end;
+  }
+  .dossier__step:hover > .t-micro {
+    color: var(--accent);
+  }
+  .pixel-glyph {
+    flex: none;
+  }
+
+  /* SLIDE ADVANCE between records (components/research/DossierPush.tsx): a push in the reading
+     direction — next leaves left and arrives from the right, prev the other way */
+  ::view-transition-old(.dossier-next),
+  ::view-transition-old(.dossier-prev) {
+    animation:
+      var(--dur-micro) var(--ease-depart) both vt-fade reverse,
+      var(--dur-element) var(--ease-transit) both vt-push reverse;
+  }
+  ::view-transition-new(.dossier-next),
+  ::view-transition-new(.dossier-prev) {
+    animation:
+      var(--dur-element-out) var(--ease-settle) var(--dur-micro) both vt-fade,
+      var(--dur-element) var(--ease-transit) both vt-push;
+  }
+  ::view-transition-old(.dossier-next),
+  ::view-transition-new(.dossier-prev) {
+    --push: calc(var(--spacing) * -16);
+  }
+  ::view-transition-new(.dossier-next),
+  ::view-transition-old(.dossier-prev) {
+    --push: calc(var(--spacing) * 16);
+  }
+  html[data-motion="reduce"]::view-transition-old(.dossier-next),
+  html[data-motion="reduce"]::view-transition-new(.dossier-next),
+  html[data-motion="reduce"]::view-transition-old(.dossier-prev),
+  html[data-motion="reduce"]::view-transition-new(.dossier-prev) {
+    animation: none;
+  }
+}
+
+@keyframes vt-push {
+  from {
+    translate: var(--push) 0;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+  }
+}

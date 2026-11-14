@@ -1,0 +1,109 @@
+/* ==========================================================================
+   RETROGRADE · styles/motion.css — DITHER RESOLVE (element tier) and the standard motion
+   utilities' DOM (DESIGN.md §3.6 ③, §3.7)
+   ========================================================================== */
+
+/* HALFTONE's dot radius, animated in steps by WAAPI (components/ui/DitherFrame.tsx) */
+@property --dot-r {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@layer components {
+  /* <DitherImage>: a box reserved by the image's aspect ratio (no layout shift), the 1-bit lo
+     layer, and the image masked through the Bayer sprite while it resolves. */
+  .dither {
+    position: relative;
+    display: block;
+    overflow: clip;
+    aspect-ratio: var(--ratio);
+    background: var(--bg-sunken);
+  }
+  .dither__lo,
+  .dither__hi {
+    position: absolute;
+    inset: 0;
+  }
+  .dither__lo[data-ink]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--fg-3);
+    -webkit-mask: var(--lo) center / cover no-repeat;
+    mask: var(--lo) center / cover no-repeat;
+  }
+  /* the mask sprite is a cell per pixel: scale it as pixels, but never the photo itself */
+  .dither__hi {
+    image-rendering: pixelated;
+  }
+  .dither__hi > img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: var(--fit, cover);
+    image-rendering: auto;
+  }
+  /* until it arrives (JS only: the no-JS edition shows the image plainly) */
+  html.js .dither[data-state="lo"] .dither__hi {
+    opacity: 0;
+  }
+  /* Paper — HALFTONE: AM dots on a 45° screen (two square lattices, offset by half a period) */
+  .dither[data-mode="halftone"][data-state="resolving"] .dither__hi {
+    --p: var(--dither-period);
+    -webkit-mask-image: radial-gradient(circle, currentColor var(--dot-r), transparent calc(var(--dot-r) + 1px)), radial-gradient(circle, currentColor var(--dot-r), transparent calc(var(--dot-r) + 1px));
+    mask-image: radial-gradient(circle, currentColor var(--dot-r), transparent calc(var(--dot-r) + 1px)), radial-gradient(circle, currentColor var(--dot-r), transparent calc(var(--dot-r) + 1px));
+    -webkit-mask-size: var(--p) var(--p);
+    mask-size: var(--p) var(--p);
+    -webkit-mask-position: 0 0, calc(var(--p) / 2) calc(var(--p) / 2);
+    mask-position: 0 0, calc(var(--p) / 2) calc(var(--p) / 2);
+    -webkit-mask-repeat: repeat;
+    mask-repeat: repeat;
+    -webkit-mask-composite: source-over;
+    mask-composite: add;
+  }
+  /* Reduced motion: DITHER RESOLVE is an instant swap (§3.9) */
+  [data-motion="reduce"] .dither .dither__hi {
+    opacity: 1;
+    -webkit-mask: none;
+    mask: none;
+  }
+
+  /* SCRAMBLE / TYPEWRITER: the real text reserves the box and stays readable to assistive tech;
+     the animation plays in an aria-hidden layer on top, so nothing reflows. */
+  .scramble,
+  .typewriter {
+    display: inline-grid;
+  }
+  .scramble > *,
+  .typewriter > * {
+    grid-area: 1 / 1;
+  }
+  .scramble[data-running] > .scramble__text,
+  .typewriter[data-typing] > .typewriter__text {
+    color: transparent;
+  }
+  .scramble__live,
+  .typewriter__live {
+    pointer-events: none;
+  }
+  .scramble__glyphs {
+    font-family: var(--ff-mono);
+    font-feature-settings: "calt" 0;
+  }
+  /* pre-wrap, not pre: the typed copy wraps exactly like the real line (a `pre` layer's
+     min-content is the whole line, which overflows narrow containers) */
+  .typewriter__live {
+    display: none;
+    white-space: pre-wrap;
+  }
+  .typewriter[data-typing] > .typewriter__live {
+    display: inline;
+  }
+
+  /* SLIDE ADVANCE: the push stays inside its frame */
+  .slide-advance {
+    position: relative;
+    overflow: clip;
+  }
+}

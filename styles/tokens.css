@@ -1,0 +1,265 @@
+/* ==========================================================================
+   RETROGRADE · styles/tokens.css
+   DESIGN.md §2 verbatim, plus the §3.2 easing and §3.4 duration tokens.
+   tests/contrast.test.ts re-derives the §2.3 contrast tables from this file and
+   tests/tokens-sync.test.ts checks every other value against DESIGN.md.
+   Amend DESIGN.md first, then this file.
+   ========================================================================== */
+
+/* §2.3 ─────────────────────────────────────────── PHOSPHOR · P1 (default) */
+:root,
+[data-theme="phosphor"] {
+  color-scheme: dark;
+  --bg: #050505;
+  --bg-raised: #0B100D;
+  --bg-sunken: #020202;
+  --bg-band: #060D09;
+  --fg-1: #E1F6EA;
+  --fg-2: #B2C9BB;
+  --fg-3: #8BA093;
+  --line-1: #1B2620;
+  --line-2: #54675B;
+  --accent: #00FF9C;
+  --accent-fill: #03915A;
+  --accent-wash: #002010;
+  --on-accent: #05160D;
+  --hot: #FF2E88;
+  --warn: #F7C243;
+  --focus: var(--accent);
+  /* §2.5 dark-theme weight compensation (light on dark reads heavier) */
+  --wght-body: 385;
+  --wght-lead: 365;
+  --wght-display: 780;
+  /* tubes glow, paper doesn't (§5.2) */
+  --glow: 1;
+}
+
+/* §2.3 ─────────────────────────────────────────── AMBER · P3 */
+[data-theme="amber"] {
+  color-scheme: dark;
+  --bg: #080605;
+  --bg-raised: #14100B;
+  --bg-sunken: #030302;
+  --bg-band: #100B06;
+  --fg-1: #FAEDD5;
+  --fg-2: #D5BF9F;
+  --fg-3: #AF9778;
+  --line-1: #2B241B;
+  --line-2: #73614C;
+  --accent: #FFB000;
+  --accent-fill: #AC731A;
+  --accent-wash: #281802;
+  --on-accent: #1C1105;
+  --hot: #37D2F2;
+  --warn: #FD8358;
+  --focus: var(--accent);
+  --wght-body: 385;
+  --wght-lead: 365;
+  --wght-display: 780;
+  --glow: 1;
+}
+
+/* §2.3 ─────────────────────────────────────────── PAPER · green-bar printout */
+[data-theme="paper"] {
+  color-scheme: light;
+  --bg: #F2F0EB;
+  --bg-raised: #FBFAF7;
+  --bg-sunken: #E8E6E0;
+  --bg-band: #DFEEE2;
+  --fg-1: #0A0A0A;
+  --fg-2: #413E39;
+  --fg-3: #605C55;
+  --line-1: #D5D2CD;
+  --line-2: #83807A;
+  --accent: #006842;
+  --accent-fill: #006842;
+  --accent-wash: #D4EEDD;
+  --on-accent: #F2F0EB;
+  --hot: #B71747;
+  --warn: #925301;
+  --focus: var(--accent);
+  --wght-body: 400;
+  --wght-lead: 380;
+  --wght-display: 800;
+  --glow: 0;
+}
+
+/* §2.3 Display-P3 upgrades. Theme selectors only — never :root, which would
+   leak the phosphor accent into Paper. */
+@media (color-gamut: p3) {
+  [data-theme="phosphor"] {
+    --accent: oklch(87% 0.25 156.6);
+    --hot: oklch(66.2% 0.29 1.7);
+  }
+  [data-theme="amber"] {
+    --accent: oklch(81.2% 0.19 76.4);
+  }
+}
+
+/* Theme-independent tokens ──────────────────────────────────────────────── */
+:root {
+  /* §2.6 type scale — fluid 360 → 1600 px (root 16 px): minor third → perfect fifth */
+  --step--2: clamp(0.6875rem, 0.6694rem + 0.0806vw, 0.7500rem);
+  --step--1: clamp(0.8125rem, 0.7944rem + 0.0806vw, 0.8750rem);
+  --step-0: clamp(1.0000rem, 0.9637rem + 0.1613vw, 1.1250rem);
+  --step-1: clamp(1.2000rem, 1.0585rem + 0.6290vw, 1.6875rem);
+  --step-2: clamp(1.4400rem, 1.1232rem + 1.4081vw, 2.5312rem);
+  --step-3: clamp(1.7280rem, 1.1274rem + 2.6695vw, 3.7969rem);
+  --step-4: clamp(2.0736rem, 1.0221rem + 4.6732vw, 5.6953rem);
+  --step-5: clamp(2.4883rem, 0.7305rem + 7.8125vw, 8.5430rem);
+
+  /* line heights: land on the 4 px grid at max size */
+  --lh--2: 1.3333;
+  --lh--1: 1.4286;
+  --lh-0: 1.5556;
+  --lh-1: 1.3333;
+  --lh-2: 1.1852;
+  --lh-3: 1.0535;
+  --lh-4: 0.9657;
+  --lh-5: 0.8779;
+
+  /* tracking */
+  --tr--2: 0.14em;
+  --tr--1: 0.02em;
+  --tr--1-sans: 0em;
+  --tr-0: 0em;
+  --tr-1: -0.005em;
+  --tr-2: -0.015em;
+  --tr-3: -0.025em;
+  --tr-4: -0.035em;
+  --tr-5: -0.045em;
+
+  /* faces: weights that don't change per theme, and widths (font-stretch drives wdth) */
+  --wght-micro: 500;
+  --wght-small: 400;
+  --wght-heading: 650;
+  --wght-title: 720;
+  --wght-mega: 860;
+  --wght-led: 800;
+  --wdth-heading: 100%;
+  --wdth-title: 110%;
+  --wdth-display: 118%;
+  --wdth-mega: 125%;
+
+  /* §2.6 LED material: pitch 0.075em, dots 80 % of the pitch */
+  --led-pitch: 0.075em;
+  --led-dot: 80%;
+
+  /* §2.7 fluid layout tokens (fixed steps are Tailwind's 4 px --spacing scale) */
+  --gutter: clamp(1.0000rem, 0.7097rem + 1.2903vw, 2.0000rem);
+  --margin: clamp(1.2500rem, 0.1613rem + 4.8387vw, 5.0000rem);
+  --block: clamp(2.0000rem, 1.4194rem + 2.5806vw, 4.0000rem);
+  --section-y: clamp(6.0000rem, 3.6774rem + 10.3226vw, 14.0000rem);
+  --hud-inset: clamp(0.7500rem, 0.5323rem + 0.9677vw, 1.5000rem);
+  --content-max: 100%;
+  /* §2.9 the baseline the "G" overlay draws and the hero's lattice lands on */
+  --baseline: 8px;
+
+  /* §2.8 radii */
+  --r-0: 0;
+  --r-1: 2px;
+  --r-card: 3.7cqw;
+  --r-bezel: 18px;
+  --r-dot: 999px;
+
+  /* §7.3 the cursor's ink: white under mix-blend-mode: difference, so it inverts whatever is
+     beneath it and reads on every theme (it is never text, never a surface) */
+  --cursor-ink: #FFFFFF;
+
+  /* §2.9 a hairline is one device pixel; brackets are 1.5 hairlines rounded to device px */
+  --hairline: 1px;
+  --bracket-arm: 12px;
+  --bracket-arm-lg: 16px;
+  --bracket-stroke: 2px;
+
+  /* §3.2 easing */
+  --ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-transit: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-depart: cubic-bezier(0.5, 0, 0.75, 0);
+  --ease-relay: cubic-bezier(0.9, 0, 0.1, 1);
+  --ease-decay: cubic-bezier(0.1, 0.9, 0.2, 1);
+
+  /* §3.4 duration tiers (in / out) and the caret blink (530 on / 530 off) */
+  --dur-micro: 120ms;
+  --dur-micro-out: 80ms;
+  --dur-element: 400ms;
+  --dur-element-out: 260ms;
+  --dur-scene: 900ms;
+  --dur-scene-out: 600ms;
+  --blink: 1060ms;
+
+  /* FX master switch, read by the Part 5 overlay layers */
+  --fx-on: 1;
+}
+
+@media (min-resolution: 2dppx) {
+  :root {
+    --hairline: 0.5px;
+    --bracket-stroke: 1px;
+  }
+}
+
+@media (min-width: 137.5rem) {
+  :root {
+    --content-max: 2048px;
+  }
+}
+
+/* §2.4 accessibility modes ─────────────────────────────────────────────── */
+@media (prefers-contrast: more) {
+  [data-theme][data-theme] {
+    --fg-3: var(--fg-2);
+    --line-1: var(--line-2);
+    --fx-on: 0;
+  }
+}
+
+@media (forced-colors: active) {
+  [data-theme][data-theme] {
+    --bg: Canvas;
+    --bg-raised: Canvas;
+    --bg-sunken: Canvas;
+    --bg-band: Canvas;
+    --fg-1: CanvasText;
+    --fg-2: CanvasText;
+    --fg-3: CanvasText;
+    --line-1: CanvasText;
+    --line-2: CanvasText;
+    --accent: LinkText;
+    --accent-fill: Highlight;
+    --accent-wash: Canvas;
+    --on-accent: HighlightText;
+    --hot: Highlight;
+    --warn: CanvasText;
+    --focus: Highlight;
+    --glow: 0;
+    --fx-on: 0;
+  }
+}
+
+/* Print = Paper (tests/tokens-sync.test.ts asserts these equal the Paper block). */
+@media print {
+  [data-theme][data-theme] {
+    color-scheme: light;
+    --bg: #F2F0EB;
+    --bg-raised: #FBFAF7;
+    --bg-sunken: #E8E6E0;
+    --bg-band: #DFEEE2;
+    --fg-1: #0A0A0A;
+    --fg-2: #413E39;
+    --fg-3: #605C55;
+    --line-1: #D5D2CD;
+    --line-2: #83807A;
+    --accent: #006842;
+    --accent-fill: #006842;
+    --accent-wash: #D4EEDD;
+    --on-accent: #F2F0EB;
+    --hot: #B71747;
+    --warn: #925301;
+    --wght-body: 400;
+    --wght-lead: 380;
+    --wght-display: 800;
+    --glow: 0;
+    --fx-on: 0;
+  }
+}

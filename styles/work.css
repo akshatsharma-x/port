@@ -1,0 +1,524 @@
+/* ==========================================================================
+   RETROGRADE · styles/work.css — 05 WORK (DESIGN.md §7.4, §4.3 A4, §4.4 B4): the band (the
+   stage slot, its HTML layer, the CSS carousel), the INDEX, the case study, SLIDE ADVANCE and
+   the DOM FLIP. Sizes from lib/work.ts and lib/covers.ts.
+   ========================================================================== */
+
+@layer components {
+  /* ── the band: the slot, the CSS carousel and the HTML layer share one box ── */
+  .work-band {
+    position: relative;
+    display: grid;
+    min-height: 100svh;
+  }
+  .work-band > * {
+    grid-area: 1 / 1;
+  }
+
+  /* the HTML layer over the live stage: the drag surface, every slide a link over its window */
+  .work-layer {
+    position: relative;
+    z-index: 1;
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+    contain: strict;
+    cursor: grab;
+  }
+  .work-layer:active {
+    cursor: grabbing;
+  }
+  .work-layer__slides {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .work-layer__slide {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: block;
+    will-change: transform;
+    -webkit-user-drag: none;
+  }
+  .work-layer__slide:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 4px;
+  }
+  /* until the stage draws, the poster is what's there: no layer to point at */
+  .work-layer:not([data-live]) .work-layer__slide {
+    visibility: hidden;
+  }
+
+  /* ── the stage-less edition: a CSS curved carousel (tier OFF, reduced motion, no JS) ── */
+  .work-css {
+    display: none;
+    align-content: center;
+    padding-block: calc(var(--hud-inset) + var(--spacing) * 14) calc(var(--hud-band-bottom) + var(--spacing) * 6);
+  }
+  .work-band[data-stage="off"] .work-css,
+  html[data-motion="reduce"] .work-css,
+  html:not(.js) .work-css {
+    display: grid;
+  }
+  .work-band[data-stage="off"] > [data-stage-slot],
+  html[data-motion="reduce"] .work-band > [data-stage-slot],
+  html:not(.js) .work-band > [data-stage-slot] {
+    visibility: hidden;
+  }
+  .work-css__rail {
+    --slide-w: min(78vw, 40rem);
+    display: flex;
+    gap: calc(var(--spacing) * 6);
+    margin: 0;
+    padding: calc(var(--spacing) * 6) calc(50vw - var(--slide-w) / 2);
+    list-style: none;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    perspective: 1400px;
+  }
+  .work-css__rail::-webkit-scrollbar {
+    display: none;
+  }
+  .work-css__slide {
+    flex: none;
+    width: var(--slide-w);
+    scroll-snap-align: center;
+  }
+  /* the arc: each slide turns as it passes, facing in from either side (a concave rail) */
+  @supports (animation-timeline: view()) {
+    html:not([data-motion="reduce"]) .work-css__slide {
+      animation: work-arc linear both;
+      animation-timeline: view(inline);
+    }
+  }
+  @keyframes work-arc {
+    from {
+      transform: rotateY(-24deg) translateZ(-60px);
+    }
+    50% {
+      transform: none;
+    }
+    to {
+      transform: rotateY(24deg) translateZ(-60px);
+    }
+  }
+  /* a 35 mm mount: the window's 36 × 24 in a 50 × 50 frame */
+  .work-css__link {
+    display: grid;
+    gap: calc(var(--spacing) * 2);
+    padding: calc(var(--slide-w) * 0.07) calc(var(--slide-w) * 0.07);
+    border-radius: calc(var(--slide-w) * 0.04);
+    background: var(--bg-raised);
+    color: var(--fg-2);
+    text-decoration: none;
+    box-shadow: inset 0 0 0 var(--hairline) var(--line-1);
+  }
+  .work-css__link:hover {
+    color: var(--fg-1);
+  }
+  .work-css__link:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 4px;
+  }
+  .work-css__print {
+    display: flex;
+    justify-content: space-between;
+    gap: calc(var(--spacing) * 3);
+    text-transform: uppercase;
+  }
+  .work-css__title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .work-css__window {
+    display: block;
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+    background: var(--bg-sunken);
+  }
+  .work-css__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* ── the document: INDEX (the interlock to CAPABILITIES) ── */
+  .work-doc {
+    min-height: 100svh;
+    align-content: start;
+    padding-block: var(--section-y);
+  }
+  .work-index {
+    display: grid;
+    gap: calc(var(--spacing) * 6);
+  }
+  .work-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--spacing) * 3) calc(var(--spacing) * 8);
+  }
+  html:not(.js) .work-filters {
+    display: none;
+  }
+  .work-filters__group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--spacing) * 2);
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .work-filters__group > legend {
+    float: left;
+    margin-inline-end: calc(var(--spacing) * 1);
+    padding: 0;
+    color: var(--fg-3);
+  }
+  .work-filters__count {
+    margin: 0;
+    color: var(--fg-3);
+  }
+  .work-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .work-table__caption {
+    padding-block-end: calc(var(--spacing) * 3);
+    text-align: start;
+    color: var(--fg-2);
+  }
+  .work-table th,
+  .work-table td {
+    padding: calc(var(--spacing) * 3) calc(var(--spacing) * 3);
+    text-align: start;
+    vertical-align: baseline;
+    font-weight: inherit;
+  }
+  .work-table thead th {
+    color: var(--fg-3);
+    font-family: var(--ff-mono);
+    font-size: var(--step--1);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    box-shadow: inset 0 calc(var(--hairline) * -1) 0 var(--line-2);
+  }
+  .work-table__row {
+    position: relative;
+    box-shadow: inset 0 calc(var(--hairline) * -1) 0 var(--line-1);
+  }
+  .work-table__row[hidden] {
+    display: none;
+  }
+  .work-table__row:hover,
+  .work-table__row:focus-within {
+    background: var(--bg-band);
+  }
+  .work-table__num,
+  .work-table__year,
+  .work-table__role,
+  .work-table__go {
+    white-space: nowrap;
+    color: var(--fg-2);
+  }
+  .work-table__title {
+    font-family: var(--ff-display);
+    font-size: var(--step-1);
+  }
+  /* the title is the row's link; the row is its target */
+  .work-table__link {
+    color: var(--fg-1);
+    text-decoration: none;
+  }
+  .work-table__link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+  }
+  .work-table__row:hover .work-table__link,
+  .work-table__row:hover .work-table__go {
+    color: var(--accent);
+  }
+  .work-table__stack {
+    color: var(--fg-3);
+  }
+  .work-table__go {
+    text-align: end;
+  }
+  .work-index__none {
+    margin: 0;
+    color: var(--fg-3);
+  }
+  /* phones: each row a record card */
+  @media (max-width: 47.99rem) {
+    .work-table,
+    .work-table tbody,
+    .work-table tr,
+    .work-table th,
+    .work-table td {
+      display: block;
+    }
+    .work-table thead {
+      display: none;
+    }
+    .work-table .work-table__row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: calc(var(--spacing) * 1) calc(var(--spacing) * 3);
+      padding-block: calc(var(--spacing) * 4);
+    }
+    .work-table__row > * {
+      padding: 0;
+    }
+    .work-table__row > .work-table__title,
+    .work-table__row > .work-table__stack {
+      grid-column: 1 / -1;
+    }
+    .work-table__row > .work-table__go {
+      grid-row: 1;
+      grid-column: 3;
+    }
+  }
+
+  /* B4: the hovered row's cover under the cursor (components/sections/work/IndexFilters.tsx) */
+  .work-preview {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 5;
+    width: 20rem;
+    aspect-ratio: 3 / 2;
+    pointer-events: none;
+    visibility: hidden;
+    will-change: transform;
+    box-shadow: 0 18px 40px color-mix(in oklab, var(--bg) 60%, transparent);
+  }
+  .work-preview[data-shown] {
+    visibility: visible;
+  }
+  .work-preview__frame {
+    position: absolute;
+    inset: 0;
+    visibility: hidden;
+  }
+  .work-preview__frame[data-on] {
+    visibility: visible;
+  }
+  .work-preview__frame > * {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ── the case study ── */
+  .case-page {
+    overflow-x: clip;
+  }
+  /* the hero: where the PROJECTION lands — the stage's canvas height (100lvh), object-fit: cover */
+  .case__hero {
+    position: relative;
+    height: 100lvh;
+    overflow: hidden;
+    background: var(--bg-sunken);
+  }
+  .case__hero > *,
+  .case__hero-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .case__body {
+    gap: calc(var(--spacing) * 12) var(--gutter);
+    padding-block: calc(var(--spacing) * 12) var(--section-y);
+  }
+  .case__back {
+    margin: 0;
+  }
+  .case__back a {
+    color: var(--fg-2);
+    text-decoration: none;
+  }
+  .case__head {
+    display: grid;
+    gap: calc(var(--spacing) * 4);
+  }
+  .case__meta {
+    margin: 0;
+    color: var(--fg-3);
+  }
+  .case__title {
+    margin: 0;
+    font-family: var(--ff-display);
+    font-size: var(--step-4);
+    line-height: 1.02;
+    text-wrap: balance;
+  }
+  .case__subtitle {
+    margin: 0;
+    font-size: var(--step-1);
+    color: var(--fg-2);
+    text-wrap: pretty;
+  }
+  .case__section {
+    display: grid;
+    gap: calc(var(--spacing) * 3);
+  }
+  .case__section > p {
+    margin: 0;
+    color: var(--fg-1);
+    text-wrap: pretty;
+  }
+  .case__label {
+    margin: 0;
+    color: var(--fg-3);
+  }
+  .case__lede {
+    font-size: var(--step-1);
+  }
+  .case__lead {
+    display: grid;
+    gap: calc(var(--spacing) * 2);
+    margin: 0;
+  }
+  .case__figure {
+    margin: 0;
+    color: var(--accent);
+    line-height: 0.9;
+  }
+  .case__tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+    gap: calc(var(--spacing) * 4);
+    margin: 0;
+  }
+  .case__tile {
+    display: grid;
+    gap: calc(var(--spacing) * 1);
+    padding-block-start: calc(var(--spacing) * 3);
+    box-shadow: inset 0 var(--hairline) 0 var(--line-1);
+  }
+  .case__tile > dt {
+    color: var(--fg-2);
+  }
+  .case__tile > dd {
+    margin: 0;
+    font-size: var(--step-3);
+  }
+  .case__stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--spacing) * 2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .case__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--spacing) * 3);
+  }
+  .case__media {
+    display: grid;
+    gap: calc(var(--spacing) * 6);
+  }
+  .case__video {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: var(--bg-sunken);
+  }
+  /* PUBLISHED RESEARCH: each paper a mini-dossier, opening over the page */
+  .case__papers {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+    gap: calc(var(--spacing) * 4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .mini-dossier {
+    display: grid;
+    gap: calc(var(--spacing) * 3);
+    height: 100%;
+    padding: calc(var(--spacing) * 4);
+    color: var(--fg-1);
+    text-decoration: none;
+    box-shadow: inset 0 0 0 var(--hairline) var(--line-2);
+  }
+  .mini-dossier:hover {
+    box-shadow: inset 0 0 0 var(--hairline) var(--accent);
+  }
+  .mini-dossier__strip {
+    justify-self: start;
+    padding: calc(var(--spacing) * 1) calc(var(--spacing) * 2.5);
+    background: var(--fg-1);
+    color: var(--bg);
+  }
+  .mini-dossier__title {
+    font-family: var(--ff-display);
+    font-size: var(--step-1);
+    line-height: 1.15;
+  }
+  .mini-dossier__tldr {
+    color: var(--fg-2);
+  }
+  .case__pager {
+    display: flex;
+    justify-content: space-between;
+    gap: calc(var(--spacing) * 6);
+    padding-block-start: calc(var(--spacing) * 6);
+    box-shadow: inset 0 var(--hairline) 0 var(--line-1);
+  }
+  .case__step {
+    display: grid;
+    gap: calc(var(--spacing) * 1);
+    max-width: 48%;
+    color: var(--fg-1);
+    text-decoration: none;
+  }
+  .case__step > .t-micro {
+    color: var(--fg-3);
+  }
+  .case__step--next {
+    margin-inline-start: auto;
+    text-align: end;
+  }
+  .case__step:hover > .t-micro {
+    color: var(--accent);
+  }
+
+  /* SLIDE ADVANCE between case studies (components/work/CasePush.tsx): a push in reading order */
+  ::view-transition-old(.work-next),
+  ::view-transition-old(.work-prev) {
+    animation:
+      var(--dur-micro) var(--ease-depart) both vt-fade reverse,
+      var(--dur-element) var(--ease-transit) both vt-push reverse;
+  }
+  ::view-transition-new(.work-next),
+  ::view-transition-new(.work-prev) {
+    animation:
+      var(--dur-element-out) var(--ease-settle) var(--dur-micro) both vt-fade,
+      var(--dur-element) var(--ease-transit) both vt-push;
+  }
+  ::view-transition-old(.work-next),
+  ::view-transition-new(.work-prev) {
+    --push: calc(var(--spacing) * -16);
+  }
+  ::view-transition-new(.work-next),
+  ::view-transition-old(.work-prev) {
+    --push: calc(var(--spacing) * 16);
+  }
+  /* the DOM FLIP's travel is the browser's own (the shared cover's group); reduced motion: none */
+  html[data-motion="reduce"]::view-transition-group(*),
+  html[data-motion="reduce"]::view-transition-old(*),
+  html[data-motion="reduce"]::view-transition-new(*) {
+    animation: none;
+  }
+}

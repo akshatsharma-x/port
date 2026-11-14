@@ -1,0 +1,537 @@
+/* ==========================================================================
+   RETROGRADE · styles/chrome.css — #hud (z30): the persistent chrome (DESIGN.md §7.3)
+   outside #screen, so a tear's jitter on #screen never re-anchors these fixed layers
+   ========================================================================== */
+
+@layer components {
+  /* the chrome's key: 24 px targets (WCAG 2.5.8). Every band is one row of keys, so the bottom
+     band's height is known from tokens — for layout that mustn't wait for HudMetrics' measure */
+  :root {
+    --hud-key: 24px;
+    --hud-band-bottom: calc(var(--hud-inset) + var(--hud-key));
+  }
+  #hud {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    pointer-events: none;
+  }
+  /* the bands' backing, as an on-screen display has: the theme's own ground, solid at the screen's
+     edge, clear a little past the band — what scrolls under the chrome dims, the chrome reads */
+  #hud::before,
+  #hud::after {
+    content: "";
+    position: absolute;
+    z-index: -1; /* under the chrome's own text, inside #hud's stacking context */
+    inset-inline: 0;
+    /* sized from tokens, not from the measured bands (they arrive after hydration, and a backing
+       that resized then would be a layout shift — measured 0.0012 when it did) */
+    height: calc(var(--hud-inset) + var(--spacing) * 14);
+    --osd: color-mix(in oklab, var(--bg) 84%, transparent);
+  }
+  #hud::before {
+    top: 0;
+    background: linear-gradient(to bottom, var(--osd) 0, var(--osd) 55%, transparent);
+  }
+  #hud::after {
+    bottom: 0;
+    background: linear-gradient(to top, var(--osd) 0, var(--osd) 55%, transparent);
+  }
+  /* below 48 rem the top band stacks: its backing takes the nav's row too */
+  @media (max-width: 47.99rem) {
+    #hud::before {
+      height: calc(var(--hud-inset) + var(--spacing) * 22);
+    }
+  }
+  @media (forced-colors: active) {
+    #hud::before,
+    #hud::after {
+      display: none;
+    }
+  }
+
+  /* focused elements are never hidden under the chrome (WCAG 2.4.11): HudMetrics measures the
+     bands and writes them inline, over these first-paint fallbacks */
+  html {
+    scroll-padding-top: 4rem;
+    scroll-padding-bottom: 4rem;
+  }
+
+  /* the bezel: corner brackets at the viewport's corners, hairline rules between them */
+  .hud-bezel > i {
+    position: absolute;
+    width: var(--bracket-arm);
+    height: var(--bracket-arm);
+    border-color: var(--line-2);
+    border-style: solid;
+    border-width: 0;
+  }
+  .hud-bezel__tl {
+    top: calc(var(--hud-inset) / 2);
+    left: calc(var(--hud-inset) / 2);
+    border-top-width: var(--hairline) !important;
+    border-left-width: var(--hairline) !important;
+  }
+  .hud-bezel__tr {
+    top: calc(var(--hud-inset) / 2);
+    right: calc(var(--hud-inset) / 2);
+    border-top-width: var(--hairline) !important;
+    border-right-width: var(--hairline) !important;
+  }
+  .hud-bezel__bl {
+    bottom: calc(var(--hud-inset) / 2);
+    left: calc(var(--hud-inset) / 2);
+    border-bottom-width: var(--hairline) !important;
+    border-left-width: var(--hairline) !important;
+  }
+  .hud-bezel__br {
+    bottom: calc(var(--hud-inset) / 2);
+    right: calc(var(--hud-inset) / 2);
+    border-bottom-width: var(--hairline) !important;
+    border-right-width: var(--hairline) !important;
+  }
+  .hud-bezel > .hud-bezel__rule {
+    left: calc(var(--hud-inset) / 2 + var(--bracket-arm-lg));
+    right: calc(var(--hud-inset) / 2 + var(--bracket-arm-lg));
+    width: auto;
+    height: var(--hairline);
+    border: 0;
+    background: var(--line-1);
+  }
+  .hud-bezel__rule--top {
+    top: calc(var(--hud-inset) / 2);
+  }
+  .hud-bezel__rule--bottom {
+    bottom: calc(var(--hud-inset) / 2);
+  }
+
+  /* the top band: the readout left, the nav right (stacked on narrow screens) */
+  .hud-top {
+    position: absolute;
+    top: var(--hud-inset);
+    left: var(--hud-inset);
+    right: var(--hud-inset);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.25rem 1.5rem;
+  }
+  /* every field is a fixed number of mono cells: JetBrains Mono advances exactly 0.6 em, so a cell
+     is 0.6 em + the micro step's tracking — in em, not ch, so the metric-matched fallback and the
+     real face lay the fields out identically and a font swap moves nothing (CLS 0) */
+  .hud-readout {
+    --cell: calc(0.6em + var(--tr--2));
+    margin: 0;
+    color: var(--fg-2);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .hud-readout > span,
+  .hud-readout__time > span {
+    display: inline-block;
+    overflow: hidden;
+    white-space: pre;
+    vertical-align: top;
+  }
+  .hud-readout__os {
+    width: calc(var(--os-n) * var(--cell));
+  }
+  .hud-readout__sep {
+    width: calc(3 * var(--cell));
+  }
+  .hud-readout__pct {
+    width: calc(4 * var(--cell));
+  }
+  .hud-readout__time {
+    width: auto !important;
+    overflow: visible !important;
+  }
+  .hud-readout__clock {
+    /* --clock-n: the zone's widest reading (lib/hud.ts clockCells), so "13:22:07 CEST" fits */
+    width: calc(var(--clock-n, 13) * var(--cell));
+  }
+  .hud-readout__fps {
+    color: var(--accent);
+  }
+
+  /* <Nav>: mono labels, magnetic (--mag-x/y from useMagnetic), one shared active indicator */
+  .hud-nav {
+    position: relative;
+    pointer-events: auto;
+  }
+  .hud-nav__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .hud-nav__link {
+    --mag-x: 0px;
+    --mag-y: 0px;
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    min-width: var(--hud-key);
+    min-height: var(--hud-key);
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--fg-2);
+    font-family: var(--ff-mono);
+    font-size: var(--step--2);
+    letter-spacing: var(--tr--2);
+    text-transform: uppercase;
+    text-decoration: none;
+    translate: var(--mag-x) var(--mag-y);
+    cursor: pointer;
+  }
+  .hud-nav__label {
+    translate: calc(var(--mag-x) * 0.5) calc(var(--mag-y) * 0.5);
+  }
+  .hud-nav__link:hover,
+  .hud-nav__link[aria-current] {
+    color: var(--fg-1);
+  }
+  .hud-nav__key[aria-disabled="true"] {
+    color: var(--fg-3);
+    cursor: default;
+  }
+  /* the one shared indicator: a bar the Nav springs between items (offsets are the nav's) */
+  .hud-nav__active {
+    position: absolute;
+    left: 0;
+    bottom: 1px;
+    width: 0;
+    height: 2px;
+    background: var(--accent);
+    pointer-events: none;
+    transition: opacity var(--dur-micro) var(--ease-relay);
+  }
+  .hud-nav__active[data-on="off"] {
+    opacity: 0;
+  }
+
+  /* the front panel: hardware switches with LEDs, bottom-left */
+  .hud-bottom {
+    position: absolute;
+    left: var(--hud-inset);
+    bottom: var(--hud-inset);
+    right: calc(var(--hud-inset) + 32px);
+    /* the panel sheds keys by the room it has, not by the viewport (below) */
+    container: hud-bottom / inline-size;
+  }
+  /* only the switches take the pointer — the band's empty space never covers the page */
+  .front-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    color: var(--fg-2);
+    pointer-events: none;
+  }
+  .front-panel > * {
+    pointer-events: auto;
+  }
+  .fp-group {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .fp-legend {
+    float: left;
+    margin-inline-end: 0.5rem;
+    padding: 0;
+  }
+  .fp-pos,
+  .fp-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: var(--hud-key);
+    padding: 0 0.375rem;
+    border: 0;
+    border-radius: var(--r-1);
+    /* a key has a face: what scrolls under the panel never shows through a label */
+    background: var(--bg-raised);
+    box-shadow: inset 0 0 0 var(--hairline) var(--line-1);
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    cursor: pointer;
+  }
+  .fp-pos input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .fp-pos:has(input:focus-visible) {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .fp-pos:has(input:checked),
+  .fp-switch[aria-pressed="true"] {
+    color: var(--fg-1);
+    box-shadow: inset 0 0 0 var(--hairline) var(--line-2);
+  }
+  .fp-led {
+    width: 6px;
+    height: 6px;
+    border-radius: 1px;
+    background: var(--line-2);
+  }
+  .fp-pos:has(input:checked) .fp-led,
+  .fp-switch[aria-pressed="true"] > .fp-led {
+    background: var(--accent);
+  }
+  .fp-state {
+    color: var(--fg-3);
+  }
+  .fp-switch[aria-pressed="true"] > .fp-state {
+    color: var(--accent);
+  }
+  /* the VU meter: four LEDs, lit by the real output level (an AnalyserNode) */
+  .fp-vu {
+    display: inline-flex;
+    gap: 2px;
+  }
+  .fp-vu > i {
+    width: 3px;
+    height: 8px;
+    background: var(--line-1);
+  }
+  .fp-vu[data-lit="1"] > i:nth-child(-n + 1),
+  .fp-vu[data-lit="2"] > i:nth-child(-n + 2),
+  .fp-vu[data-lit="3"] > i:nth-child(-n + 3),
+  .fp-vu[data-lit="4"] > i:nth-child(-n + 4) {
+    background: var(--accent);
+  }
+  .fp-vu[data-lit="4"] > i:nth-child(4) {
+    background: var(--hot);
+  }
+
+  @media (max-width: 47.99rem) {
+    /* one flex line: its width is the band's, whatever a row holds (a wrapping column sizes each
+       line to its widest item — debug's FPS field made the readout 392 px at 390, and the nav
+       spread across that) */
+    .hud-top {
+      flex-direction: column;
+      flex-wrap: nowrap;
+      align-items: flex-start;
+    }
+  }
+  /* phones: the chrome gives the content back — the readout drops its clock (the time is in
+     CONNECT), and the nav spreads across its row (a fixed 1.25 rem gap put ~ on a row of its own
+     at 360 px) */
+  @media (max-width: 29.99rem) {
+    .hud-readout > .hud-readout__time {
+      display: none;
+    }
+    /* stretched, the nav passes the gaps between its keys through, like the panel's band */
+    .hud-top > .hud-nav {
+      align-self: stretch;
+      pointer-events: none;
+    }
+    .hud-nav__link {
+      pointer-events: auto;
+    }
+    .hud-nav__list {
+      justify-content: space-between;
+      gap: 0 0.375rem;
+    }
+  }
+  /* each band stays one row (DESIGN.md §7.3). Without the room for all four keys (477 px), the
+     panel keeps TUBE and SND — GRID has no G key on touch, and phones are LOW by policy, so GFX
+     overrides nothing; on the narrowest screens TUBE's legend is read, not shown */
+  @container hud-bottom (width < 30rem) {
+    .front-panel > .fp-switch:not(:first-of-type) {
+      display: none;
+    }
+  }
+  @container hud-bottom (width < 19rem) {
+    .front-panel {
+      gap: 0.5rem;
+    }
+    .fp-legend {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+  .hud-readout__section {
+    width: calc(var(--label-n) * var(--cell));
+    color: var(--accent);
+  }
+
+  /* The section rail: 24 px targets (WCAG 2.5.8), labels out of flow so the hidden ones never
+     catch the pointer over the page. */
+  .section-rail {
+    position: absolute;
+    top: 50%;
+    right: var(--hud-inset);
+    translate: 0 -50%;
+    pointer-events: auto;
+  }
+  .section-rail__list {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .section-rail__link {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    color: var(--fg-1);
+    text-decoration: none;
+  }
+  .section-rail__node {
+    width: 8px;
+    height: 8px;
+    box-shadow: inset 0 0 0 var(--hairline) var(--line-2);
+    transition: background-color var(--dur-micro) var(--ease-relay);
+  }
+  .section-rail__link[data-state="visited"] .section-rail__node {
+    background: var(--line-2);
+  }
+  .section-rail__link[data-state="current"] .section-rail__node {
+    background: var(--accent);
+    box-shadow: none;
+  }
+  .section-rail__label {
+    position: absolute;
+    top: 50%;
+    right: 100%;
+    translate: 0 -50%;
+    padding: 0.125rem 0.375rem;
+    border-radius: var(--r-1);
+    background: var(--bg-raised);
+    box-shadow: inset 0 0 0 var(--hairline) var(--line-2);
+    white-space: nowrap;
+    pointer-events: none;
+    clip-path: inset(0 0 0 100%);
+    transition: clip-path var(--dur-micro-out) var(--ease-relay);
+  }
+  .section-rail__link:hover .section-rail__label,
+  .section-rail__link:focus-visible .section-rail__label {
+    clip-path: inset(0);
+    transition-duration: var(--dur-micro);
+  }
+
+  @media (forced-colors: active) {
+    .section-rail__node {
+      border: 1px solid CanvasText;
+      box-shadow: none;
+    }
+    .section-rail__link[data-state="current"] .section-rail__node {
+      background: Highlight;
+    }
+  }
+
+  /* ── #cursor (z40) ───────────────────────────────────────────────────────────────── */
+  #cursor {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    pointer-events: none;
+    contain: strict;
+  }
+  html:not([data-cursor="on"]) #cursor,
+  #cursor[data-hidden] {
+    visibility: hidden;
+  }
+  html[data-reticle="on"],
+  html[data-reticle="on"] * {
+    cursor: none !important;
+  }
+  /* text fields keep the native I-beam (and the custom cursor hides there) */
+  html[data-reticle="on"] :is(input:not([type="radio"], [type="checkbox"], [type="button"], [type="submit"]), textarea, [contenteditable="true"], [contenteditable=""]) {
+    cursor: text !important;
+  }
+  .cursor__dot,
+  .cursor__ring {
+    position: absolute;
+    top: 0;
+    left: 0;
+    mix-blend-mode: difference;
+    will-change: transform;
+  }
+  /* the hotspot: 2 px, centred on the pointer, unlagged */
+  .cursor__dot {
+    width: 2px;
+    height: 2px;
+    margin: -1px 0 0 -1px;
+    background: var(--cursor-ink);
+  }
+  /* a 10 px hollow square at rest; four brackets when snapped (the corners part) */
+  .cursor__ring {
+    width: 10px;
+    height: 10px;
+  }
+  .cursor__ring > i {
+    position: absolute;
+    width: min(5px, 50%);
+    height: min(5px, 50%);
+    border: 0 solid var(--cursor-ink);
+  }
+  .cursor__ring > i:nth-child(1) {
+    top: 0;
+    left: 0;
+    border-top-width: var(--hairline);
+    border-left-width: var(--hairline);
+  }
+  .cursor__ring > i:nth-child(2) {
+    top: 0;
+    right: 0;
+    border-top-width: var(--hairline);
+    border-right-width: var(--hairline);
+  }
+  .cursor__ring > i:nth-child(3) {
+    bottom: 0;
+    left: 0;
+    border-bottom-width: var(--hairline);
+    border-left-width: var(--hairline);
+  }
+  .cursor__ring > i:nth-child(4) {
+    right: 0;
+    bottom: 0;
+    border-right-width: var(--hairline);
+    border-bottom-width: var(--hairline);
+  }
+  /* the media chip (VIEW / DRAG / FLIP / OPEN): normal blending, so it reads over any image */
+  .cursor__chip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 0.125rem 0.375rem;
+    border-radius: var(--r-1);
+    background: var(--bg-raised);
+    box-shadow: inset 0 0 0 var(--hairline) var(--line-2);
+    color: var(--fg-1);
+    opacity: 0;
+    transform-origin: top left;
+    white-space: nowrap;
+  }
+  .cursor__chip:empty {
+    display: none;
+  }
+  @media (pointer: coarse), (forced-colors: active) {
+    #cursor {
+      display: none;
+    }
+  }
+}

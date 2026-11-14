@@ -1,0 +1,228 @@
+/* ==========================================================================
+   RETROGRADE · styles/capabilities.css — 06 CAPABILITIES (DESIGN.md §7.4, §4.3 A5): the
+   PRIMARY STACK strip, the band (the stage slot, its HTML layer, the CSS keycap grid) and the
+   canonical panel. Sizes from lib/capabilities.ts.
+   ========================================================================== */
+
+@layer components {
+  /* ── before the stage (the interlock): the header and the six primary technologies ── */
+  .keys-head {
+    min-height: 30svh;
+    align-content: center;
+    padding-block: var(--section-y);
+  }
+  .keys-primary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 calc(var(--spacing) * 8);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-family: var(--ff-display);
+    font-size: var(--step-4);
+    line-height: 1.05;
+    color: var(--fg-1);
+  }
+
+  /* ── the band: the slot, the CSS keycap grid and the HTML layer share one box ── */
+  .keys-band {
+    position: relative;
+    display: grid;
+    min-height: 80svh;
+  }
+  .keys-band > * {
+    grid-area: 1 / 1;
+  }
+
+  /* the layer over the live stage: the focus target, the tooltip, the chips */
+  .keys-layer {
+    position: relative;
+    z-index: 1;
+    outline: none;
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .keys-layer:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--focus);
+  }
+  .keys-chips {
+    position: absolute;
+    left: var(--margin);
+    /* clear of the HUD's readout when the band's top reaches the screen's */
+    top: calc(var(--hud-inset) + var(--spacing) * 14);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--spacing) * 2);
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .keys-chips > legend {
+    float: left;
+    margin-inline-end: calc(var(--spacing) * 1);
+    padding: 0;
+    color: var(--fg-3);
+  }
+  .keys-chips__chip {
+    cursor: pointer;
+  }
+  .keys-chips__chip:has(input:checked) {
+    color: var(--accent);
+    box-shadow: inset 0 0 0 var(--hairline) var(--accent);
+  }
+  .keys-chips__chip:has(input:focus-visible) {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .keys-hint {
+    position: absolute;
+    left: var(--margin);
+    bottom: calc(var(--hud-band-bottom) + var(--spacing) * 4);
+    margin: 0;
+    color: var(--fg-3);
+    visibility: hidden;
+  }
+  .keys-hint[data-shown] {
+    visibility: visible;
+  }
+  .keys-tip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: grid;
+    gap: calc(var(--spacing) * 1);
+    margin: 0;
+    padding: calc(var(--spacing) * 2) calc(var(--spacing) * 3);
+    translate: -50% calc(-100% - var(--spacing) * 3);
+    background: color-mix(in oklab, var(--bg-raised) 92%, transparent);
+    box-shadow: inset 0 0 0 var(--hairline) var(--line-2);
+    font-family: var(--ff-mono);
+    font-size: var(--step--1);
+    line-height: 1.35;
+    white-space: nowrap;
+    color: var(--fg-1);
+    pointer-events: none;
+    visibility: hidden;
+    will-change: transform;
+  }
+  .keys-tip[data-shown] {
+    visibility: visible;
+  }
+  .keys-tip__meta {
+    color: var(--fg-3);
+  }
+
+  /* ── the stage-less edition: a CSS keycap grid (LOW, phones, OFF, reduced motion, no JS) ── */
+  .keygrid {
+    --cap: clamp(3.25rem, 9vw, 4.5rem);
+    display: none;
+    grid-template-columns: repeat(auto-fill, var(--cap));
+    justify-content: center;
+    align-content: center;
+    gap: calc(var(--spacing) * 3);
+    margin: 0;
+    padding: calc(var(--spacing) * 10) var(--margin);
+    list-style: none;
+  }
+  .keys-band[data-stage="off"] .keygrid,
+  html[data-motion="reduce"] .keygrid,
+  html:not(.js) .keygrid {
+    display: grid;
+  }
+  /* the slot leaves the box (the band keeps its height): nothing of it is drawn or fetched, its poster included */
+  .keys-band[data-stage="off"] > [data-stage-slot],
+  html[data-motion="reduce"] .keys-band > [data-stage-slot],
+  html:not(.js) .keys-band > [data-stage-slot] {
+    display: none;
+  }
+  @media (pointer: coarse) and (max-width: 47.99rem) {
+    .keygrid {
+      display: grid;
+    }
+    .keys-band > [data-stage-slot] {
+      display: none;
+    }
+  }
+  /* a sculpted cap: the dish's light across the top, the skirt below; a tap presses it */
+  .keycap {
+    position: relative;
+    width: var(--cap);
+    aspect-ratio: 1;
+    border-radius: 18%;
+    background: radial-gradient(120% 90% at 50% 30%, color-mix(in oklab, var(--bg-raised) 70%, var(--fg-3)), var(--bg-raised) 70%);
+    box-shadow:
+      inset 0 0 0 var(--hairline) var(--line-2),
+      0 calc(var(--cap) * 0.08) 0 var(--bg-sunken),
+      0 calc(var(--cap) * 0.12) calc(var(--cap) * 0.16) color-mix(in oklab, var(--bg) 70%, transparent);
+    transition:
+      translate var(--dur-micro) var(--ease-relay),
+      box-shadow var(--dur-micro) var(--ease-relay);
+    cursor: pointer;
+  }
+  .keycap[data-primary] {
+    background: radial-gradient(120% 90% at 50% 30%, color-mix(in oklab, var(--accent) 80%, white), var(--accent) 70%);
+  }
+  .keycap:active {
+    translate: 0 calc(var(--cap) * 0.06);
+    box-shadow:
+      inset 0 0 0 var(--hairline) var(--line-2),
+      0 calc(var(--cap) * 0.02) 0 var(--bg-sunken),
+      0 calc(var(--cap) * 0.04) calc(var(--cap) * 0.06) color-mix(in oklab, var(--bg) 70%, transparent);
+  }
+  /* its legend: the stage's own atlas, as a mask, in the theme's ink */
+  .keycap__legend {
+    position: absolute;
+    inset: 11%;
+    background: var(--fg-1);
+    -webkit-mask: url(/textures/keycaps-legends.webp) calc(var(--cx) / 6 * 100%) calc(var(--cy) / 6 * 100%) / 700% 700% no-repeat;
+    mask: url(/textures/keycaps-legends.webp) calc(var(--cx) / 6 * 100%) calc(var(--cy) / 6 * 100%) / 700% 700% no-repeat;
+  }
+  .keycap[data-primary] .keycap__legend {
+    background: var(--bg-sunken);
+  }
+
+  /* ── the panel: canonical, categories as columns, a DataRow a skill ── */
+  .keys-panel {
+    align-content: start;
+    gap: calc(var(--spacing) * 10) var(--gutter);
+    padding-block: var(--section-y);
+  }
+  .skill-row {
+    row-gap: calc(var(--spacing) * 1);
+    padding-block: calc(var(--spacing) * 1.5);
+    transition: background-color var(--dur-micro) var(--ease-relay);
+  }
+  .skill-row[data-lit] {
+    background: var(--accent-wash);
+  }
+  .skill-row[data-lit] > dt {
+    color: var(--accent);
+  }
+  .skill__years {
+    color: var(--fg-2);
+  }
+  .skill-row > .skill__level {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 2);
+    color: var(--fg-2);
+  }
+  .skill-row > .skill__evidence {
+    color: var(--fg-3);
+  }
+  /* the 5-segment meter: --accent-fill on an --accent-wash track, labelled by the rubric beside it */
+  .meter {
+    display: inline-flex;
+    gap: 2px;
+  }
+  .meter__seg {
+    width: 0.6em;
+    height: 0.6em;
+    background: var(--accent-wash);
+  }
+  .meter__seg[data-on] {
+    background: var(--accent-fill);
+  }
+}

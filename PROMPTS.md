@@ -780,6 +780,12 @@ Build the hidden terminal — a real, working CLI inside the portfolio. It's bui
 - Discoverability: after 25 s idle on the hero, a subtle mono hint appears once — "PRESS ~ FOR TERMINAL". Never nag twice. Part 6 built it and holds it until the terminal exists (DESIGN.md §10 #28): set TERMINAL.ready in lib/terminal.ts when the terminal ships, and enable the HUD's ~ key (aria-disabled until now).
 
 Hard rule: the terminal is additive. If it fails to load, nothing else breaks. Code-split it (≤ 30 KB gz) and load it on first open.
+
+Budget and build:
+- First-load JS on / is 228.0 KB gz of the 230 KB budget after Part 12 (DESIGN.md §8.3): 2.0 KB remain, and the governor lever is spent. Only what opens the terminal (the ~ and / keys, the HUD button) and the Konami listener may be first-load; the panel, the commands, the index fetch and the degauss load on first use.
+- HTML on / is 42.4 KB gz of 60 after Part 12.
+- Some commands meet data that isn't there yet. There's no résumé until one without the owner's phone number exists (resumeUrl is null, DESIGN.md §10 #49), so `resume` says that. The owner has no certificates yet (§10 #46), so `ls certs` and `verify` say so once, never "0". `contact` takes you to CONNECT's form, whose behaviour loads on its first focus.
+- A lazy chunk carries every module it imports whole (Part 10). Keep what only the terminal needs in its own modules.
 ```
 
 ---

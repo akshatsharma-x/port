@@ -1,4 +1,7 @@
+import { encode, packColumns } from "@/lib/hollerith";
+import { cardText } from "@/lib/log";
 import { routes } from "@/lib/routes";
+import { SHELL } from "@/lib/shell/config";
 import type { SectionId } from "./schema";
 import type { Derived } from "./selectors";
 
@@ -8,9 +11,11 @@ import type { Derived } from "./selectors";
  * terminal's first open; ≤ 60 KB gz (DESIGN.md §8.3, enforced by the bake and tests/bake.test.ts).
  *
  * Every record is a doc: `title` + `meta` + `text` are what `grep` ranks; the typed fields are what
- * `cat`, `cite`, `verify`, `scholar` and `neofetch` print.
+ * `cat`, `cite`, `verify`, `scholar` and `neofetch` print. Since v2 it also carries the terminal's
+ * own words (labels), each LOG card's holes for `decode`, and what only the build knows (the
+ * version and stack, recent commits for `rain`, the portrait as text for `neofetch`).
  */
-export const SEARCH_INDEX_VERSION = 1;
+export const SEARCH_INDEX_VERSION = SHELL.indexVersion;
 export const SEARCH_INDEX_BUDGET_GZ = 60 * 1024;
 
 interface DocBase<K extends string> {
@@ -38,11 +43,26 @@ export type SearchDoc =
       tldr: string;
       authors: { name: string; isMe: boolean }[];
       bibtex: string;
+      venue: string;
+      abstract: string | null;
+      keywords: string[];
       links: { doi: string | null; arxiv: string | null; pdf: string | null; code: string | null; dataset: string | null };
     })
-  | (DocBase<"project"> & { year: number | null; stack: string[]; links: { live: string | null; repo: string | null; paper: string | null } })
-  | (DocBase<"role"> & { company: string; role: string; start: string; end: string; highlights: string[]; stack: string[] })
-  | (DocBase<"education"> & { institution: string; degree: string; start: string; end: string })
+  | (DocBase<"project"> & {
+      year: number | null;
+      subtitle: string;
+      category: string;
+      role: string | null;
+      summary: string;
+      problem: string;
+      approach: string;
+      outcome: string;
+      metrics: { label: string; value: number; unit: string | null }[];
+      stack: string[];
+      links: { live: string | null; repo: string | null; paper: string | null };
+    })
+  | (DocBase<"role"> & { company: string; role: string; type: string; location: string; start: string; end: string; blurb: string; highlights: string[]; stack: string[] })
+  | (DocBase<"education"> & { institution: string; degree: string; field: string; location: string; start: string; end: string; honors: string | null })
   | (DocBase<"skill"> & {
       category: string;
       level: number;
@@ -53,16 +73,27 @@ export type SearchDoc =
     })
   | (DocBase<"cert"> & {
       issuer: string;
+      level: string;
+      proves: string;
       credentialId: string;
       issueDate: string;
       expiryDate: string | null;
       verifyUrl: string | null;
       verification: string;
     })
-  | (DocBase<"award"> & { achievementKind: string; date: string; proofUrl: string | null })
+  | (DocBase<"award"> & { achievementKind: string; issuer: string; date: string; description: string; proofUrl: string | null })
   | (DocBase<"quote"> & { name: string; role: string; company: string });
 
-export interface SearchIndex {
+/** What only the build knows: the bake reads it (package.json, git, the portrait) and passes it in. */
+export interface IndexExtras {
+  build: { version: string | null; sha: string | null; stack: { name: string; version: string | null }[] };
+  /** recent commits' short hashes, newest first (a shallow clone has fewer) */
+  commits: string[];
+  /** the About portrait as rows of text, light as dense glyphs */
+  portrait: string[];
+}
+
+export interface SearchIndex extends IndexExtras {
   version: typeof SEARCH_INDEX_VERSION;
   isPlaceholder: boolean;
   /** derived numbers (years of experience, active credentials) are true as of this date */
@@ -75,6 +106,8 @@ export interface SearchIndex {
     tagline: string;
     bio: string;
     location: string;
+    /** the zone is named as the owner's country writes it in English (the HUD's rule, §7.3): IST, not GMT+5:30 */
+    countryCode: string;
     timezone: string;
     workingHours: { start: string; end: string };
     availability: { status: string; note: string };
@@ -92,14 +125,34 @@ export interface SearchIndex {
     primaryStack: string[];
   };
   docs: SearchDoc[];
+  /** the terminal's own words, and the site's labels it shares (so one change reaches both) */
+  labels: {
+    shell: Derived["site"]["labels"]["shell"];
+    os: string;
+    status: Derived["site"]["labels"]["archive"]["status"];
+    metrics: Derived["site"]["labels"]["archive"]["metrics"];
+    stamps: Derived["site"]["labels"]["credentials"]["stamps"];
+    card: Derived["site"]["labels"]["credentials"]["back"];
+    levels: Derived["site"]["labels"]["credentials"]["levels"];
+    currently: Derived["site"]["labels"]["identity"]["currently"];
+    availability: Derived["site"]["labels"]["hero"]["availability"];
+    channels: Derived["site"]["labels"]["connect"]["channels"];
+    paperLinks: Derived["site"]["labels"]["archive"]["dossier"]["actions"];
+    projectLinks: Derived["site"]["labels"]["work"]["study"]["link"];
+  };
+  /** LOG's punch cards (§4.3 A2): each column's punched rows (lib/hollerith packColumns), as LOG's deck punches them — `decode` reads them back */
+  cards: { slug: string; title: string; holes: string }[];
 }
+
+const NO_EXTRAS: IndexExtras = { build: { version: null, sha: null, stack: [] }, commits: [], portrait: [] };
 
 const join = (...parts: (string | null | undefined | false)[]) => parts.filter(Boolean).join(" · ");
 const lines = (...parts: (string | null | undefined | readonly string[])[]) => parts.flat().filter(Boolean).join("\n");
 const range = (start: string, end: string) => `${start} – ${end}`;
 
-export function buildSearchIndex(d: Derived): SearchIndex {
+export function buildSearchIndex(d: Derived, extras: IndexExtras = NO_EXTRAS): SearchIndex {
   const p = d.profile;
+  const L = d.site.labels;
   const docs: SearchDoc[] = [
     ...d.publications.map(
       (x): SearchDoc => ({
@@ -121,6 +174,9 @@ export function buildSearchIndex(d: Derived): SearchIndex {
         tldr: x.tldr,
         authors: x.authors.map((a) => ({ name: a.name, isMe: a.isMe })),
         bibtex: x.bibtex,
+        venue: x.venue,
+        abstract: x.abstract ?? null,
+        keywords: x.keywords,
         links: x.links,
       }),
     ),
@@ -135,6 +191,14 @@ export function buildSearchIndex(d: Derived): SearchIndex {
         meta: join(x.subtitle, x.year === null ? null : String(x.year), x.category),
         text: lines(x.summary, x.problem, x.approach, x.outcome, x.role, x.stack.join(", "), x.metrics.map((m) => `${m.label} ${m.value}${m.unit ?? ""}`)),
         year: x.year,
+        subtitle: x.subtitle,
+        category: x.category,
+        role: x.role ?? null,
+        summary: x.summary,
+        problem: x.problem,
+        approach: x.approach,
+        outcome: x.outcome,
+        metrics: x.metrics.map((m) => ({ label: m.label, value: m.value, unit: m.unit ?? null })),
         stack: x.stack,
         links: { live: x.links.live ?? null, repo: x.links.repo ?? null, paper: x.links.paper ?? null },
       }),
@@ -151,8 +215,11 @@ export function buildSearchIndex(d: Derived): SearchIndex {
         text: lines(x.blurb, x.highlights, x.stack.join(", ")),
         company: x.company,
         role: x.role,
+        type: x.type,
+        location: x.location,
         start: x.start,
         end: x.end,
+        blurb: x.blurb,
         highlights: x.highlights,
         stack: x.stack,
       }),
@@ -169,8 +236,11 @@ export function buildSearchIndex(d: Derived): SearchIndex {
         text: lines(x.field, x.thesis, x.honors),
         institution: x.institution,
         degree: x.degree,
+        field: x.field,
+        location: x.location,
         start: x.start,
         end: x.end,
+        honors: x.honors ?? null,
       }),
     ),
     ...d.skills.all.map(
@@ -202,6 +272,8 @@ export function buildSearchIndex(d: Derived): SearchIndex {
         meta: join(x.issuer, x.level, x.issueDate),
         text: lines(x.proves, x.domain, x.skillsCovered.join(", ")),
         issuer: x.issuer,
+        level: x.level,
+        proves: x.proves,
         credentialId: x.credentialId,
         issueDate: x.issueDate,
         expiryDate: x.expiryDate,
@@ -220,7 +292,9 @@ export function buildSearchIndex(d: Derived): SearchIndex {
         meta: join(x.issuer, x.kind, x.date),
         text: lines(x.description, x.metric ? `${x.metric.label} ${x.metric.value}${x.metric.unit ?? ""}` : null),
         achievementKind: x.kind,
+        issuer: x.issuer,
         date: x.date,
+        description: x.description,
         proofUrl: x.proofUrl ?? null,
       }),
     ),
@@ -253,6 +327,7 @@ export function buildSearchIndex(d: Derived): SearchIndex {
       tagline: p.tagline,
       bio: p.bio.short,
       location: `${p.location.city}, ${p.location.country}`,
+      countryCode: p.location.countryCode,
       timezone: p.timezone,
       workingHours: p.workingHours,
       availability: p.availability,
@@ -286,5 +361,21 @@ export function buildSearchIndex(d: Derived): SearchIndex {
       primaryStack: d.skills.primary.map((s) => s.name),
     },
     docs,
+    labels: {
+      shell: L.shell,
+      os: L.chrome.os,
+      status: L.archive.status,
+      metrics: L.archive.metrics,
+      stamps: L.credentials.stamps,
+      card: L.credentials.back,
+      levels: L.credentials.levels,
+      currently: L.identity.currently,
+      availability: L.hero.availability,
+      channels: L.connect.channels,
+      paperLinks: L.archive.dossier.actions,
+      projectLinks: L.work.study.link,
+    },
+    cards: d.experience.map((e) => ({ slug: e.slug, title: e.company, holes: packColumns(encode(cardText(e, L.log.present))) })),
+    ...extras,
   };
 }

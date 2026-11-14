@@ -75,6 +75,15 @@ async function main() {
   await step("layout-graph", () => layoutGraphStep(content), (s) => s);
   await step("citations", () => citationsStep(content, ctx), (s) => s);
   await step("verify", () => verifyStep(content, ctx), (s) => s);
+  await step("posters", postersStep, (s) => s);
+  await step("bluenoise", blueNoiseStep, (s) => s);
+  await step("foil-grain", foilGrainStep, (s) => s);
+  await step("portrait", portraitStep, (s) => s);
+  await step("covers", () => coversStep(), (s) => s);
+  await step("atlases", () => atlasStep(), (s) => s);
+  await step("keycaps", () => keycapsStep(), (s) => s);
+  await step("publication-list", () => publicationListStep(), (s) => s);
+  // last: the index carries the portrait (as text), so it reads this run's
   await step(
     "search-index",
     async () => {
@@ -88,14 +97,6 @@ async function main() {
     },
     (s) => s,
   );
-  await step("posters", postersStep, (s) => s);
-  await step("bluenoise", blueNoiseStep, (s) => s);
-  await step("foil-grain", foilGrainStep, (s) => s);
-  await step("portrait", portraitStep, (s) => s);
-  await step("covers", () => coversStep(), (s) => s);
-  await step("atlases", () => atlasStep(), (s) => s);
-  await step("keycaps", () => keycapsStep(), (s) => s);
-  await step("publication-list", () => publicationListStep(), (s) => s);
   for (const stub of STUB_STEPS) print("todo", stub.name, `${stub.summary} (${stub.part})`);
 
   printWarnings();

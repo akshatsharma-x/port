@@ -105,6 +105,10 @@ export function decode(columns: readonly number[]): string {
     .replace(/\s+$/, "");
 }
 
+/** A card's 80 column masks as text, three hex digits a column (12 bits): how the terminal's index carries them. */
+export const packColumns = (columns: readonly number[]): string => columns.map((m) => m.toString(16).padStart(3, "0")).join("");
+export const unpackColumns = (hex: string): number[] => Array.from({ length: Math.floor(hex.length / 3) }, (_, i) => Number.parseInt(hex.slice(i * 3, i * 3 + 3), 16));
+
 /** Every hole on the card: [column 0–79, row index 0–11 in card order]. */
 export function holes(columns: readonly number[]): [number, number][] {
   const out: [number, number][] = [];

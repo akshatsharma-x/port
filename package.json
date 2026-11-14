@@ -22,7 +22,12 @@
     "fonts:bake": "sh scripts/fonts/run.sh",
     "smoke": "node scripts/smoke.mjs",
     "check": "npm run typecheck && npm run lint && npm run test",
-    "weight": "node scripts/weight.mjs"
+    "weight": "node scripts/weight.mjs",
+    "size": "size-limit",
+    "lhci": "lhci autorun",
+    "visual": "playwright test",
+    "audit": "node scripts/audit-gate.mjs",
+    "measure": "node scripts/audit/measure.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^7.0.6",
@@ -43,17 +48,21 @@
     "zustand": "^5.1.0"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.16.1",
     "@playwright/test": "^1.65.0",
+    "@size-limit/file": "^11.2.0",
     "@tailwindcss/postcss": "^4.3.5",
     "@types/node": "^22.19.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/three": "^0.187.0",
+    "axe-core": "^4.14.0",
     "d3-force-3d": "^3.0.6",
     "eslint": "^9.39.5",
     "eslint-config-next": "16.4.6",
     "postcss": "^8.5.6",
     "simple-icons": "^16.37.0",
+    "size-limit": "^11.2.0",
     "tailwindcss": "^4.3.5",
     "tsx": "^4.23.15",
     "typescript": "~5.9.3",

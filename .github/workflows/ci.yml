@@ -1,0 +1,115 @@
+# RETROGRADE · Gate D (PROMPTS.md Part 14): every DESIGN.md §8.3 budget a machine can hold, on every push.
+#
+#   check    · typecheck, lint, the unit tests (the token contrast test among them)
+#   budgets  · bake → build → size-limit (bundles, fonts, textures) → Lighthouse CI (LCP, CLS, TBT,
+#              a11y / best practices / SEO) → the audit gate (governor, tiers, reduced motion, keyboard,
+#              axe, contrast under FX, resilience, layout, INP) → smoke
+#   visual   · the Playwright matrix: 3 themes × 6 widths × motion on/off. Its baselines are macOS's.
+#   gpu      · the scene gates' GPU-time budgets need a real GPU (hosted runners have none: WebGL there
+#              is SwiftShader). Runs on a self-hosted Apple-silicon runner, when one is registered
+#              (set the repository variable GPU_RUNNER=1).
+#
+# The bake runs --offline: CI measures the committed data, never the network's.
+name: ci
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+  RETROGRADE_DEV_ROUTES: "1"
+  BASE_URL: http://localhost:3200
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 30 } # the terminal's index lists recent commits
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+
+  budgets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 30 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Build (bake offline, build, boot manifest)
+        run: |
+          npx tsx scripts/bake.ts --offline
+          npx next build
+          node scripts/boot-manifest.mjs
+      - name: Bundles and assets (size-limit)
+        run: npx size-limit
+      - name: Web vitals (Lighthouse CI)
+        env: { CHROME_PATH: /usr/bin/google-chrome }
+        run: npx lhci autorun
+      - name: Serve the build for the gates
+        run: |
+          npx next start -p 3200 &
+          for i in $(seq 1 120); do curl -sf -o /dev/null http://localhost:3200/ && break; sleep 1; done
+      - name: Audit gate
+        run: node scripts/audit-gate.mjs --ci # --ci: the checks that need a real GPU say SKIP
+      - name: Smoke and weight
+        run: |
+          npm run smoke
+          npm run weight
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: budgets
+          path: |
+            .artifacts/audit-gate.json
+            .artifacts/a11y-tree.txt
+            .artifacts/lhci/
+
+  visual:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 30 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Build
+        run: |
+          npx tsx scripts/bake.ts --offline
+          npx next build
+          node scripts/boot-manifest.mjs
+      - name: The visual matrix
+        run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with: { name: visual-diffs, path: .artifacts/playwright/ }
+
+  gpu:
+    if: ${{ vars.GPU_RUNNER == '1' }}
+    runs-on: [self-hosted, macOS, ARM64]
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 30 }
+      - run: npm ci
+      - name: Build
+        run: |
+          npx tsx scripts/bake.ts --offline
+          npx next build
+          node scripts/boot-manifest.mjs
+      - name: The scene and stage gates (GPU time, VRAM, draw calls, fps)
+        run: |
+          npx next start -p 3200 &
+          for i in $(seq 1 120); do curl -sf -o /dev/null http://localhost:3200/ && break; sleep 1; done
+          for g in stage scroll boot hero log archive work capabilities credentials connect shell; do
+            node scripts/$g-gate.mjs || exit 1
+          done

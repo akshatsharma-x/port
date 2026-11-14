@@ -27,3 +27,6 @@ public/boot-manifest.json
 
 # Claude Code local state
 .claude/*.lock
+
+# Lighthouse CI
+.lighthouseci/

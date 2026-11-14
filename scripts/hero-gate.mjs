@@ -279,33 +279,36 @@ for (const [name, opts] of [
   await ctx.close();
 }
 
-// the scroll hint leaves on the first scroll; the idle hint waits 25 s (shown here only with ?hint=terminal: the terminal isn't built)
+// the scroll hint leaves on the first scroll; the idle hint waits 25 s, names a key that works (the
+// terminal exists since Part 13), and never shows twice
 {
-  const { ctx, page } = await open({ tier: "LOW", query: "&hint=terminal" });
+  const { ctx, page } = await open({ tier: "LOW" });
   const before = await page.evaluate(() => document.querySelector(".hero-hint--scroll").hasAttribute("data-gone"));
   await page.evaluate(() => window.__retrograde.lenis().scrollTo(40, { immediate: true, force: true }));
   await page.waitForTimeout(300);
   const after = await page.evaluate(() => document.querySelector(".hero-hint--scroll").hasAttribute("data-gone"));
   await page.evaluate(() => window.__retrograde.lenis().scrollTo(0, { immediate: true, force: true }));
-  const shownAt = await page.evaluate(
-    () =>
-      new Promise((resolve) => {
-        const t0 = performance.now();
-        const tick = () => (document.querySelector(".hero-hint--idle[data-shown]") ? resolve(Math.round(performance.now() - t0)) : performance.now() - t0 > 30_000 ? resolve(null) : setTimeout(tick, 100));
-        tick();
-      }),
-  );
-  await page.mouse.move(300, 300);
-  await page.waitForTimeout(200);
+  const idle = () =>
+    page.evaluate(
+      () =>
+        new Promise((resolve) => {
+          const t0 = performance.now();
+          const tick = () => (document.querySelector(".hero-hint--idle[data-shown]") ? resolve(Math.round(performance.now() - t0)) : performance.now() - t0 > 30_000 ? resolve(null) : setTimeout(tick, 100));
+          tick();
+        }),
+    );
+  const shownAt = await idle();
+  // the key it names: ~ opens the terminal (and, as input, takes the hint away)
+  await page.keyboard.press("~");
+  await page.waitForTimeout(900);
+  const opened = await page.evaluate(() => !!document.querySelector("dialog[data-shell][open]"));
   const gone = await page.evaluate(() => !document.querySelector(".hero-hint--idle[data-shown]") && localStorage.getItem("retrograde:hint-terminal") === "1");
-  check("hints: SCROLL leaves on the first scroll; PRESS ~ FOR TERMINAL after 25 s idle, once ever, gone on input", !before && after && shownAt !== null && shownAt >= 24_500 && gone, { before, after, idleShownAfterMs: shownAt, gone });
-  await ctx.close();
-}
-{
-  // without the debug override the idle hint is held: the terminal doesn't exist yet
-  const { ctx, page } = await open({ tier: "LOW" });
-  const held = await page.evaluate(() => document.querySelector(".hero-hint--idle")?.textContent === "");
-  check("…and held in the shipped page (lib/terminal.ts: not ready) — no hint for a key that does nothing", held);
+  check("hints: SCROLL leaves on the first scroll; PRESS ~ FOR TERMINAL after 25 s idle, gone on input — and ~ opens the terminal", !before && after && shownAt !== null && shownAt >= 24_500 && gone && opened, { before, after, idleShownAfterMs: shownAt, gone, opened });
+  await page.keyboard.press("Escape");
+  await page.reload({ waitUntil: "load" });
+  await page.waitForTimeout(600);
+  const again = await idle();
+  check("…once ever: the same visitor's next visit idles 30 s without it", again === null, { again });
   await ctx.close();
 }
 

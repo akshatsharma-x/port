@@ -458,6 +458,17 @@
   html[data-reticle="on"] * {
     cursor: none !important;
   }
+  /* a modal <dialog> (a record's dossier, the terminal) sits in the top layer, over the reticle: inside
+     it — its backdrop too — the native cursors come back, and the reticle steps aside (Cursor.tsx) */
+  html[data-reticle="on"] :is(dialog:modal, dialog:modal *) {
+    cursor: auto !important;
+  }
+  html[data-reticle="on"] dialog:modal :is(a[href], button, label, summary, select, [role="button"]) {
+    cursor: pointer !important;
+  }
+  html[data-reticle="on"] dialog:modal :is(input:not([type="radio"], [type="checkbox"], [type="button"], [type="submit"]), textarea) {
+    cursor: text !important;
+  }
   /* text fields keep the native I-beam (and the custom cursor hides there) */
   html[data-reticle="on"] :is(input:not([type="radio"], [type="checkbox"], [type="button"], [type="submit"]), textarea, [contenteditable="true"], [contenteditable=""]) {
     cursor: text !important;

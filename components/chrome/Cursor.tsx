@@ -93,8 +93,10 @@ export function Cursor({ labels }: { labels: CursorLabels }) {
       }
       const under = e.target instanceof Element ? e.target : null;
       const inText = !!under?.closest(TEXT_FIELD);
-      setHidden(inText);
-      const hit = inText ? null : (under?.closest(INTERACTIVE) ?? null);
+      // a modal dialog is in the top layer, above the reticle: over it (or its backdrop) the native cursor shows instead
+      const inModal = !!under?.closest("dialog:modal");
+      setHidden(inText || inModal);
+      const hit = inText || inModal ? null : (under?.closest(INTERACTIVE) ?? null);
       const box = hit?.getBoundingClientRect();
       const huge = !!box && box.width > window.innerWidth * MAX_SNAP && box.height > window.innerHeight * MAX_SNAP;
       snapped = hit && !huge && !hit.closest("[data-cursor-snap='off']") ? hit : null;

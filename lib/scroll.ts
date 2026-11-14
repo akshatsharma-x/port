@@ -306,13 +306,39 @@ export function teleport(target: string | number | HTMLElement): void {
   track(currentY());
 }
 
-/** A smooth scroll (back to top, detents): Lenis on `transit`, or native under reduced motion. */
-export function glideTo(target: string | number | HTMLElement, ms: number = duration.scene.in): void {
+// a quiet glide in flight: its token, so only the glide that started it (or input) ends it
+let quietGlide = 0;
+let glideSeq = 0;
+
+function endQuietGlide(token?: number): void {
+  if (!quietGlide || (token !== undefined && token !== quietGlide)) return;
+  quietGlide = 0;
+  setJumping(false);
+  const id = scrollStore.getState().section;
+  if (id) shallowHash(id); // the landing is linkable, as a crossing would have made it
+}
+
+/**
+ * A smooth scroll (back to top, the hero's advance): Lenis on `transit`, or native under reduced
+ * motion. `quiet`: the sections it passes aren't crossings — no SECTION cue for each, no hash, no
+ * detent (back to top passes the whole page in 900 ms) — it lands like a jump. It ends where it
+ * lands, or when input takes the scroll back (Lenis drops a scrollTo's onComplete then).
+ */
+export function glideTo(target: string | number | HTMLElement, ms: number = duration.scene.in, { quiet = false }: { quiet?: boolean } = {}): void {
   const y = scrollTargetOf(target);
   if (y === null) return;
   const lenis = getLenis();
-  if (lenis) lenis.scrollTo(y, { duration: sec(ms), easing: bezier(ease.transit), force: true });
-  else window.scrollTo({ top: y, behavior: "auto" });
+  if (!lenis) {
+    window.scrollTo({ top: y, behavior: "auto" });
+    return;
+  }
+  endQuietGlide(); // a glide replaces the one in flight
+  const token = ++glideSeq;
+  if (quiet) {
+    quietGlide = token;
+    setJumping(true);
+  }
+  lenis.scrollTo(y, { duration: sec(ms), easing: bezier(ease.transit), force: true, onComplete: () => endQuietGlide(token) });
 }
 
 export function setJumping(on: boolean): void {
@@ -351,8 +377,10 @@ export function startScroll({ reduced }: { reduced: boolean }): () => void {
   const onInput = (e: Event) => {
     scrollSignal.lastInput = performance.now();
     detentUntil = 0;
-    if (!lenis || lenis.isScrolling !== "smooth") return;
     const key = e instanceof KeyboardEvent ? e.key : null;
+    // a wheel or a scrolling key takes a quiet glide's scroll back too: from here it's continuous
+    if (quietGlide && (key === null || (SCROLL_KEYS.has(key) && !isTextEntry(e.target)))) endQuietGlide();
+    if (!lenis || lenis.isScrolling !== "smooth") return;
     const takesOver = key === null ? e.type === "pointerdown" || e.type === "touchstart" : SCROLL_KEYS.has(key) && !isTextEntry(e.target);
     if (takesOver) {
       lenis.stop(); // stop() + start() is Lenis's public reset: animation cancelled, synced to scrollY

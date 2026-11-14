@@ -482,6 +482,14 @@
     }
   }
 
+  /* ── Pixel glyph (§2.10): a drawn character where the mono face has none (✓). It sits in the
+     line like the letter it replaces — preflight would make the <svg> a block of its own. ── */
+  .pixel-glyph {
+    display: inline-block;
+    flex: none;
+    vertical-align: -0.125em;
+  }
+
   /* ── Counter ──────────────────────────────────────────────────────────────────── */
   .counter {
     display: inline-flex;

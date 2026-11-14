@@ -357,9 +357,6 @@
   .dossier__step:hover > .t-micro {
     color: var(--accent);
   }
-  .pixel-glyph {
-    flex: none;
-  }
 
   /* SLIDE ADVANCE between records (components/research/DossierPush.tsx): a push in the reading
      direction — next leaves left and arrives from the right, prev the other way */

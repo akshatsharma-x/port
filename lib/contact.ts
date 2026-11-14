@@ -1,4 +1,6 @@
-import { z } from "zod";
+// zod/mini: the same rules as classic zod's chains, a fifth of the bytes in CONNECT's idle chunk
+// (classic zod was most of its 45.8 KB gz)
+import * as z from "zod/mini";
 
 /**
  * 08 · CONNECT (DESIGN.md §7.4): the form's rules, shared by the page (its lazy behaviour) and
@@ -23,12 +25,12 @@ export type Intent = (typeof CONTACT.intents)[number];
 export type ErrorCode = "required" | "email" | "short" | "long" | "fast" | "rate" | "unavailable" | "failed";
 
 const L = CONTACT.limits;
-/** The visitor's words. */
+/** The visitor's words: each check in order on the trimmed text, an issue's message its code. */
 export const ContactSchema = z.object({
-  name: z.string().trim().min(1, { error: "required" }).max(L.name, { error: "long" }),
-  email: z.string().trim().min(1, { error: "required" }).max(L.email, { error: "long" }).pipe(z.email({ error: "email" })),
+  name: z.string({ error: "required" }).check(z.trim(), z.minLength(1, { error: "required" }), z.maxLength(L.name, { error: "long" })),
+  email: z.string({ error: "required" }).check(z.trim(), z.minLength(1, { error: "required" }), z.maxLength(L.email, { error: "long" }), z.email({ error: "email" })),
   intent: z.enum(CONTACT.intents, { error: "required" }),
-  message: z.string().trim().min(1, { error: "required" }).min(L.minMessage, { error: "short" }).max(L.message, { error: "long" }),
+  message: z.string({ error: "required" }).check(z.trim(), z.minLength(1, { error: "required" }), z.minLength(L.minMessage, { error: "short" }), z.maxLength(L.message, { error: "long" })),
 });
 export type ContactInput = z.infer<typeof ContactSchema>;
 
@@ -36,15 +38,15 @@ export type ContactInput = z.infer<typeof ContactSchema>;
  * What the page posts: the words and when the form was first touched (epoch ms). The honeypot
  * (`website`, empty for a person) is read before this, whatever its shape (handleContact).
  */
-export const ContactPostSchema = ContactSchema.extend({
-  startedAt: z.number().int().nonnegative(),
+export const ContactPostSchema = z.extend(ContactSchema, {
+  startedAt: z.int().check(z.gte(0)),
 });
 
 const FIELDS = Object.keys(ContactSchema.shape) as (keyof ContactInput)[];
 const FIELD_CODES: readonly ErrorCode[] = ["required", "email", "short", "long"];
 
 /** The first error code per visible field (a schema issue's message is its code); nothing else is named. */
-export function fieldErrors(error: z.ZodError): Partial<Record<keyof ContactInput, ErrorCode>> {
+export function fieldErrors(error: { issues: readonly { path: readonly PropertyKey[]; message: string }[] }): Partial<Record<keyof ContactInput, ErrorCode>> {
   const out: Partial<Record<keyof ContactInput, ErrorCode>> = {};
   for (const issue of error.issues) {
     const key = issue.path[0];

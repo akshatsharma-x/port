@@ -20,6 +20,16 @@ export const site = {
   title: "Akshat Sharma — AI & ML engineer, full-stack developer",
   description:
     "A portfolio you boot, not browse: generative-AI systems, full-stack software, and research in interpretable machine learning.",
+  meta: {
+    appName: "RETROGRADE",
+    titleTemplate: "%s — Akshat Sharma",
+    locale: "en_US",
+    ogAlt: {
+      home: "{name}, {role}: a phosphor-green RETROGRADE card in a bracket frame",
+      project: "{title}, {subtitle}: a RETROGRADE project card",
+      paper: "{title} — {venue}, {year}: a RETROGRADE publication card",
+    },
+  },
   sections: [
     { id: "post", index: 0, code: "POST", title: "Boot" },
     { id: "system", index: 1, code: "SYSTEM", title: "Hero" },
@@ -86,7 +96,7 @@ export const site = {
         citedBy: "Cited by",
         unknown: "—",
       },
-      ledger: { caption: "Every publication, by year", year: "Year", venue: "Venue", title: "Title", authors: "Authors", citations: "Citations", sortBy: "Sort by", ascending: "ascending", descending: "descending", open: "Open its dossier" },
+      ledger: { caption: "Every publication, by year", year: "Year", venue: "Venue", title: "Title", authors: "Authors", citations: "Citations", open: "Open its dossier" },
       status: { published: "Published", accepted: "Accepted", underReview: "Under review", inPrep: "In prep", stamp: "Status" },
       metrics: {
         label: "Research metrics",

@@ -8,7 +8,5 @@ export interface StubStep {
   summary: string;
 }
 
-export const STUB_STEPS: readonly StubStep[] = [
-  // TODO(Part 15): OG images per route, from the posters and content/derive.ts.
-  { name: "og", part: "Part 15", summary: "stub — OG images" },
-];
+// none left: Part 15 filled the last (og)
+export const STUB_STEPS: readonly StubStep[] = [];

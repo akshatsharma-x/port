@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
@@ -10,7 +10,7 @@ import { CitationsFileSchema, ContentSchema, GraphFileSchema, parseContent, Veri
 import { derive } from "@/content/selectors";
 import { stageData } from "@/content/stage-data";
 import verifyJson from "@/content/verify.json";
-import { COVER, coverSrc, coverTierSrc, ogSrc } from "@/lib/covers";
+import { COVER, coverSrc, coverTierSrc } from "@/lib/covers";
 import { duration, MAX_TIMED_MS, signature } from "@/lib/motion";
 import { TIERS } from "@/lib/tier";
 import { arcPitch, arcPose, coverNdc, flingAmount, gateDistance, landing, rubber, slideNumber, unrubber, WORK } from "@/lib/work";
@@ -128,7 +128,6 @@ describe("the covers (scripts/bake/covers.ts)", () => {
         const m = await sharp(file).metadata();
         expect([m.width, m.height]).toEqual([t.width, t.height]);
       }
-      expect(existsSync(resolve(ROOT, "public", ogSrc(p.slug).slice(1)))).toBe(true);
     }
   });
 

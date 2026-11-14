@@ -29,9 +29,14 @@ coverage/
 public/search-index.json
 public/fixtures/
 public/boot-manifest.json
+public/og/
 
 # Claude Code local state
 .claude/*.lock
 
 # Lighthouse CI
 .lighthouseci/
+
+# Python
+__pycache__/
+

@@ -8,6 +8,8 @@ if [ -x .venv/bin/python ]; then PY=.venv/bin/python; else PY=python3; fi
   exit 1
 }
 "$PY" scripts/fonts/bake.py
+# the OG cards' static instances (next/og reads no WOFF2, and no variable axes)
+(cd scripts/fonts && "../../$PY" og.py)
 # Hubot Sans fallbacks, measured per display step in the installed Chrome
 node scripts/fonts/display-fallbacks.mjs
 # the hero name's width model (wdth fit, DESIGN.md §7.4), measured the same way

@@ -157,7 +157,7 @@ export function Archive() {
           <Ledger
             rows={rows}
             caption={L.ledger.caption}
-            labels={{ year: L.ledger.year, venue: L.ledger.venue, title: L.ledger.title, authors: L.ledger.authors, citations: L.ledger.citations, sortBy: L.ledger.sortBy, ascending: L.ledger.ascending, descending: L.ledger.descending }}
+            labels={{ year: L.ledger.year, venue: L.ledger.venue, title: L.ledger.title, authors: L.ledger.authors, citations: L.ledger.citations }}
           />
         </div>
       </Grid>

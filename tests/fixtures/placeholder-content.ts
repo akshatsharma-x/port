@@ -42,6 +42,7 @@ export const site = {
   },
   // UI copy isn't the persona's: the fixture borrows the site's own labels, so it never drifts
   labels: realSite.labels,
+  meta: { ...realSite.meta, titleTemplate: "%s — Noor Halvorsen" },
 } satisfies In["site"];
 
 // ── profile ──────────────────────────────────────────────────────────────────────────────────

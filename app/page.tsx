@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { About } from "@/components/sections/about/About";
 import { Archive } from "@/components/sections/archive/Archive";
@@ -10,6 +11,10 @@ import { Work } from "@/components/sections/work/Work";
 import { Hero } from "@/components/sections/hero/Hero";
 import { TrackedSection } from "@/components/scroll/TrackedSection";
 import { derived } from "@/content/derive";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { homeGraph } from "@/lib/jsonld";
+import { homeAlt, ogPath } from "@/lib/og-meta";
+import { pageMeta } from "@/lib/seo";
 import type { SectionId } from "@/content/schema";
 
 /**
@@ -21,6 +26,10 @@ import type { SectionId } from "@/content/schema";
  * 00 POST is the boot overlay (Part 5): it paints over the hero and has no height of its own.
  */
 const d = derived;
+
+// the site's own card: its canonical is the root (PROMPTS.md Part 15). Its title is the site's whole,
+// which already names the owner: absolute, past the template (else "… — Akshat Sharma" twice)
+export const metadata: Metadata = { ...pageMeta({ title: d.site.title, description: d.site.description, path: "/", image: { path: ogPath("home"), alt: homeAlt(d) } }), title: { absolute: d.site.title } };
 const n = new Intl.NumberFormat("en-US");
 
 function section(id: SectionId) {
@@ -53,6 +62,7 @@ export default function Home() {
   const { research, labels } = { research: d.research, labels: d.site.labels };
   return (
     <>
+    <JsonLd graph={homeGraph()} />
     <main id="main" tabIndex={-1}>
       {/* 01 · SYSTEM — the hero: the A1 morph behind the typography layer (components/sections/hero) */}
       <Stub id="system" strip={false}>

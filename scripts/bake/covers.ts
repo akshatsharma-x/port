@@ -1,6 +1,6 @@
 /**
  * covers (DESIGN.md §8.2, §4.3 A4) → public/media/projects/<slug>/{cover.avif, cover-1024.avif,
- * cover-768.avif, cover-640.avif, og.jpg} + content/covers.json.
+ * cover-768.avif, cover-640.avif} + content/covers.json. (A project's share card is app/work/[slug]/opengraph-image.tsx since Part 15, not a crop.)
  *
  * Every project gets one 3:2 picture at four sizes (lib/covers.ts): the master for the DOM, and the
  * stage's three tier files, each an AVIF of at most 120 KB (the build fails past it). The picture
@@ -20,7 +20,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import sharp, { type Sharp } from "sharp";
 import { derived } from "../../content/derive";
-import { COVER, TITLE_CARD, coverSrc, coverTierSrc, ogSrc } from "../../lib/covers";
+import { COVER, TITLE_CARD, coverSrc, coverTierSrc } from "../../lib/covers";
 import { BakeError, formatJson, ROOT, writeIfChanged } from "./lib";
 
 export const COVERS_JSON = "content/covers.json";
@@ -41,7 +41,7 @@ export interface CoverSpec {
 
 export interface CoversManifest {
   version: 1;
-  covers: Record<string, { source: "title-card" | "screenshot"; inputHash: string; bytes: Record<"master" | "1024" | "768" | "640" | "og", number> }>;
+  covers: Record<string, { source: "title-card" | "screenshot"; inputHash: string; bytes: Record<"master" | "1024" | "768" | "640", number> }>;
 }
 
 const fnv = (input: string): string => {
@@ -142,7 +142,7 @@ export async function coversStep(force = false): Promise<string> {
   const specs = coverSpecs();
   const faceHashes = Object.fromEntries(Object.entries(FACES).map(([k, f]) => [k, fileHash(f)])) as Record<keyof typeof FACES, string>;
   const prev = existsSync(join(ROOT, COVERS_JSON)) ? (JSON.parse(readFileSync(join(ROOT, COVERS_JSON), "utf8")) as CoversManifest) : null;
-  const files = (slug: string) => [coverSrc(slug), ...COVER.tiers.map((t) => coverTierSrc(slug, t.width)), ogSrc(slug)].map((f) => join(ROOT, "public", f));
+  const files = (slug: string) => [coverSrc(slug), ...COVER.tiers.map((t) => coverTierSrc(slug, t.width))].map((f) => join(ROOT, "public", f));
   const hashes = new Map(specs.map((s) => [s.slug, coverInputHash(s, faceHashes)]));
   const stale = specs.filter((s) => force || prev?.covers[s.slug]?.inputHash !== hashes.get(s.slug) || !files(s.slug).every((f) => existsSync(f)));
   const cards = await renderCards(stale.filter((s) => !s.screenshot));
@@ -162,9 +162,8 @@ export async function coversStep(force = false): Promise<string> {
     const flat = await master.clone().png().toBuffer();
     const outs: [string, Buffer][] = [[coverSrc(spec.slug), await avifWithin(sharp(flat), COVER.maxMasterBytes, `${spec.slug}'s master`)]];
     for (const t of COVER.tiers) outs.push([coverTierSrc(spec.slug, t.width), await avifWithin(sharp(flat).resize(t.width, t.height, { fit: "fill", kernel: "lanczos3" }), COVER.maxBytes, `${spec.slug} at ${t.width}`)]);
-    outs.push([ogSrc(spec.slug), await sharp(flat).resize(COVER.og.width, COVER.og.height, { fit: "cover", position: sharp.strategy.attention }).jpeg({ quality: 82, mozjpeg: true }).toBuffer()]);
     for (const [path, buf] of outs) if (await writeIfChanged(join(ROOT, "public", path), buf)) written++;
-    const bytes = Object.fromEntries(outs.map(([, buf], k) => [(["master", "1024", "768", "640", "og"] as const)[k] as string, buf.length])) as CoversManifest["covers"][string]["bytes"];
+    const bytes = Object.fromEntries(outs.map(([, buf], k) => [(["master", "1024", "768", "640"] as const)[k] as string, buf.length])) as CoversManifest["covers"][string]["bytes"];
     manifest.covers[spec.slug] = { source: spec.screenshot ? "screenshot" : "title-card", inputHash: hash, bytes };
   }
   await writeIfChanged(join(ROOT, COVERS_JSON), formatJson(manifest));

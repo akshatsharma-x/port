@@ -82,6 +82,17 @@ export const SectionCopySchema = z.strictObject({
 export const SiteSchema = z.strictObject({
   title: sentence(80),
   description: sentence(200),
+  /** what the head, the share cards and the web manifest say (PROMPTS.md Part 15) */
+  meta: z.strictObject({
+    /** the installed app's name (manifest short_name: ≤ 12 characters) */
+    appName: sentence(12),
+    /** a page's <title> under the root: "%s" is the page's own */
+    titleTemplate: sentence(60).refine((t) => t.includes("%s"), "must contain %s"),
+    /** Open Graph's locale, language_TERRITORY */
+    locale: z.string().regex(/^[a-z]{2}_[A-Z]{2}$/),
+    /** each share card's alt text; {braces} are filled from the record */
+    ogAlt: z.strictObject({ home: sentence(200), project: sentence(200), paper: sentence(200) }),
+  }),
   sections: z.array(SectionCopySchema).min(1),
   topicClusters: z.record(slug, sentence(40)),
   labels: z.strictObject({
@@ -149,7 +160,7 @@ export const SiteSchema = z.strictObject({
         /** a figure nobody has counted yet */
         unknown: z.string().min(1).max(4),
       }),
-      ledger: z.strictObject({ caption: sentence(80), year: text, venue: text, title: text, authors: text, citations: text, sortBy: sentence(24), ascending: sentence(24), descending: sentence(24), open: sentence(32) }),
+      ledger: z.strictObject({ caption: sentence(80), year: text, venue: text, title: text, authors: text, citations: text, open: sentence(32) }),
       status: z.strictObject({ published: sentence(24), accepted: sentence(24), underReview: sentence(24), inPrep: sentence(24), stamp: sentence(16) }),
       metrics: z.strictObject({
         label: sentence(32),

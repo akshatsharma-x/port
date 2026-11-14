@@ -6,17 +6,14 @@ import { FxCss } from "@/components/chrome/FxCss";
 import { Stage } from "@/components/stage/Stage";
 import { Providers } from "@/components/ui/Providers";
 import { derived } from "@/content/derive";
+import { rootMeta } from "@/lib/seo";
 import { headScript } from "@/lib/theme-script";
 import { THEME_BG } from "@/lib/tokens";
 import { hubotSans, jetbrainsMono, monaSans } from "./typefaces";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  // absolute OG and Twitter URLs need the site's own address (Part 15 sets it at deploy)
-  ...(process.env.NEXT_PUBLIC_SITE_URL ? { metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL) } : {}),
-  title: { default: "RETROGRADE", template: "%s · RETROGRADE" },
-  description: "A portfolio you boot, not browse.",
-};
+// the site's address, title template, description and authors (lib/seo.ts, PROMPTS.md Part 15)
+export const metadata: Metadata = rootMeta;
 
 export const viewport: Viewport = {
   themeColor: THEME_BG.phosphor,

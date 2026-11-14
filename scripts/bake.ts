@@ -2,7 +2,7 @@
  * The build-time bake (DESIGN.md §8.2, law 7). `npm run bake`, and automatically before
  * `npm run build` (prebuild) and `npm run dev` (predev, offline).
  *
- *   validate → layout-graph → citations → verify → search-index → posters (placeholders) → bluenoise → foil-grain → portrait → covers → atlases → keycaps → publication-list · og (stub)
+ *   validate → layout-graph → citations → verify → posters → bluenoise → foil-grain → portrait → covers → atlases → keycaps → publication-list → icons → og → search-index
  *
  * Flags: --offline (or RETROGRADE_OFFLINE=1) keeps the last network results; --verbose prints every
  * warning. RETROGRADE_BUILD_DATE=YYYY-MM-DD pins "today". Placeholder content always bakes dry.
@@ -22,6 +22,8 @@ import { atlasStep } from "./bake/atlases";
 import { postersStep } from "./bake/posters";
 import { BakeError, isoDay, OUT, readJson, resolveMode, type StepContext } from "./bake/lib";
 import { searchIndexStep } from "./bake/search-index";
+import { iconsStep } from "./bake/icons";
+import { ogStep } from "./bake/og";
 import { STUB_STEPS } from "./bake/stubs";
 import { validateStep } from "./bake/validate";
 import { verifyStep } from "./bake/verify";
@@ -83,20 +85,21 @@ async function main() {
   await step("atlases", () => atlasStep(), (s) => s);
   await step("keycaps", () => keycapsStep(), (s) => s);
   await step("publication-list", () => publicationListStep(), (s) => s);
-  // last: the index carries the portrait (as text), so it reads this run's
-  await step(
-    "search-index",
-    async () => {
-      // derive() over the files this run just wrote: the index sees the same numbers the page will
-      const overlays = {
+  await step("icons", () => iconsStep(), (s) => s);
+  // derive() over the files this run just wrote: the cards and the index see the numbers the page will
+  const fresh = async () =>
+    derive(
+      content,
+      {
         citations: CitationsFileSchema.parse(await readJson(OUT.citations)),
         verify: VerifyFileSchema.parse(await readJson(OUT.verify)),
         graph: GraphFileSchema.parse(await readJson(OUT.graph)),
-      };
-      return searchIndexStep(derive(content, overlays, now));
-    },
-    (s) => s,
-  );
+      },
+      now,
+    );
+  await step("og", async () => ogStep(content, await fresh()), (s) => s);
+  // last: the index carries the portrait (as text), so it reads this run's
+  await step("search-index", async () => searchIndexStep(await fresh()), (s) => s);
   for (const stub of STUB_STEPS) print("todo", stub.name, `${stub.summary} (${stub.part})`);
 
   printWarnings();

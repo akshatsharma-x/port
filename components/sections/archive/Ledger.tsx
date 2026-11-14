@@ -37,7 +37,7 @@ export function Ledger({
 }: {
   rows: readonly LedgerRow[];
   caption: string;
-  labels: { year: string; venue: string; title: string; authors: string; citations: string; sortBy: string; ascending: string; descending: string };
+  labels: { year: string; venue: string; title: string; authors: string; citations: string };
 }) {
   const [key, setKey] = useState<SortKey>("year");
   const [desc, setDesc] = useState(true);
@@ -72,9 +72,11 @@ export function Ledger({
             }
           }}
         >
+          {/* its name is the column's word; the order is the header's aria-sort, which a screen reader
+              says with it ("Year, sorted descending") — a spelled-out "Sort by Year, descending" said
+              it twice (Part 14's accessibility-tree review) */}
           <span>{text}</span>
           <span aria-hidden="true">{on ? (desc ? "▼" : "▲") : "△"}</span>
-          <span className="sr-only">{`${labels.sortBy} ${text}${on ? `, ${desc ? labels.descending : labels.ascending}` : ""}`}</span>
         </button>
       </th>
     );

@@ -17,7 +17,7 @@ export const COVER = {
   maxBytes: 120_000,
   /** the master is the DOM's: next/image re-encodes it per width, so it's held looser */
   maxMasterBytes: 400_000,
-  /** provisional until Part 15's og step: a 1.91:1 crop of the master */
+  /** the share cards' size (lib/og.tsx, Part 15): 1.91:1, Open Graph's and X's large card */
   og: { width: 1200, height: 630 },
   /** where a real screenshot goes, any of these */
   sources: ["avif", "webp", "png", "jpg", "jpeg"],
@@ -27,7 +27,6 @@ export type CoverTierWidth = "1024" | "768" | "640";
 
 export const coverSrc = (slug: string): string => `/media/projects/${slug}/cover.avif`;
 export const coverTierSrc = (slug: string, width: number): string => `/media/projects/${slug}/cover-${width}.avif`;
-export const ogSrc = (slug: string): string => `/media/projects/${slug}/og.jpg`;
 
 /** The stage's three files for a project, keyed by width. */
 export function coverSizes(slug: string): Record<CoverTierWidth, string> {

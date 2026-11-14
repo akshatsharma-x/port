@@ -881,6 +881,14 @@ Make the portfolio findable, shareable and shipped. Follow DESIGN.md and the Glo
   - a cross-browser check: Chrome, Safari, Firefox, iOS Safari, Android Chrome.
 
 Give me the final Lighthouse numbers verbatim. Mobile Performance below 95 means fix and re-measure (90 is the floor).
+
+Where Part 14 left it (DESIGN.md v2.5, §8.3):
+- First-load JS on / is 229.1 KB gz of 230: 0.9 KB remains. Analytics, metadata and anything client-side has to buy its way in: measure it with `npx size-limit` (every §8.3 bundle and asset budget) and `npx next analyze --output`.
+- LCP on / is 1,734–1,748 ms (Lighthouse mobile, devtools throttling), 52 ms under budget at the slowest run. A case study reads 1,715–1,724 and a paper 1,666–1,677. Every page carries the root not-found boundary in its payload, and a stylesheet the boundary imports is preloaded on every page: keep NO SIGNAL's styles a hoisted <style> (components/no-signal/styles.ts).
+- "Themed 404/500 pages (NO SIGNAL)" exist: app/not-found.tsx (a real 404) and app/global-error.tsx for every error (500 only with a digest). There is no segment error.tsx: it costs 4.4 KB gz of first-load JS.
+- Lighthouse reads 100 for accessibility, best practices and SEO on /, a case study and a paper. The metadata and JSON-LD must keep them there.
+- CI is .github/workflows/ci.yml. It runs typecheck, lint and tests; size-limit; Lighthouse CI (lighthouserc.cjs); the audit gate (scripts/audit-gate.mjs, --ci); the visual matrix (e2e/, 108 baselines from this Mac, so it runs on macOS); and the scene gates on a self-hosted GPU runner once GPU_RUNNER=1. It has never run on GitHub: nothing is pushed.
+- Twelve gates: the eleven part gates plus the audit gate, 527 checks, all green on a production build. Start the server with RETROGRADE_DEV_ROUTES=1 for the dev routes.
 ```
 
 ---

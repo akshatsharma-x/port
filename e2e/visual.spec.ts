@@ -5,11 +5,11 @@ import { expect, test, type Page } from "@playwright/test";
  * 1440 / 2560 px × motion on and off — the first screen of home, CONNECT (the form and its footer),
  * and a case study's body.
  *
- * What it holds still, so a difference is a real one: the clock (fixed), the grain, roll and
- * cursor (hidden), the HUD's fps and uptime and every image (masked), CSS animations (finished). The stage's own
- * pixels — the live canvas or its poster, whichever the machine's tier gives — are hidden: the
- * matrix is the DOM, the chrome and the type around them. The scenes have their own gates; the
- * posters are bakes (tests/posters.test.ts).
+ * What it holds still, so a difference is a real one: the clock (fixed); the glass, #fx-gl and the
+ * cursor (gone); the HUD's fps and uptime, every image and in-page canvas (masked); CSS animations
+ * (finished). The stage's own pixels — the live canvas or its poster, whichever the machine's tier
+ * gives — are hidden: the matrix is the DOM, the chrome and the type around them. The scenes have
+ * their own gates; the posters are bakes (tests/posters.test.ts).
  */
 
 const THEMES = ["phosphor", "amber", "paper"] as const;

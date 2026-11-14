@@ -13,7 +13,7 @@ import { shareHost } from "@/lib/site";
  * site; JetBrains Mono (static instances, app/fonts/og: Satori reads no WOFF2 and no variable
  * axes); the HUD's readout over a bracket frame. Not app routes (opengraph-image.tsx): next/og's
  * WebAssembly in the app's graph put Turbopack's async-module runtime in every page's first-load
- * JS, 0.45 KB gz (measured, Part 15).
+ * JS: 0.45 KB gz of runtime, 0.52 of first load in all (measured, Part 15).
  */
 
 export const OG_SIZE = COVER.og;

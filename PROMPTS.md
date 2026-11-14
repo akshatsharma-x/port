@@ -924,6 +924,17 @@ Final craft pass. You are now a hyper-critical design director reviewing this po
      - the artifact allocation in DESIGN.md §2.11 respected.
 3. Ship 3 small, unexpected delights — cheap in bytes, invisible until discovered. Start from DESIGN.md §7.5, and propose better ones if you have them.
 4. Final honest verdict: what tier is this (portfolio / strong / award-submittable), the top 3 remaining weaknesses, and exactly what you'd do with one more day.
+
+Where Part 15 left it (DESIGN.md v2.6, §8.3):
+- First-load JS on / is 229.46 KB gz of 230: 0.54 KB remains (a case study 220.98, a paper 221.29; HTML on / 45.5 of 60). Anything the polish adds client-side has to buy its way in: measure it with `npx size-limit` and `npx next analyze --output`.
+- LCP on / is 1,731–1,755 ms (Lighthouse 12.8.2 mobile, devtools throttling), 45 ms under budget at the slowest run; a case study 1,716–1,720, a paper 1,661–1,679. Mobile Performance reads 97 on /, 96–97 on a case study (its weighted score, 96.45–96.65, sits on the rounding line) and 98 on a paper; accessibility, best practices and SEO read 100 everywhere. Speed Index holds Performance under 100: the boot and a cover's DITHER RESOLVE show their pictures 3.9–4.8 s into a throttled load.
+- The share cards are the bake's (scripts/bake/og.ts → public/og/). App code must never import lib/og.tsx: next/og's WebAssembly anywhere in the app's graph puts Turbopack's async-module runtime in every page's first-load JS. After a content change, run `npm run bake` locally (the covers, atlases and keycaps draw in Chrome).
+- Analytics is a queue: first-load JS holds only `track()` (lib/analytics.ts); the rest loads after idle, on Vercel only. Custom events need a Vercel Pro or Enterprise plan.
+- The GL colors come from the tokens through lib/token-color.ts, which reads hex, oklch() and lab(): the build writes the P3 upgrades as lab(). Teach it any new color form. Headless Chrome reports sRGB, so the hero gate checks the field on an emulated P3 screen.
+- Open, the owner's call (DESIGN.md §7.4): on a portrait screen a case study's first screen is its cover at object-fit: cover, and while the covers are title cards their type is cut ("vault AI · n assistant" on a Pixel 7). The phone walk will see it first.
+- The launch checklist (docs/LAUNCH.md) is walked locally. What needs a public URL waits for the deploy: Google's Rich Results Test, the platforms' share debuggers, Search Console and the sitemap, real devices and screen readers.
+- CI (.github/workflows/ci.yml) has never run on GitHub: pushing the workflow needs the gh token's workflow scope (`gh auth refresh -h github.com -s workflow`).
+- Twelve gates: the eleven part gates plus the audit gate, 529 checks, all green on a production build; 406 unit tests; the visual matrix 72 of 72 (108 baselines). Start the server with RETROGRADE_DEV_ROUTES=1 for the dev routes.
 ```
 
 ---

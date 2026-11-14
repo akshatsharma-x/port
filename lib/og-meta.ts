@@ -3,8 +3,9 @@ import type { Derived } from "@/content/selectors";
 /**
  * The share cards' paths and alt texts (PROMPTS.md Part 15) — pure, so the pages' metadata
  * (lib/seo.ts) can name a card without importing next/og: its WebAssembly anywhere in the app's
- * graph puts Turbopack's async-module runtime in every page's first-load JS (0.45 KB gz, measured).
- * The cards themselves are lib/og-cards.tsx, rendered by the bake (scripts/bake/og.ts).
+ * graph puts Turbopack's async-module runtime in every page's first-load JS (0.45 KB gz of
+ * runtime, 0.52 of first load in all, measured). The cards themselves are lib/og-cards.tsx,
+ * rendered by the bake (scripts/bake/og.ts).
  */
 export const ogPath = (page: "home" | { work: string } | { research: string }): string =>
   page === "home" ? "/og/home.png" : "work" in page ? `/og/work/${page.work}.png` : `/og/research/${page.research}.png`;

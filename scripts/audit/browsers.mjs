@@ -5,7 +5,9 @@
  * (WebKit with the iPhone 15's descriptor, Chrome with the Pixel 7's) — emulations, not devices.
  * On each: home through every section, a case study, a paper, NO SIGNAL; no uncaught error, no
  * console error, no sideways overflow, the hero's h1, the HUD; the theme switch and the terminal
- * (desktop); the stage's tier and its contexts. A first-screen shot each, in .artifacts/browsers/.
+ * (desktop); the stage's tier and its contexts. Every page's first screen, shot on each, in
+ * .artifacts/browsers/ — the checks read the DOM, not the picture (the case study's cover crop on a
+ * phone, Part 15, was found by eye).
  *
  *   BASE_URL=http://localhost:3200 node scripts/audit/browsers.mjs     Exits 1 on a failure.
  */
@@ -24,6 +26,7 @@ const TARGETS = [
 ];
 const PAGES = ["/", "/work/cognivault-ai", "/research/food-waste-cold-chain-sci-2026", "/this-page-does-not-exist"];
 const IGNORE = [/status of 404/]; // the browser's own line for the 404 page's document
+const slug = (s) => s.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase();
 
 let failures = 0;
 for (const t of TARGETS) {
@@ -38,7 +41,7 @@ for (const t of TARGETS) {
   for (const path of PAGES) {
     const res = await page.goto(`${BASE}${path}?debug=1`, { waitUntil: "load", timeout: 60_000 });
     await page.waitForTimeout(1500);
-    if (path === "/") await page.screenshot({ path: `${OUT}${t.name.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.png` });
+    await page.screenshot({ path: `${OUT}${slug(t.name)}--${slug(path) || "home"}.png`, style: ".stage-debug { display: none !important; }" }); // the page, not ?debug=1's overlay
     const s = await page.evaluate(() => ({
       h1: document.querySelector("h1")?.textContent?.trim().slice(0, 40) ?? null,
       hud: !!document.querySelector("#hud .hud-top") && getComputedStyle(document.querySelector("#hud")).display !== "none",

@@ -1,6 +1,7 @@
 /**
  * covers (DESIGN.md §8.2, §4.3 A4) → public/media/projects/<slug>/{cover.avif, cover-1024.avif,
- * cover-768.avif, cover-640.avif} + content/covers.json. (A project's share card is app/work/[slug]/opengraph-image.tsx since Part 15, not a crop.)
+ * cover-768.avif, cover-640.avif} + content/covers.json. (A project's share card is its own since
+ * Part 15, public/og/work/<slug>.png from the og step, not a crop.)
  *
  * Every project gets one 3:2 picture at four sizes (lib/covers.ts): the master for the DOM, and the
  * stage's three tier files, each an AVIF of at most 120 KB (the build fails past it). The picture

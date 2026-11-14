@@ -5,6 +5,7 @@ import { Chrome, CursorLayer } from "@/components/chrome/Chrome";
 import { FxCss } from "@/components/chrome/FxCss";
 import { Stage } from "@/components/stage/Stage";
 import { Providers } from "@/components/ui/Providers";
+import { derived } from "@/content/derive";
 import { headScript } from "@/lib/theme-script";
 import { THEME_BG } from "@/lib/tokens";
 import { hubotSans, jetbrainsMono, monaSans } from "./typefaces";
@@ -41,7 +42,7 @@ export default function RootLayout({ children, modal }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: headScript }} />
       </head>
       <body>
-        <Providers>
+        <Providers labels={{ newTab: derived.site.labels.chrome.newTab }}>
           {/* DESIGN.md §4.1: the stage (parked in #stage, docked in the live slot) and #fx-gl (z60)
               live here, so they survive route changes; #hud (z30) sits outside #screen */}
           <Stage />

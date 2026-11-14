@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode, Ref } from "react";
+import { useUiLabels } from "./labels";
 import { cx } from "@/lib/cx";
 import { useMagnetic } from "@/hooks/useMagnetic";
 
@@ -30,6 +31,7 @@ const isExternal = (href: string) => /^(https?:)?\/\//.test(href);
 export function Button(props: ButtonProps) {
   const { variant = "secondary", icon, magnetic = true, children, className, ...rest } = props;
   const ref = useMagnetic<HTMLElement>(magnetic);
+  const { newTab: newTabLabel } = useUiLabels();
   const external = typeof props.href === "string" && isExternal(props.href);
   // a site file opened in a new tab or downloaded (the publication list) is a plain link too: not a
   // route Next should prefetch
@@ -46,7 +48,7 @@ export function Button(props: ButtonProps) {
           {glyph}
         </span>
       )}
-      {newTab && <span className="sr-only"> (opens in a new tab)</span>}
+      {newTab && newTabLabel && <span className="sr-only">{` ${newTabLabel}`}</span>}
     </span>
   );
 

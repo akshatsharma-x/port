@@ -424,7 +424,7 @@ export const site = {
       decode: { list: "Cards", header: "{title} · {holes} holes in {columns} columns", reads: "reads: {text}", unknown: "decode: no card called {name}" },
       debug: "The dev overlay is {state}.",
     },
-    chrome: { os: "RETROGRADE/OS", rail: "Sections" },
+    chrome: { os: "RETROGRADE/OS", rail: "Sections", newTab: "(opens in a new tab)" },
     nav: {
       label: "Primary",
       items: [

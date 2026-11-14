@@ -418,7 +418,12 @@ export const SiteSchema = z.strictObject({
       debug: sentence(60),
     }),
     /** persistent chrome (DESIGN.md §7.3): the HUD readout's system name, the section rail's name */
-    chrome: z.strictObject({ os: z.string().regex(/^[A-Z0-9/ .-]{2,24}$/, "uppercase system name"), rail: sentence(32) }),
+    chrome: z.strictObject({
+      os: z.string().regex(/^[A-Z0-9/ .-]{2,24}$/, "uppercase system name"),
+      rail: sentence(32),
+      /** what a screen reader hears after a link that opens a new tab (components/ui/Button) */
+      newTab: sentence(32),
+    }),
     /** <Nav> (§7.3): four destinations and the terminal key; `section` is where each one lands */
     nav: z.strictObject({
       label: sentence(32),

@@ -114,7 +114,7 @@
     background: var(--accent);
     visibility: hidden;
     pointer-events: none;
-    animation: teletype-caret 1060ms steps(1) infinite;
+    animation: teletype-caret var(--blink) steps(1) infinite;
   }
   .teletype__line:focus-within .teletype__input:placeholder-shown + .teletype__caret {
     visibility: visible;

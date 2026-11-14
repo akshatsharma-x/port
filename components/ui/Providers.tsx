@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import "@/lib/gsap"; // registers GSAP plugins + the DESIGN.md easing tokens once, client-side
 import { FocusBrackets } from "./FocusBrackets";
 import { GridOverlay } from "./GridOverlay";
+import { UiLabelsProvider, type UiLabels } from "./labels";
 import { ScrollProvider } from "@/components/scroll/ScrollProvider";
 import { UIEffects } from "./UIEffects";
 
@@ -16,15 +17,17 @@ const loadDomAnimation = () => import("./motion-dom-animation").then((m) => m.de
  * component throws). Both feature bundles load asynchronously, so neither is in first-load JS:
  * `domAnimation` here, `domMax` in <LayoutMotion>.
  */
-export function Providers({ children }: { children: ReactNode }) {
+export function Providers({ children, labels }: { children: ReactNode; labels: UiLabels }) {
   return (
     <LazyMotion features={loadDomAnimation} strict>
-      <ScrollProvider>
-        <UIEffects />
-        {children}
-        <GridOverlay />
-        <FocusBrackets />
-      </ScrollProvider>
+      <UiLabelsProvider value={labels}>
+        <ScrollProvider>
+          <UIEffects />
+          {children}
+          <GridOverlay />
+          <FocusBrackets />
+        </ScrollProvider>
+      </UiLabelsProvider>
     </LazyMotion>
   );
 }

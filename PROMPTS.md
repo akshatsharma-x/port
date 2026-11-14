@@ -838,6 +838,12 @@ RESILIENCE:
   - cert cards tap-to-flip.
 
 Gate D: every §8.3 budget is green in CI. Report a before/after table with real measurements, and tell me honestly what still falls short.
+
+Where Part 13 left it (DESIGN.md v2.4, §8.3):
+- First-load JS on / is 229.0 KB gz of 230: 1.0 KB remains and no lever is left unspent. Every new byte has to buy its way in.
+- HTML on / is 42.6 KB gz of 60. LCP was 1.73–1.75 s at Part 13 (Lighthouse mobile, devtools throttling), 50 ms under budget at the slowest run. Measure it first.
+- Eleven gates exist (scripts/*-gate.mjs), all green on a production build. They are the starting point for CI, not a replacement for it.
+- Two modal dialogs exist, the dossier and the terminal. Both keep focus, and both now get the native cursor (§7.3). The terminal's Tab is completion and Esc is its exit; check both against WCAG 2.1.2.
 ```
 
 ---

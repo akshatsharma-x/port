@@ -12,11 +12,11 @@ import "./globals.css";
  * of Button with its hooks), so every error lands here, the 500 said only for a server error (it
  * carries a digest). This replaces the root layout, so it brings its own <html>, faces and styles —
  * and the few words it needs, from content/no-signal.ts (nothing else can reach it). Phosphor, the
- * default tube; the motion edition from the preference (the module's media query). retry()
+ * default tube; the motion edition from the preference (a media query in its styles). retry()
  * re-renders from the root (Next 16).
  *
- * The screen itself comes when it's needed: imported here, its CSS module was a second render-
- * blocking stylesheet on every page (1.3 KB gz, +35–49 ms of LCP on Slow 4G, Part 14). Until it
+ * The screen itself comes when it's needed: with its styles it's a 1.5 KB gz chunk that would
+ * otherwise be in every page's first-load JS (this file's own is 1.1, measured at Part 14). Until it
  * lands — or if it can't, the network being what broke — the words alone, and the retry.
  */
 const Screen = lazy(() =>

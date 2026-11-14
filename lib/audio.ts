@@ -45,6 +45,10 @@ export const PEAK_DB = {
   FLIP: -28,
   /** B1: VERIFIED or EXPIRED lands, synced to the deal */
   STAMP: -18,
+  /** CONNECT: the form's message goes out */
+  TRANSMIT: -24,
+  /** the footer's power-off on the last pixel */
+  HALT: -22,
 } as const;
 
 /**
@@ -61,6 +65,13 @@ export const KEYCAP_CUE = { pitch: 0.06, voices: 6, minIntensity: 0.2 } as const
 
 /** STAMP (§6.4): [Hz, Q, ms] of the slap and the stock's body, [from, to (Hz), ms] of the thump. */
 export const STAMP_CUE = { slap: [1300, 0.9, 16], thump: [120, 48, 95], body: [520, 1.1, 40] } as const;
+/**
+ * TRANSMIT (§6.4): a modem's handshake in 1.4 s — its answer tone, an FSK warble between two
+ * tones, the scrambler's hiss — then a two-partial chime. [Hz] tones, [Hz, Q] noise, (s) times.
+ */
+export const TRANSMIT_CUE = { answer: [2100, 0.24], warble: { tones: [1650, 1850], stepS: 0.03, startS: 0.26, endS: 0.56 }, hiss: { hz: 3000, q: 0.6, startS: 0.58, ms: 470 }, chime: { partials: [1320, 1980], startS: 1.08, ms: 320 } } as const;
+/** HALT (§6.4): the tube's sweep down, 2 kHz → 60 Hz in 400 ms, and the relay's click after it. */
+export const HALT_CUE = { sweep: [2000, 60, 400], click: [2200, 3, 6] } as const;
 /** FLIP (§6.4): [Hz, Q, ms] of the air and the landing tick, which comes this late (s); pitched ±6%. */
 export const FLIP_CUE = { air: [2600, 0.8, 70], tick: [4300, 3.5, 5], landS: 0.06, pitch: 0.06 } as const;
 
@@ -181,8 +192,8 @@ function tone(ctx: Ctx, out: Out, at: number, { from, to, ms, peakDb, type = "si
 }
 
 /**
- * The cues, built against `out` from time `at`. Returns the length in seconds (0 for a stub: SHELL,
- * TRANSMIT and HALT are named here and arrive with their parts). FLING is a
+ * The cues, built against `out` from time `at`. Returns the length in seconds (0 for a stub: SHELL
+ * is named here and arrives with the terminal, Part 13). FLING is a
  * continuous voice in the engine (Engine.whir); built here it's its loudest stretch, for the peak
  * measurement.
  */
@@ -237,6 +248,25 @@ export function buildCue(ctx: Ctx, out: Out, cue: Cue, detail: CueDetail, at: nu
     }
     case "FLING":
       return whirSegment(ctx, out, at, Math.min(1, Math.max(0, detail.intensity ?? 1)));
+    case "TRANSMIT": {
+      const T = TRANSMIT_CUE;
+      tone(ctx, out, at, { from: T.answer[0], to: T.answer[0], ms: T.answer[1] * 1000, peakDb: PEAK_DB.TRANSMIT - 6, attack: 0.02 });
+      const w = T.warble;
+      for (let t = w.startS, k = 0; t < w.endS; t += w.stepS, k++) {
+        const hz = w.tones[k % 2] as number;
+        tone(ctx, out, at + t, { from: hz, to: hz, ms: w.stepS * 1000, peakDb: PEAK_DB.TRANSMIT - 4, type: "square", attack: 0.002 });
+      }
+      burst(ctx, out, at + T.hiss.startS, { hz: T.hiss.hz, q: T.hiss.q, ms: T.hiss.ms, peakDb: PEAK_DB.TRANSMIT - 2 });
+      // the chime: a fifth, both partials together — the louder one at the sheet's peak
+      tone(ctx, out, at + T.chime.startS, { from: T.chime.partials[0], to: T.chime.partials[0], ms: T.chime.ms, peakDb: PEAK_DB.TRANSMIT - 2 });
+      tone(ctx, out, at + T.chime.startS, { from: T.chime.partials[1], to: T.chime.partials[1], ms: T.chime.ms, peakDb: PEAK_DB.TRANSMIT - 8 });
+      return T.chime.startS + T.chime.ms / 1000;
+    }
+    case "HALT": {
+      const [from, to, ms] = HALT_CUE.sweep;
+      tone(ctx, out, at, { from, to, ms, peakDb: PEAK_DB.HALT - 2, type: "triangle", attack: 0.01 });
+      return burst(ctx, out, at + ms / 1000, { hz: HALT_CUE.click[0], q: HALT_CUE.click[1], ms: HALT_CUE.click[2], peakDb: PEAK_DB.HALT }) + ms / 1000;
+    }
     case "STAMP": {
       // a rubber stamp on card stock: the slap of the face, the thump of the handle behind it
       // (rising as the slap decays, so the two never stack), the stock's body under both
@@ -509,5 +539,5 @@ async function loadSamples(ctx: BaseAudioContext): Promise<void> {
 }
 
 /** Every cue the sheet names; the ones this part doesn't synthesize are stubs (0 s). */
-export const IMPLEMENTED: readonly Cue[] = ["ENABLE", "BOOT", "POWER", "TEAR", "SECTION", "COMMIT", "FLING", "GATE", "ARCHIVE", "REPLOT", "KEYCAP", "FLIP", "STAMP"];
+export const IMPLEMENTED: readonly Cue[] = ["ENABLE", "BOOT", "POWER", "TEAR", "SECTION", "COMMIT", "FLING", "GATE", "ARCHIVE", "REPLOT", "KEYCAP", "FLIP", "STAMP", "TRANSMIT", "HALT"];
 export const STUBS: readonly Cue[] = CUES.filter((c) => !IMPLEMENTED.includes(c));

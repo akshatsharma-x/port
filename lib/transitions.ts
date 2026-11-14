@@ -242,9 +242,13 @@ function resumeOnInput(): void {
 }
 const RESUME_EVENTS = ["keydown", "wheel", "touchstart", "pointerdown"] as const;
 
-/** POWER OFF (450 ms): the tube collapses to a line, then a dot (the footer's last pixel). */
-export async function powerOff(): Promise<void> {
-  cue("POWER", { variant: "off" });
+/**
+ * POWER OFF (450 ms): the tube collapses to a line, then a dot (the footer's last pixel). It plays
+ * POWER's off, or HALT's sweep when the footer asks (§6.4).
+ */
+export async function powerOff(options: { cue?: "POWER" | "HALT" } = {}): Promise<void> {
+  if (options.cue === "HALT") cue("HALT");
+  else cue("POWER", { variant: "off" });
   const off = () => {
     document.documentElement.dataset.tube = "off";
     resumeOnInput();

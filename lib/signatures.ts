@@ -47,5 +47,5 @@ export function switchTheme(next: Theme): Promise<void> {
 }
 
 /** POWER OFF / ON are deliberate (the footer's halt, the boot): they wait for the grammar. */
-export const powerOff = (): Promise<void> => loadTransitions().then((m) => m.powerOff());
+export const powerOff = (options?: { cue?: "POWER" | "HALT" }): Promise<void> => loadTransitions().then((m) => m.powerOff(options));
 export const powerOn = (options?: PowerOnOptions): Promise<void> => loadTransitions().then((m) => m.powerOn(options));

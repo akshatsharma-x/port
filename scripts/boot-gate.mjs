@@ -352,15 +352,16 @@ const STALL = (untilMs) => {
   const peaks = await page.evaluate(async () => {
     const m = await window.__retrograde.audio();
     const out = {};
-    const cases = [["ENABLE", {}, m.PEAK_DB.ENABLE], ["BOOT", { variant: "tick" }, m.PEAK_DB.BOOT_TICK], ["BOOT", { variant: "thunk" }, m.PEAK_DB.BOOT_THUNK], ["POWER", { variant: "on" }, m.PEAK_DB.POWER], ["POWER", { variant: "off" }, m.PEAK_DB.POWER], ["TEAR", {}, m.PEAK_DB.TEAR], ["SECTION", {}, m.PEAK_DB.SECTION], ["COMMIT", {}, m.PEAK_DB.COMMIT], ["ARCHIVE", { hz: 880, ms: 120 }, m.PEAK_DB.ARCHIVE], ["ARCHIVE", { hz: 220, ms: 40 }, m.PEAK_DB.ARCHIVE], ["REPLOT", {}, m.PEAK_DB.REPLOT], ["GATE", {}, m.PEAK_DB.GATE], ["FLING", { intensity: 1 }, m.PEAK_DB.FLING], ["KEYCAP", { intensity: 1 }, m.PEAK_DB.KEYCAP], ["FLIP", {}, m.PEAK_DB.FLIP], ["STAMP", {}, m.PEAK_DB.STAMP]];
+    const cases = [["ENABLE", {}, m.PEAK_DB.ENABLE], ["BOOT", { variant: "tick" }, m.PEAK_DB.BOOT_TICK], ["BOOT", { variant: "thunk" }, m.PEAK_DB.BOOT_THUNK], ["POWER", { variant: "on" }, m.PEAK_DB.POWER], ["POWER", { variant: "off" }, m.PEAK_DB.POWER], ["TEAR", {}, m.PEAK_DB.TEAR], ["SECTION", {}, m.PEAK_DB.SECTION], ["COMMIT", {}, m.PEAK_DB.COMMIT], ["ARCHIVE", { hz: 880, ms: 120 }, m.PEAK_DB.ARCHIVE], ["ARCHIVE", { hz: 220, ms: 40 }, m.PEAK_DB.ARCHIVE], ["REPLOT", {}, m.PEAK_DB.REPLOT], ["GATE", {}, m.PEAK_DB.GATE], ["FLING", { intensity: 1 }, m.PEAK_DB.FLING], ["KEYCAP", { intensity: 1 }, m.PEAK_DB.KEYCAP], ["FLIP", {}, m.PEAK_DB.FLIP], ["STAMP", {}, m.PEAK_DB.STAMP], ["TRANSMIT", {}, m.PEAK_DB.TRANSMIT], ["HALT", {}, m.PEAK_DB.HALT]];
     // the jittered cues (±4–8% pitch at random) render RENDERS times: the worst take is the peak
     const RENDERS = 24;
     for (const [cue, detail, target] of cases) {
       const takes = [];
       let len = 0;
       for (let i = 0; i < RENDERS; i++) {
-        // half a second of silence first: a live engine meets each cue with its compressor released
-        const ctx = new OfflineAudioContext(1, 72000, 48000);
+        // half a second of silence first: a live engine meets each cue with its compressor released;
+        // then two seconds, past the longest cue (TRANSMIT's 1.4 s handshake and chime)
+        const ctx = new OfflineAudioContext(1, 120000, 48000);
         const { input } = m.masterChain(ctx, ctx.destination);
         len = m.buildCue(ctx, input, cue, detail, 0.5);
         const buf = await ctx.startRendering();
@@ -377,8 +378,8 @@ const STALL = (untilMs) => {
   report.runs.sound = { before, after, peaks };
   const cues = Object.entries(peaks).filter(([k]) => k !== "stubs");
   check("every implemented cue peaks at (or under) its sheet level in its loudest of 24 takes, and the mix under −6 dBFS", cues.every(([, v]) => v.peakDb <= v.target + 1 && v.peakDb <= -6 && v.peakDb >= v.target - 4), Object.fromEntries(cues.map(([k, v]) => [k, `${v.quietestDb === v.peakDb ? "" : `${v.quietestDb}…`}${v.peakDb} dBFS (sheet ${v.target})`])));
-  // Part 8 implemented ARCHIVE and REPLOT, Part 9 GATE and FLING, Part 10 KEYCAP, Part 11 FLIP and STAMP; the rest wait for their parts
-  check("…the other cues are named stubs, silent until their parts", peaks.stubs.length === 3 && peaks.stubs.every(([, len]) => len === 0), peaks.stubs.map(([c]) => c));
+  // Part 8 implemented ARCHIVE and REPLOT, Part 9 GATE and FLING, Part 10 KEYCAP, Part 11 FLIP and STAMP, Part 12 TRANSMIT and HALT; SHELL waits for Part 13
+  check("…the other cues are named stubs, silent until their parts", peaks.stubs.length === 1 && peaks.stubs.every(([, len]) => len === 0), peaks.stubs.map(([c]) => c));
   check("…console clean", logs.length === 0, logs.slice(0, 4));
   await ctx.close();
 }

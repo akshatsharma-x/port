@@ -36,6 +36,7 @@ import { createGlContext, releaseGlContext } from "@/lib/gl";
 import { yieldToMain } from "@/lib/yield";
 import { artifact, duration, hashSeed, rng, sec } from "@/lib/motion";
 import { governor, GOVERNOR, type ProbeRecord, type RenderJob, type RenderResult, type StageRuntime } from "@/lib/sceneManager";
+import { createEngine } from "@/lib/governor-engine";
 import { scrollSignal } from "@/lib/scroll";
 import { percentile } from "@/lib/stats";
 import { DPR_RULES, initialDpr, stepDpr, TIER_RULES, TIERS, tierAfterProbe, type SceneId, type Tier } from "@/lib/tier";
@@ -264,6 +265,8 @@ export async function startRuntime(canvas: HTMLCanvasElement, opts: RuntimeOptio
       return s.x * s.y * (4 * 2 + 4); // RGBA8 front + back, 32-bit depth
     },
   };
+  // the governor's scene scheduler comes with the runtime, never in first-load JS (§8.3, v2.3)
+  governor.attachEngine(createEngine);
   governor.attachRuntime(adapter);
   governor.dev.sceneTime = (id) => core.handles.get(id)?.time ?? null;
   governor.dev.postGround = () => core.post.ground(renderer);

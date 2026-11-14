@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { hashSeed, rng } from "@/lib/motion";
-import { docBottom, Governor, GOVERNOR, interlockGaps, pickCurrent, viewTop, visibleHeight, warmCandidates, type FrameOverlay, type SceneLoaders, type Slot, type StageRuntime } from "@/lib/sceneManager";
+import { createEngine, pickCurrent, warmCandidates } from "@/lib/governor-engine";
+import { docBottom, Governor, GOVERNOR, interlockGaps, viewTop, visibleHeight, type FrameOverlay, type SceneLoaders, type Slot, type StageRuntime } from "@/lib/sceneManager";
 import { SCENE_IDS, type SceneId, type Tier } from "@/lib/tier";
 
 /**
@@ -38,6 +39,8 @@ async function harness(options: { tier?: Tier; gap?: number; overlay?: FrameOver
   let now = 1000;
   let scroll = 0;
   const g = new Governor({ now: () => now });
+  // the scheduler, as the stage runtime plugs it in (lib/governor-engine.ts)
+  g.attachEngine(createEngine);
   const loaders = Object.fromEntries(SCENE_IDS.map((id) => [id, async () => ({ default: null, prime: () => ({ id }) })])) as SceneLoaders;
   const renders: SceneId[] = [];
   const violations: string[] = [];

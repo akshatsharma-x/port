@@ -18,6 +18,11 @@ import { liveAllowed, SCENE_IDS, TIER_RULES, type SceneId, type Tier, type TierD
  * Plain TypeScript, no three.js: it ships in first-load JS and runs under vitest with a fake clock
  * and a fake runtime. The three/R3F side (components/stage/StageRuntime) plugs in through
  * StageRuntime; DOM access lives in configure()/measure()/start() only.
+ *
+ * Split (v2.3, the §8.3 lever): this module is what the page needs before a scene can draw — the
+ * store, the tier, the slots and the interlock, the boot's tasks, #fx-gl's frames, the stats. The
+ * state machine above (residency, docking, the stage's draws) is lib/governor-engine.ts, which the
+ * stage runtime brings and plugs in (attachEngine); until then every slot shows its poster.
  */
 export const SCENE_STATES = ["COLD", "PRIMED", "WARM", "LIVE", "COOLING"] as const;
 export type SceneState = (typeof SCENE_STATES)[number];
@@ -192,28 +197,6 @@ export interface StageStats {
   warms: Record<SceneId, number>;
 }
 
-interface Entry {
-  id: SceneId;
-  state: SceneState;
-  module: SceneModule | null;
-  data: unknown;
-  loading: boolean;
-  mounted: boolean;
-  warming: boolean;
-  /** after a context loss: mounted, but its GPU side is gone */
-  needsRewarm: boolean;
-  /** bumps on evict / context loss, so late async results are dropped */
-  epoch: number;
-  coolingSince: number;
-  warmMs: number | null;
-  vramBytes: number;
-  drawnSinceLive: boolean;
-  invalidated: boolean;
-  /** the slot was on screen showing its poster since the scene last drew: resolve on next draw */
-  posterSeen: boolean;
-  error: string | null;
-}
-
 // ── pure geometry (exported for tests) ────────────────────────────────────────────────────
 
 type SlotGeometry = Pick<Slot, "top" | "height"> & { pin?: Slot["pin"]; fixed?: boolean };
@@ -234,51 +217,6 @@ export const docBottom = (slot: SlotGeometry): number => slot.top + slot.height 
 export function visibleHeight(slot: SlotGeometry, scroll: number, viewportHeight: number): number {
   const top = viewTop(slot, scroll);
   return Math.max(0, Math.min(viewportHeight, top + slot.height) - Math.max(0, top));
-}
-
-/** The slot the stage docks to: the most-visible one whose scene may go LIVE. */
-export function pickCurrent(slots: readonly Slot[], scroll: number, viewportHeight: number, allowed: (id: SceneId) => boolean): Slot | null {
-  let best: Slot | null = null;
-  let bestArea = 0;
-  for (const s of slots) {
-    if (!allowed(s.id)) continue;
-    const v = visibleHeight(s, scroll, viewportHeight);
-    if (v > bestArea) {
-      best = s;
-      bestArea = v;
-    }
-  }
-  return best;
-}
-
-/**
- * Slots to warm: ahead in the scroll direction within warm-ahead distance (plus any partly visible
- * one), nearest first. Slots behind are left to COOLING — "the next scene starts warming when the
- * current stage's document begins"; the one you left cools, then goes.
- */
-export function warmCandidates(
-  slots: readonly Slot[],
-  scroll: number,
-  viewportHeight: number,
-  direction: 1 | -1,
-  allowed: (id: SceneId) => boolean,
-  exclude: SceneId | null,
-): SceneId[] {
-  const reach = GOVERNOR.warmAheadViewports * viewportHeight;
-  const found: { id: SceneId; gap: number; ahead: boolean }[] = [];
-  for (const s of slots) {
-    if (!allowed(s.id) || s.id === exclude) continue;
-    const top = viewTop(s, scroll);
-    const bottom = top + s.height;
-    const gap = bottom <= 0 ? -bottom : top >= viewportHeight ? top - viewportHeight : 0;
-    if (gap > reach) continue;
-    const ahead = direction > 0 ? top > 0 : bottom < viewportHeight;
-    const onScreen = Math.min(viewportHeight, bottom) - Math.max(0, top) > 0;
-    if (!ahead && !onScreen) continue;
-    found.push({ id: s.id, gap, ahead });
-  }
-  found.sort((a, b) => a.gap - b.gap);
-  return [...new Set(found.map((f) => f.id))];
 }
 
 export interface SlotGap {
@@ -359,6 +297,46 @@ export interface GovernorOptions {
   now?: () => number;
 }
 
+/** What the scene scheduler sees of the governor (lib/governor-engine.ts): read-mostly, no DOM. */
+export interface GovernorHost {
+  readonly now: () => number;
+  readonly store: StoreApi<StageSnapshot>;
+  readonly stats: StageStats;
+  slots(): readonly Slot[];
+  viewport(): Viewport;
+  runtime(): StageRuntime | null;
+  loaders(): SceneLoaders | null;
+  /** scene chunks already fetched (prefetch() on idle) */
+  readonly modules: Map<SceneId, SceneModule>;
+  /** scenes kept resident with no slot (hold()) */
+  readonly held: ReadonlyMap<SceneId, number>;
+  dockSink(el: HTMLElement | null): void;
+  pointer(): { x: number; y: number } | null;
+  lastActivity(): number;
+  direction(): 1 | -1;
+  frameP95(): number;
+  nextKey(): number;
+}
+
+/** The scene scheduler, as the governor drives it (lib/governor-engine.ts implements it). */
+export interface SceneEngine {
+  /** residency and docking; the stage's draw unless the frame is held — the mode it asked for, or null */
+  frame(now: number, scroll: number, held: boolean): RenderMode | null;
+  takeover(id: SceneId, el: HTMLElement | null): (() => void) | null;
+  readonly takenOver: SceneId | null;
+  /** the docked slot's key */
+  readonly docked: number | null;
+  forgetSlot(key: number): void;
+  scene(id: SceneId): { module: SceneModule | null; data: unknown };
+  sceneMounted(id: SceneId): void;
+  invalidate(id?: SceneId): void;
+  onTier(tier: Tier, final: boolean): void;
+  markDirty(): void;
+  contextLost(): void;
+  contextRestored(): void;
+  detach(): void;
+}
+
 export class Governor {
   readonly store: StoreApi<StageSnapshot> = createStore<StageSnapshot>(freshSnapshot);
   readonly stats: StageStats = freshStats();
@@ -395,12 +373,12 @@ export class Governor {
   } = {};
 
   private readonly now: () => number;
-  private readonly entries: Record<SceneId, Entry>;
-  private readonly all: Entry[];
   private slots: Slot[] = [];
   private nextKey = 1;
   private loaders: SceneLoaders | null = null;
   private runtime: StageRuntime | null = null;
+  private engine: SceneEngine | null = null;
+  private readonly modules = new Map<SceneId, SceneModule>();
   private overlay: FrameOverlay | null = null;
   private bootTasks: { task: BootTask; done: () => void }[] = [];
   private viewport: Viewport = { width: 0, height: 0, canvasHeight: 0, svh: 0 };
@@ -410,32 +388,33 @@ export class Governor {
   private lastScroll = 0;
   private direction: 1 | -1 = 1;
   private lastActivity = 0;
-  private lastRenderAt = Number.NEGATIVE_INFINITY;
   private lastTick = 0;
-  private docked: number | null = null;
   private pointer: { x: number; y: number } | null = null;
   private refresh: number[] = [];
-  private dirty = false;
-  private lost = false;
   private warningsShown = new Set<string>();
-  /** frameP95() sorts two windows: refreshed at 2 Hz, not per frame */
-  private p95Cached = 0;
-  private intervalP95Cached = 0;
-  private p95At = Number.NEGATIVE_INFINITY;
-  private cappedUntil = Number.NEGATIVE_INFINITY;
-  /** PROJECTION: a scene holding the whole viewport (takeover()), and scenes kept resident (hold()) */
-  private takeoverSlot: Slot | null = null;
+  /** PROJECTION: scenes kept resident with no slot (hold()) */
   private readonly held = new Map<SceneId, number>();
+  private readonly host: GovernorHost;
 
   constructor(options: GovernorOptions = {}) {
     this.now = options.now ?? (() => performance.now());
-    this.entries = Object.fromEntries(
-      SCENE_IDS.map((id) => [
-        id,
-        { id, state: "COLD", module: null, data: null, loading: false, mounted: false, warming: false, needsRewarm: false, epoch: 0, coolingSince: 0, warmMs: null, vramBytes: 0, drawnSinceLive: false, invalidated: false, posterSeen: false, error: null },
-      ]),
-    ) as Record<SceneId, Entry>;
-    this.all = SCENE_IDS.map((id) => this.entries[id]);
+    this.host = {
+      now: this.now,
+      store: this.store,
+      stats: this.stats,
+      slots: () => this.slots,
+      viewport: () => this.viewport,
+      runtime: () => this.runtime,
+      loaders: () => this.loaders,
+      modules: this.modules,
+      held: this.held,
+      dockSink: (el) => this.dockSink(el),
+      pointer: () => this.pointer,
+      lastActivity: () => this.lastActivity,
+      direction: () => this.direction,
+      frameP95: () => this.frameP95(),
+      nextKey: () => this.nextKey++,
+    };
   }
 
   // ── wiring ──────────────────────────────────────────────────────────────────────────────
@@ -445,6 +424,14 @@ export class Governor {
     if (options.readScroll) this.readScroll = options.readScroll;
     if (options.dockSink) this.dockSink = options.dockSink;
     if (options.isHidden) this.isHidden = options.isHidden;
+  }
+
+  /** Plugs in the scene scheduler (the stage runtime brings it, lib/governor-engine.ts). Once. */
+  attachEngine(make: (host: GovernorHost) => SceneEngine): void {
+    if (this.engine) return;
+    this.engine = make(this.host);
+    const snap = this.snapshot;
+    if (snap.tier) this.engine.onTier(snap.tier, snap.tierFinal);
   }
 
   get snapshot(): StageSnapshot {
@@ -468,9 +455,8 @@ export class Governor {
 
   detachRuntime(): void {
     this.runtime = null;
-    for (const e of this.list()) if (e.mounted) this.evict(e);
+    this.engine?.detach();
     this.bootTasks.splice(0).forEach((b) => b.done());
-    this.publish();
   }
 
   setOverlay(overlay: FrameOverlay | null): void {
@@ -480,8 +466,7 @@ export class Governor {
   /** The tier from the hard rules (final = false while the probe still has a say). */
   setTier(decision: TierDecision, final: boolean): void {
     this.patch({ tier: decision.tier, tierReasons: decision.reasons, phone: decision.phone, tierFinal: final, ...(decision.tier === "OFF" ? { runtime: "off" as const } : {}) });
-    if (final) for (const e of this.list()) if (!liveAllowed(decision.tier, e.id) && e.mounted) this.evict(e);
-    this.dirty = true;
+    this.engine?.onTier(decision.tier, final);
   }
 
   recordProbe(p: ProbeRecord): void {
@@ -518,10 +503,7 @@ export class Governor {
     else this.checkInterlock();
     return () => {
       this.slots = this.slots.filter((s) => s !== slot);
-      if (this.docked === slot.key) {
-        this.docked = null;
-        this.dockSink(null);
-      }
+      this.engine?.forgetSlot(slot.key);
       this.checkInterlock();
     };
   }
@@ -533,27 +515,12 @@ export class Governor {
    * let it draw or it isn't resident — the caller falls back to a plain navigation.
    */
   takeover(id: SceneId, el: HTMLElement | null): (() => void) | null {
-    const snap = this.snapshot;
-    const e = this.entries[id];
-    if (!snap.tierFinal || !liveAllowed(snap.tier, id) || this.lost || !this.isDrawable(e)) return null;
-    const slot: Slot = { key: this.nextKey++, id, el, top: 0, height: this.viewport.canvasHeight, pin: null, fixed: true };
-    this.takeoverSlot = slot;
-    e.invalidated = true;
-    this.dirty = true;
-    return () => {
-      if (this.takeoverSlot !== slot) return;
-      this.takeoverSlot = null;
-      if (this.docked === slot.key) {
-        this.docked = null;
-        this.dockSink(null);
-      }
-      this.dirty = true;
-    };
+    return this.engine?.takeover(id, el) ?? null;
   }
 
   /** The scene a takeover holds, if any (the stage's own state, for the dev overlay and the gate). */
   get takenOver(): SceneId | null {
-    return this.takeoverSlot?.id ?? null;
+    return this.engine?.takenOver ?? null;
   }
 
   /**
@@ -562,7 +529,7 @@ export class Governor {
    */
   hold(id: SceneId): () => void {
     this.held.set(id, (this.held.get(id) ?? 0) + 1);
-    this.dirty = true;
+    this.engine?.markDirty();
     let released = false;
     return () => {
       if (released) return;
@@ -590,10 +557,11 @@ export class Governor {
    * pin comes and goes). The docked slot when the scene has several; null when it has none.
    */
   slotTop(id: SceneId): number | null {
-    if (this.takeoverSlot?.id === id) return 0;
+    if (this.engine?.takenOver === id) return 0;
     if (typeof window === "undefined") return null;
     const own = this.slots.filter((s) => s.id === id);
-    const slot = own.find((s) => s.key === this.docked) ?? own[0];
+    const docked = this.engine?.docked ?? null;
+    const slot = own.find((s) => s.key === docked) ?? own[0];
     return slot ? viewTop(slot, window.scrollY) : null;
   }
 
@@ -640,48 +608,20 @@ export class Governor {
     }
   }
 
-  // ── scenes (called by the runtime) ──────────────────────────────────────────────────────
+  // ── scenes (called by the runtime, through the engine) ──────────────────────────────────
 
   scene(id: SceneId): { module: SceneModule | null; data: unknown } {
-    const e = this.entries[id];
-    return { module: e.module, data: e.data };
+    return this.engine?.scene(id) ?? { module: this.modules.get(id) ?? null, data: null };
   }
 
   /** ScenePortal committed: its three objects exist — compile and upload them. */
   sceneMounted(id: SceneId): void {
-    const e = this.entries[id];
-    if (!e.mounted || !this.runtime) return;
-    this.startWarm(e);
-  }
-
-  private startWarm(e: Entry): void {
-    if (!this.runtime) return;
-    const epoch = e.epoch;
-    e.warming = true;
-    e.needsRewarm = false;
-    this.stats.warms[e.id]++;
-    this.runtime.warm(e.id).then(
-      (r) => {
-        if (e.epoch !== epoch || !e.mounted) return;
-        e.warming = false;
-        e.warmMs = Math.round(r.ms * 10) / 10;
-        e.vramBytes = r.vramBytes;
-        this.setState(e, "WARM");
-        this.publish();
-      },
-      (error: unknown) => {
-        if (e.epoch !== epoch) return;
-        e.error = error instanceof Error ? error.message : String(error);
-        console.error(`[stage] warming "${e.id}" failed`, error);
-        this.evict(e);
-        this.publish();
-      },
-    );
+    this.engine?.sceneMounted(id);
   }
 
   /** A scene asks for one more frame (on-demand rendering). */
   invalidate(id?: SceneId): void {
-    for (const e of this.list()) if (!id || e.id === id) e.invalidated = true;
+    this.engine?.invalidate(id);
   }
 
   /** Input, scrolling or camera motion: keeps the stage at full rate for another 2 s. */
@@ -697,30 +637,21 @@ export class Governor {
   // ── context loss (§4.2) ─────────────────────────────────────────────────────────────────
 
   contextLost(): void {
-    this.lost = true;
-    for (const e of this.list()) {
-      if (!e.mounted) continue;
-      e.epoch++;
-      e.warming = false;
-      e.needsRewarm = true;
-      if (e.state !== "PRIMED") this.setState(e, "PRIMED");
-    }
-    this.patch({ contextLost: true });
-    this.publish();
+    if (this.engine) this.engine.contextLost();
+    else this.patch({ contextLost: true });
   }
 
   /** The current slot re-warms on the next frame; other resident scenes are released. */
   contextRestored(): void {
-    this.lost = false;
-    this.patch({ contextLost: false });
-    this.dirty = true;
+    if (this.engine) this.engine.contextRestored();
+    else this.patch({ contextLost: false });
   }
 
   // ── the frame ───────────────────────────────────────────────────────────────────────────
 
   /**
-   * One step of the one-RAF chain, after lenis.raf and the scroll tick: residency, docking,
-   * then exactly one of { #fx-gl, boot task, stage render } draws — or nothing does.
+   * One step of the one-RAF chain, after lenis.raf and the scroll tick: the scheduler's residency
+   * and docking, then exactly one of { #fx-gl, boot task, stage render } draws — or nothing does.
    */
   update(now: number = this.now()): void {
     const st = this.stats;
@@ -741,69 +672,21 @@ export class Governor {
 
     const snap = this.snapshot;
     const tier = snap.tierFinal ? snap.tier : null;
-    const allowed = (id: SceneId) => liveAllowed(tier, id);
-    const vh = this.viewport.height;
-    // a takeover (PROJECTION) is the current slot, whatever the page's slots say
-    const take = this.takeoverSlot && tier && allowed(this.takeoverSlot.id) ? this.takeoverSlot : null;
-    if (take) take.height = this.viewport.canvasHeight;
-    const current = take ?? (tier ? pickCurrent(this.slots, scroll, vh, allowed) : null);
-    const desiredLive = current?.id ?? null;
-    const budget = GOVERNOR.maxResident - (desiredLive ? 1 : 0);
-    // held scenes first (a PROJECTION's way back), then the warm-ahead
-    const held: SceneId[] = [];
-    if (tier) for (const id of this.held.keys()) if (allowed(id) && id !== desiredLive) held.push(id);
-    const ahead = tier ? warmCandidates(this.slots, scroll, vh, this.direction, allowed, desiredLive) : [];
-    const desiredWarm = (held.length ? [...new Set([...held, ...ahead])] : ahead).slice(0, budget);
-
-    this.reconcile(now, desiredLive, desiredWarm);
-
-    // invariants (no allocation: this runs every frame)
-    let liveCount = 0;
-    let resident = 0;
-    let liveEntry: Entry | null = null;
-    for (const e of this.all) {
-      if (e.state === "LIVE") {
-        liveCount++;
-        liveEntry ??= e;
-      }
-      if (e.mounted) resident++;
-    }
-    st.maxLive = Math.max(st.maxLive, liveCount);
-    st.maxResident = Math.max(st.maxResident, resident);
-    const onScreen = !!(liveEntry && current && current.id === liveEntry.id);
-    st.visible = onScreen;
-    // gap protection: the slot on screen is showing its poster (its scene can't draw yet)
-    if (current) {
-      const e = this.entries[current.id];
-      if (!e.posterSeen && !(e.state === "LIVE" && e.drawnSinceLive) && !this.isDrawable(e)) {
-        e.posterSeen = true;
-        this.dirty = true;
-      }
-    }
-
-    // who draws this frame
+    const hidden = this.isHidden();
+    // who draws this frame: #fx-gl and a boot task hold it; otherwise the stage, if it asks
     const fx = this.overlay?.wantsFrame(now) ?? false;
+    const asked = this.engine?.frame(now, scroll, hidden || fx || this.bootTasks.length > 0) ?? null;
     let mode: RenderMode = tier === null ? (this.bootTasks.length ? "boot" : "off") : tier === "OFF" ? "off" : "demand";
-    let renderStage = false;
-    if (this.isHidden()) mode = "off";
+    if (hidden) mode = "off";
     else if (fx) mode = "frozen";
     else if (this.bootTasks.length) mode = "boot";
-    else if (onScreen && liveEntry && this.runtime && !this.lost) {
-      const r = this.renderDecision(now, liveEntry);
-      mode = r.mode;
-      renderStage = r.render;
-    }
+    else if (asked) mode = asked;
 
-    // docking: the canvas moves to a slot only when it will draw there (its last frame belongs there)
-    if (onScreen && liveEntry && current && (liveEntry.drawnSinceLive || renderStage)) this.dock(current);
-    st.docked = this.docked === null ? null : (this.slots.find((s) => s.key === this.docked)?.id ?? null);
-
-    // drewThisFrame is set before handing the frame out: the debug GL census attributes calls by it
     if (mode === "frozen") {
       st.drewThisFrame = "fx";
       this.overlay?.draw(now);
       st.framesFx++;
-      if (onScreen) st.framesFrozen++;
+      if (st.visible) st.framesFrozen++;
     } else if (mode === "boot") {
       st.drewThisFrame = "boot";
       const head = this.bootTasks[0];
@@ -812,85 +695,10 @@ export class Governor {
         head.done();
       }
       st.framesBoot++;
-    } else if (renderStage && liveEntry && current && this.runtime) {
-      st.drewThisFrame = "stage";
-      const t0 = this.now();
-      const viewport = this.slotViewport(current);
-      const resolve = liveEntry.posterSeen ? this.resolveOrigin(current, viewport, scroll) : null;
-      liveEntry.posterSeen = false;
-      const res = this.runtime.render({ id: liveEntry.id, time: now / 1000, viewport, resolve });
-      st.work.push(this.now() - t0);
-      st.last = { ...res, frame: st.frame };
-      st.framesRendered++;
-      if (!onScreen) st.offscreenDraws += res.calls;
-      this.lastRenderAt = now;
-      liveEntry.invalidated = false;
-      if (!liveEntry.drawnSinceLive) {
-        liveEntry.drawnSinceLive = true;
-        this.dirty = true; // the poster can go now
-      }
     }
 
     if (this.snapshot.mode !== mode) this.patch({ mode });
-    if (this.dirty) this.publish();
     flushHud(now);
-  }
-
-  private renderDecision(now: number, e: Entry): { render: boolean; mode: RenderMode } {
-    if (now - this.p95At > 500) {
-      this.p95Cached = this.frameP95();
-      this.intervalP95Cached = this.stats.intervals.count ? this.stats.intervals.percentile(95) : 0;
-      this.p95At = now;
-    }
-    const animating = (this.runtime?.animating(e.id) ?? false) || e.invalidated || !e.drawnSinceLive;
-    if (!animating) return { render: false, mode: "demand" };
-    let fps = 0;
-    let mode: RenderMode = "full";
-    if (now - this.lastActivity > GOVERNOR.idleAfterMs) {
-      fps = GOVERNOR.idleFps;
-      mode = "idle";
-    } else if (this.highRefreshCapped(now)) {
-      fps = GOVERNOR.highRefreshFallbackFps;
-      mode = "capped";
-    }
-    // a frame due within half a frame counts as due (the tick lands on vsync, not on the ms)
-    const render = fps === 0 || !e.drawnSinceLive || e.invalidated || now - this.lastRenderAt >= 1000 / fps - 4;
-    return { render, mode };
-  }
-
-  /** §8.3: the stage drops to 60 on a high-refresh display only when it can't hold the display rate. */
-  private highRefreshCapped(now: number): boolean {
-    const hz = this.snapshot.refreshHz ?? 0;
-    if (hz <= GOVERNOR.highRefreshHz) return false;
-    if (now < this.cappedUntil) return true;
-    const slow = this.stats.work.count >= 30 && this.p95Cached > GOVERNOR.highRefreshP95Ms;
-    const late = this.intervalP95Cached > (1000 / hz) * GOVERNOR.missedFrameIntervals;
-    if (slow && late) this.cappedUntil = now + GOVERNOR.highRefreshHoldMs;
-    return slow && late;
-  }
-
-  private slotViewport(slot: Slot): RenderJob["viewport"] {
-    const { width, canvasHeight } = this.viewport;
-    if (slot.height >= canvasHeight) return { width, height: canvasHeight, offsetBottom: 0 };
-    return { width, height: slot.height, offsetBottom: canvasHeight - slot.height };
-  }
-
-  private dock(slot: Slot): void {
-    if (this.docked === slot.key) return;
-    this.docked = slot.key;
-    this.dockSink(slot.el);
-  }
-
-  /** The pointer if it's over the slot's drawn region, else its center (0–1 in the slot viewport). */
-  private resolveOrigin(slot: Slot, vp: RenderJob["viewport"], scroll: number): { x: number; y: number } {
-    const top = Math.max(0, viewTop(slot, scroll));
-    const p = this.pointer;
-    if (p && p.y >= top && p.y <= top + vp.height && vp.width > 0 && vp.height > 0) return { x: p.x / vp.width, y: (p.y - top) / vp.height };
-    return { x: 0.5, y: 0.5 };
-  }
-
-  private isDrawable(e: Entry): boolean {
-    return !this.lost && e.mounted && !e.warming && !e.needsRewarm && (e.state === "WARM" || e.state === "LIVE" || e.state === "COOLING");
   }
 
   private sampleRefresh(interval: number): void {
@@ -903,164 +711,18 @@ export class Governor {
     }
   }
 
-  // ── residency ───────────────────────────────────────────────────────────────────────────
-
-  private list(): Entry[] {
-    return this.all;
-  }
-
-  private setState(e: Entry, state: SceneState, now = this.now()): void {
-    if (e.state === state) return;
-    if (state === "COOLING") e.coolingSince = now;
-    if (state === "LIVE") e.drawnSinceLive = false;
-    e.state = state;
-    this.dirty = true;
-  }
-
-  private reconcile(now: number, desiredLive: SceneId | null, desiredWarm: SceneId[]): void {
-    const want = new Set<SceneId>(desiredWarm);
-    if (desiredLive) want.add(desiredLive);
-
-    for (const e of this.list()) {
-      if (e.mounted && e.needsRewarm && !this.lost) {
-        // after a context restore: only the current slot is worth re-warming
-        if (e.id === desiredLive && this.runtime && !this.anyWarming()) this.startWarm(e);
-        else if (e.id !== desiredLive) this.evict(e);
-        continue;
-      }
-      switch (e.state) {
-        case "LIVE":
-          if (e.id !== desiredLive) this.setState(e, "COOLING", now);
-          break;
-        case "WARM":
-          if (e.id === desiredLive) this.setState(e, "LIVE", now);
-          else if (!want.has(e.id)) this.setState(e, "COOLING", now);
-          break;
-        case "COOLING":
-          if (e.id === desiredLive) this.setState(e, "LIVE", now);
-          else if (want.has(e.id)) this.setState(e, "WARM", now);
-          else if (now - e.coolingSince >= GOVERNOR.coolingGraceMs) this.evict(e);
-          break;
-        case "PRIMED":
-          if (e.mounted && e.warming && !want.has(e.id)) this.evict(e); // abandoned warm-ahead frees the slot
-          else if (!e.mounted && !want.has(e.id)) {
-            e.data = null;
-            this.setState(e, "COLD", now);
-          }
-          break;
-        case "COLD":
-          break;
-      }
-    }
-
-    if (this.lost) return;
-    for (const id of desiredLive ? [desiredLive, ...desiredWarm] : desiredWarm) {
-      const e = this.entries[id];
-      if (e.state === "COLD" && !e.loading && !e.error) this.load(e);
-      if (e.state === "PRIMED" && !e.mounted && this.runtime && !this.anyWarming() && this.makeRoom(e, desiredLive, want)) this.mount(e);
-    }
-  }
-
-  private anyWarming(): boolean {
-    return this.list().some((e) => e.warming);
-  }
-
-  /** Frees a VRAM slot for `e`: COOLING first (oldest), then WARM or warming scenes nobody wants. */
-  private makeRoom(e: Entry, desiredLive: SceneId | null, want: Set<SceneId>): boolean {
-    const resident = this.list().filter((x) => x.mounted);
-    if (resident.length < GOVERNOR.maxResident) return true;
-    const evictable = resident
-      .filter((x) => x.state !== "LIVE" && x.id !== desiredLive && x !== e)
-      .filter((x) => x.state === "COOLING" || !want.has(x.id) || e.id === desiredLive)
-      .sort((a, b) => rankForEviction(a) - rankForEviction(b) || a.coolingSince - b.coolingSince);
-    const victim = evictable[0];
-    if (!victim) return false;
-    this.evict(victim);
-    return true;
-  }
-
-  private load(e: Entry): void {
-    const loader = this.loaders?.[e.id];
-    if (!loader) return;
-    e.loading = true;
-    const epoch = e.epoch;
-    void (async () => {
-      try {
-        const mod = e.module ?? (await loader());
-        e.module = mod;
-        const data = await mod.prime?.();
-        if (e.epoch !== epoch || e.state !== "COLD") return;
-        e.data = data ?? null;
-        this.setState(e, "PRIMED");
-      } catch (error) {
-        e.error = error instanceof Error ? error.message : String(error);
-        console.error(`[stage] loading "${e.id}" failed`, error);
-        this.dirty = true;
-      } finally {
-        e.loading = false;
-      }
-    })();
-  }
-
-  private mount(e: Entry): void {
-    e.mounted = true;
-    e.warming = true; // until the portal commits and warm() resolves
-    this.dirty = true;
-  }
-
-  /** Unmounts and disposes (the runtime's portal cleanup frees every GPU resource) → COLD. */
-  private evict(e: Entry): void {
-    e.epoch++;
-    e.mounted = false;
-    e.warming = false;
-    e.needsRewarm = false;
-    e.data = null;
-    e.drawnSinceLive = false;
-    e.posterSeen = false;
-    this.setState(e, "COLD");
-  }
-
-  /** Mirrors entries into the store — only on change, never per frame. */
-  private publish(): void {
-    this.dirty = false;
-    const prev = this.snapshot.scenes;
-    let changed = false;
-    const scenes = { ...prev };
-    for (const e of this.list()) {
-      const next: SceneSnapshot = {
-        state: e.state,
-        mounted: e.mounted,
-        drawable: this.isDrawable(e),
-        poster: !(this.isDrawable(e) && (!e.posterSeen || (e.state === "LIVE" && e.drawnSinceLive))),
-        warmMs: e.warmMs,
-        vramBytes: e.vramBytes,
-        error: e.error,
-      };
-      const p = prev[e.id];
-      if (!p || p.state !== next.state || p.mounted !== next.mounted || p.drawable !== next.drawable || p.poster !== next.poster || p.warmMs !== next.warmMs || p.error !== next.error) {
-        scenes[e.id] = next;
-        changed = true;
-      }
-    }
-    const resident = this.list()
-      .filter((e) => e.mounted)
-      .map((e) => e.id);
-    const residentChanged = resident.join() !== this.snapshot.resident.join();
-    if (changed || residentChanged) this.patch({ scenes, ...(residentChanged ? { resident } : {}) });
-  }
-
   // ── lifecycle (client) ──────────────────────────────────────────────────────────────────
 
   /** Chunks for the scenes this tier can show, fetched while the main thread is idle (HIGH/MID). */
   prefetch(): void {
     const tier = this.snapshot.tier;
     if (!this.loaders || (tier !== "HIGH" && tier !== "MID")) return;
-    for (const e of this.list()) {
-      if (e.module || !liveAllowed(tier, e.id)) continue;
-      const loader = this.loaders[e.id];
+    for (const id of SCENE_IDS) {
+      if (this.modules.has(id) || !liveAllowed(tier, id)) continue;
+      const loader = this.loaders[id];
       void loader().then((m) => {
-        e.module ??= m;
-        this.patch({ prefetched: [...new Set([...this.snapshot.prefetched, e.id])] });
+        if (!this.modules.has(id)) this.modules.set(id, m);
+        this.patch({ prefetched: [...new Set([...this.snapshot.prefetched, id])] });
       });
     }
   }
@@ -1071,8 +733,6 @@ export class Governor {
     Object.assign(this.stats, freshStats(), { intervals, work, gpu });
   }
 }
-
-const rankForEviction = (e: Entry): number => (e.state === "COOLING" ? 0 : e.state === "WARM" ? 1 : 2);
 
 /** The app's one governor. */
 export const governor = new Governor();

@@ -3,10 +3,10 @@ import { expect, test, type Page } from "@playwright/test";
 /**
  * The visual matrix (PROMPTS.md Part 14): Phosphor, Amber and Paper × 320 / 375 / 768 / 1024 /
  * 1440 / 2560 px × motion on and off — the first screen of home, CONNECT (the form and its footer),
- * and a case study's first screen.
+ * and a case study's body.
  *
  * What it holds still, so a difference is a real one: the clock (fixed), the grain, roll and
- * cursor (hidden), the HUD's fps and uptime (masked), CSS animations (finished). The stage's own
+ * cursor (hidden), the HUD's fps and uptime and every image (masked), CSS animations (finished). The stage's own
  * pixels — the live canvas or its poster, whichever the machine's tier gives — are hidden: the
  * matrix is the DOM, the chrome and the type around them. The scenes have their own gates; the
  * posters are bakes (tests/posters.test.ts).
@@ -23,7 +23,10 @@ const SIZES = [
 ] as const;
 const MOTION = ["full", "reduce"] as const;
 const FIXED = new Date("2026-11-14T10:00:00Z");
-const STILL = "#fx-css, #cursor, .stage-poster, .stage-dock, #stage { visibility: hidden !important; }";
+// the glass goes entirely (display: its grain sets visibility: visible on itself, so a hidden parent
+// kept it — noise in every pixel, most of a baseline's bytes); #fx-gl is the transition layer's
+// full-viewport canvas (masked, it masked the whole screen); the stage keeps its boxes, unseen
+const STILL = "#fx-css, #fx-gl, #cursor { display: none !important; } .stage-poster, .stage-dock, #stage { visibility: hidden !important; }";
 
 async function open(page: Page, path: string): Promise<void> {
   await page.clock.setFixedTime(FIXED);
@@ -33,13 +36,15 @@ async function open(page: Page, path: string): Promise<void> {
   await page.waitForTimeout(1200);
 }
 
-async function to(page: Page, id: string): Promise<void> {
-  await page.evaluate((id) => document.getElementById(id)?.scrollIntoView({ block: "start" }), id);
+async function to(page: Page, selector: string): Promise<void> {
+  await page.evaluate((s) => document.querySelector(s)?.scrollIntoView({ block: "start" }), selector);
   await page.waitForTimeout(1500);
 }
 
+// media too is masked flat: its pixels are the project's, not the layout's, and a photograph's PNG is
+// most of a baseline's bytes (a case study's first screen was 1.2 MB of them)
 const shot = (page: Page, name: string) =>
-  expect(page).toHaveScreenshot(name, { mask: [page.locator(".hud-readout__fps, .hud-readout__time")], maskColor: "#ff00ff" });
+  expect(page).toHaveScreenshot(name, { mask: [page.locator(".hud-readout__fps, .hud-readout__time, img, picture, video, canvas:not(#fx-gl)")], maskColor: "#ff00ff" });
 
 for (const theme of THEMES)
   for (const [width, height] of SIZES)
@@ -62,12 +67,16 @@ for (const theme of THEMES)
         test("home", async ({ page }) => {
           await open(page, "/");
           await shot(page, `home-${theme}-${width}-${motion}.png`);
-          await to(page, "connect");
+          await to(page, "#connect");
           await shot(page, `connect-${theme}-${width}-${motion}.png`);
         });
 
+        // its body: the first screen is the full-bleed cover the PROJECTION lands on, all image
         test("a case study", async ({ page }) => {
           await open(page, "/work/cognivault-ai");
+          // exactly past the cover (scrollIntoView keeps the HUD's scroll-padding, so its last band showed)
+          await page.evaluate(() => window.scrollTo(0, (document.querySelector(".case__hero")?.getBoundingClientRect().bottom ?? 0) + scrollY));
+          await page.waitForTimeout(1500);
           await shot(page, `case-${theme}-${width}-${motion}.png`);
         });
       });

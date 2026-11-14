@@ -443,7 +443,7 @@ export const SiteSchema = z.strictObject({
       terminal: z.strictObject({ glyph: z.string().min(1).max(2), label: sentence(32) }),
     }),
     /** the front panel's hardware switches (§7.3) */
-    panel: z.strictObject({ label: sentence(32), tube: text, sound: text, on: text, off: text, meter: sentence(32), grid: text, gfx: text, gfxAuto: text, gfxLow: text }),
+    panel: z.strictObject({ label: sentence(32), tube: text, sound: text, soundName: text, on: text, off: text, meter: sentence(32), grid: text, gfx: text, gfxName: text, gfxAuto: text, gfxLow: text, themes: z.strictObject({ phosphor: text, amber: text, paper: text }) }),
     /** cursor chips over media (§7.3) */
     cursor: z.strictObject({ view: text, drag: text, flip: text, open: text }),
     /** the boot log (§7.4 POST) — every line is true; these are its words */

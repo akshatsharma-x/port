@@ -31,6 +31,10 @@
     outline: 2px solid var(--focus);
     outline-offset: 2px;
   }
+  /* …on controls: the skip link's landing (main, tabindex -1) is a place, and the next Tab is a stop */
+  main[tabindex="-1"]:focus {
+    outline: none;
+  }
 
   h1, h2, h3, h4, h5, h6 {
     text-wrap: balance;

@@ -4,7 +4,9 @@ import type { MouseEvent, ReactNode } from "react";
 import { glideTo, pinProgress, scrollToStep } from "@/lib/scroll";
 import { HERO } from "@/lib/hero";
 
-const INTERACTIVE = "a, button, input, select, textarea, summary, label, [role='button'], [tabindex]";
+// tabindex -1 is focusable by script, not a control: <main id="main"> (the skip link's landing) wraps
+// the hero, and counting it made every click on the hero a click on a control (Part 14)
+const INTERACTIVE = "a, button, input, select, textarea, summary, label, [role='button'], [tabindex]:not([tabindex='-1'])";
 
 /**
  * Scroll owns the morph (DESIGN.md §7.4): a click on the hero scrolls to the next checkpoint

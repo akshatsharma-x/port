@@ -158,6 +158,8 @@ for (const [tier, spec] of Object.entries(TIERS)) {
   const { ctx, page, logs } = await open({ tier: "HIGH" });
   const stage = await page.evaluate(async () => (await (await fetch("/data/stage.json")).json()).graph);
   const shape = await sky(page);
+  // the HTML layer comes with the scene (SkyLayer, Part 14): its chunk lands just after A3 warms
+  await page.waitForSelector(".sky-node", { state: "attached", timeout: 15_000 }).catch(() => {});
   const html = await page.evaluate(() => ({ records: document.querySelectorAll(".sky-node--record").length, cited: document.querySelectorAll(".sky-node--cited").length, ledger: document.querySelectorAll(".ledger__row").length }));
   const recordsFirst = stage.nodes.every((n, i) => (i < shape.records ? n.kind === 0 : n.kind === 1));
   check("the sky is the content's: a glyph per record and cited work, records first, every edge", shape.count === stage.nodes.length && shape.edges === stage.edges.length && html.records === shape.records && html.records + html.cited === shape.count && html.ledger === shape.records && recordsFirst, { glyphs: shape.count, edges: shape.edges, html, recordsFirst });
@@ -378,6 +380,9 @@ for (const [tier, spec] of Object.entries(TIERS)) {
   await page.waitForTimeout(1500);
   const s = await page.evaluate(() => window.__retrograde.governor.snapshot.scenes.archive);
   check("LOW: no ARCHIVE stage — the slot keeps its poster (the drawn constellation)", s.state !== "LIVE" && s.poster === true, s);
+  // where A3 can't run, its stars can't be placed: no layer, so no tab stop parked off screen (Part 14)
+  const layer = await page.evaluate(() => ({ overlay: !!document.querySelector(".sky-overlay"), stops: document.querySelectorAll(".sky-node").length }));
+  check("LOW: no constellation layer — the ledger carries every record", !layer.overlay && layer.stops === 0, layer);
   check("LOW: console clean", logs.length === 0, logs.slice(0, 3));
   await ctx.close();
 }
@@ -387,10 +392,10 @@ for (const [tier, spec] of Object.entries(TIERS)) {
   const r = await page.evaluate(async () => {
     const svg = document.querySelector(".archive-sky-svg");
     const row = document.querySelector(".ledger__row");
-    const out = { svg: svg ? getComputedStyle(svg).display !== "none" : false, slot: getComputedStyle(document.querySelector('.archive-backdrop > [data-stage-slot="archive"]')).visibility, overlay: getComputedStyle(document.querySelector(".sky-overlay")).display, card: row ? getComputedStyle(row).display : null, live: window.__retrograde.governor.snapshot.scenes.archive.state };
+    const out = { svg: svg ? getComputedStyle(svg).display !== "none" : false, slot: getComputedStyle(document.querySelector('.archive-backdrop > [data-stage-slot="archive"]')).visibility, overlay: document.querySelector(".sky-overlay") ? getComputedStyle(document.querySelector(".sky-overlay")).display : "absent", card: row ? getComputedStyle(row).display : null, live: window.__retrograde.governor.snapshot.scenes.archive.state };
     return out;
   });
-  check("phones: the drawn constellation is the header, no stage; the ledger as record cards", r.svg && r.slot === "hidden" && r.overlay === "none" && r.card === "grid" && r.live !== "LIVE", r);
+  check("phones: the drawn constellation is the header, no stage, no constellation layer (it comes only with A3); the ledger as record cards", r.svg && r.slot === "hidden" && r.overlay === "absent" && r.card === "grid" && r.live !== "LIVE", r);
   await page.evaluate(() => document.querySelector(".ledger__link")?.click());
   await page.waitForTimeout(1500);
   const sheet = await page.evaluate(() => { const d = document.querySelector("dialog.dossier-dialog[open]"); const b = d?.getBoundingClientRect(); return { open: !!d, w: Math.round(b?.width ?? 0), h: Math.round(b?.height ?? 0), vw: innerWidth, vh: innerHeight }; });

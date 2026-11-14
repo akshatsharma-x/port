@@ -34,7 +34,8 @@ export function NoSignal({ labels, code, kind, action }: { labels: NoSignalLabel
                 {kind === "notFound" ? labels.notFound : labels.error}
               </p>
               <p className={css.hint}>
-                {/* a full load, not a soft navigation: after an error the system starts again */}
+                {/* a plain link: from the 404 the layout's navigation takes it (a route change, as any link home);
+                    from global-error, where the layout is gone, it's a full load — the system started again */}
                 {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
                 <a href="/" className={css.link}>
                   {labels.hint}

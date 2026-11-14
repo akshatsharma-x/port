@@ -60,6 +60,8 @@ export function FocusBrackets() {
       const el = e.target;
       if (!(el instanceof HTMLElement) || el === document.body || !el.matches(":focus-visible")) return hide();
       if (el.closest("[data-focus-brackets='off']")) return hide();
+      // the skip link's landing is a place, not a control: no brackets round the whole page
+      if (el.matches("main")) return hide();
       show(el);
     };
     const onFocusOut = (e: FocusEvent) => {

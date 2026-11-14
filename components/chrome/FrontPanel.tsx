@@ -11,13 +11,18 @@ export interface PanelLabels {
   label: string;
   tube: string;
   sound: string;
+  /** what SND means, for a screen reader, after the visible label */
+  soundName: string;
   on: string;
   off: string;
   meter: string;
   grid: string;
   gfx: string;
+  gfxName: string;
   gfxAuto: string;
   gfxLow: string;
+  /** each tube's name, after its phosphor code */
+  themes: Record<Theme, string>;
 }
 
 /** The VU meter's four LEDs light at these output peaks (dBFS). */
@@ -66,12 +71,14 @@ export function FrontPanel({ labels: L }: { labels: PanelLabels }) {
             <input type="radio" name="fp-tube" value={t} checked={theme === t} onChange={() => void switchTheme(t)} />
             <span className="fp-led" aria-hidden="true" />
             <span>{THEME_LABEL[t]}</span>
+            <span className="sr-only">{` ${L.themes[t]}`}</span>
           </label>
         ))}
       </fieldset>
       <button type="button" className="fp-switch" aria-pressed={sound} data-cue="none" onClick={() => void setSoundOn(!sound)}>
         <span className="fp-led" aria-hidden="true" />
         <span>{L.sound}</span>
+        <span className="sr-only">{` ${L.soundName}`}</span>
         <span className="fp-state">{sound ? L.on : L.off}</span>
         <span ref={vuRef} className="fp-vu" aria-hidden="true" title={L.meter} data-lit="0">
           <i />
@@ -87,6 +94,7 @@ export function FrontPanel({ labels: L }: { labels: PanelLabels }) {
       <button type="button" className="fp-switch" aria-pressed={gfx === "low"} onClick={() => setGfx(gfx === "low" ? "auto" : "low")}>
         <span className="fp-led" aria-hidden="true" />
         <span>{L.gfx}</span>
+        <span className="sr-only">{` ${L.gfxName}`}</span>
         <span className="fp-state">{gfx === "low" ? L.gfxLow : L.gfxAuto}</span>
       </button>
     </div>

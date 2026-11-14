@@ -789,8 +789,12 @@ if (run("resilience")) await part("resilience", async () => {
     await ctx.close();
     const rm = await open("/this-page-does-not-exist", { reduced: true });
     const still = await rm.page.evaluate(() => document.getAnimations().filter((a) => /no-signal/.test(a.animationName ?? "")).length);
-    check("resilience", "…and under reduced motion the box stands still", still === 0, { still });
     await rm.ctx.close();
+    // the error screen replaces the layout (no head script, no data-motion): it reads the preference itself
+    const re = await open("/dev/throw?at=server", { reduced: true, debug: false });
+    const stillError = await re.page.evaluate(() => ({ drift: document.getAnimations().filter((a) => /no-signal/.test(a.animationName ?? "")).length, h1: document.querySelector("h1")?.textContent }));
+    await re.ctx.close();
+    check("resilience", "…and under reduced motion the box stands still, on the 404 and on the error screen", still === 0 && stillError.drift === 0 && /no signal/i.test(stillError.h1 ?? ""), { still, stillError });
     for (const at of ["server", "client"]) {
       const e = await open(`/dev/throw?at=${at}`, { debug: false });
       await e.page.waitForTimeout(800);

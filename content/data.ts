@@ -437,7 +437,9 @@ export const site = {
       ],
       terminal: { glyph: "~", label: "Terminal" },
     },
-    panel: { label: "Front panel", tube: "Tube", sound: "Snd", on: "On", off: "Off", meter: "Sound level", grid: "Grid", gfx: "Gfx", gfxAuto: "Auto", gfxLow: "Low" },
+    // the panel's keys say P1 · SND · GFX, as hardware does; a screen reader hears what they mean too
+    // (after the visible label, so a speech command naming it still matches, WCAG 2.5.3)
+    panel: { label: "Front panel", tube: "Tube", sound: "Snd", soundName: "(sound)", on: "On", off: "Off", meter: "Sound level", grid: "Grid", gfx: "Gfx", gfxName: "(graphics)", gfxAuto: "Auto", gfxLow: "Low", themes: { phosphor: "Phosphor", amber: "Amber", paper: "Paper" } },
     cursor: { view: "View", drag: "Drag", flip: "Flip", open: "Open" },
     boot: {
       version: "1.0",

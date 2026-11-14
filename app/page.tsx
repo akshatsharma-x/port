@@ -2,14 +2,13 @@ import type { ReactNode } from "react";
 import { About } from "@/components/sections/about/About";
 import { Archive } from "@/components/sections/archive/Archive";
 import { Capabilities } from "@/components/sections/capabilities/Capabilities";
+import { Connect } from "@/components/sections/connect/Connect";
 import { Credentials } from "@/components/sections/credentials/Credentials";
+import { Halt } from "@/components/sections/halt/Halt";
 import { Log } from "@/components/sections/log/Log";
 import { Work } from "@/components/sections/work/Work";
 import { Hero } from "@/components/sections/hero/Hero";
 import { TrackedSection } from "@/components/scroll/TrackedSection";
-import { Grid } from "@/components/ui/Grid";
-import { Marquee } from "@/components/ui/Marquee";
-import { Text } from "@/components/ui/Text";
 import { derived } from "@/content/derive";
 import type { SectionId } from "@/content/schema";
 
@@ -23,7 +22,6 @@ import type { SectionId } from "@/content/schema";
  */
 const d = derived;
 const n = new Intl.NumberFormat("en-US");
-const pad = (v: number) => String(v).padStart(2, "0");
 
 function section(id: SectionId) {
   const s = d.site.sections.find((x) => x.id === id);
@@ -52,7 +50,7 @@ function Stub({ id, counts, strip, children }: { id: SectionId; counts?: string[
 }
 
 export default function Home() {
-  const { profile, research, labels } = { profile: d.profile, research: d.research, labels: d.site.labels };
+  const { research, labels } = { research: d.research, labels: d.site.labels };
   return (
     <main>
       {/* 01 · SYSTEM — the hero: the A1 morph behind the typography layer (components/sections/hero) */}
@@ -100,47 +98,12 @@ export default function Home() {
 
       {/* 08 · CONNECT — quiet, plus one loud beat */}
       <Stub id="connect">
-        <Grid className="min-h-[100svh] content-center gap-y-8 py-section-y">
-          <Text as="p" step="display" className="col-span-12 break-words">
-            <a href={`mailto:${profile.email}`} className="hover:text-accent">
-              {profile.email}
-            </a>
-          </Text>
-          <Text as="p" step="lead" tone="fg-2" className="col-span-12 max-w-[52ch]">
-            {profile.availability.note}
-          </Text>
-          <ul className="col-span-12 flex flex-wrap gap-x-6 gap-y-2">
-            {profile.socials.map((s) => (
-              <li key={s.platform}>
-                <a href={s.url} target="_blank" rel="noreferrer" className="t-micro inline-flex min-h-6 items-center text-fg-2 hover:text-fg-1">
-                  {`${s.platform} ↗`}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </Grid>
+        <Connect d={d} />
       </Stub>
 
-      {/* 09 · HALT — the footer: marquee, site index (the power-off on the last pixel is Part 13).
-          Its links, like CONNECT's, are 24 px targets (min-h-6, WCAG 2.5.8): wrapped on a phone,
-          the micro-type rows sat closer than 24 px (Lighthouse target-size, Part 7) */}
+      {/* 09 · HALT — the footer: the marquee, the index, the build line; the power-off on the last pixel */}
       <Stub id="halt">
-        <Marquee label={`${profile.name} — ${profile.role}`} className="py-8">
-          <Text as="span" step="display" className="pr-16">
-            {`${profile.name} — ${profile.role}`}
-          </Text>
-        </Marquee>
-        <Grid className="min-h-[40svh] content-start gap-y-2 py-section-y">
-          <nav className="col-span-12 flex flex-wrap gap-x-6 gap-y-2">
-            {d.site.sections
-              .filter((s) => s.id !== "post" && s.id !== "shell")
-              .map((s) => (
-                <a key={s.id} href={`#${s.id}`} className="t-micro inline-flex min-h-6 items-center text-fg-2 hover:text-fg-1">
-                  {`${pad(s.index)} ${s.code}`}
-                </a>
-              ))}
-          </nav>
-        </Grid>
+        <Halt d={d} />
       </Stub>
     </main>
   );

@@ -1,0 +1,343 @@
+/* ==========================================================================
+   RETROGRADE · styles/connect.css — 08 CONNECT and 09 HALT (DESIGN.md §7.4): the invitation, the
+   email, the teletype form (its caret, errors, log and received screen), availability, the
+   channels and downloads; the footer's LED marquee, index, build line, and the halted screen.
+   ========================================================================== */
+
+@layer components {
+  /* ── CONNECT ───────────────────────────────────────────────────────────────────────────────── */
+  .connect {
+    align-items: start;
+    row-gap: calc(var(--spacing) * 10);
+    padding-block: var(--section-y);
+  }
+  .connect-invite {
+    margin: 0;
+    overflow-wrap: anywhere;
+    text-transform: uppercase;
+    color: var(--fg-1);
+  }
+  .connect-email {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: calc(var(--spacing) * 2) calc(var(--spacing) * 4);
+  }
+  .connect-email__link {
+    font-family: var(--ff-display-face), "Hubot Sans Fallback heading", ui-sans-serif, system-ui, sans-serif;
+    font-size: var(--step-4);
+    line-height: 1.05;
+    overflow-wrap: anywhere;
+    color: var(--fg-1);
+    text-decoration: underline var(--hairline);
+    text-underline-offset: 0.14em;
+    transition: color var(--dur-micro) var(--ease-relay);
+  }
+  .connect-email__link:hover,
+  .connect-email__link:focus-visible {
+    color: var(--accent);
+  }
+  .connect-email__toast {
+    color: var(--accent);
+  }
+
+  /* the teletype: a prompt, a field, a block caret while it's empty, the error under it */
+  .teletype {
+    display: grid;
+    gap: calc(var(--spacing) * 5);
+    font-family: var(--ff-mono);
+  }
+  .teletype__line {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    /* the prompt and the field share one face and size: top-aligned they share a first line too
+       (baseline put MESSAGE> at a textarea's last line) */
+    align-items: start;
+    column-gap: calc(var(--spacing) * 3);
+    padding-bottom: calc(var(--spacing) * 2);
+    box-shadow: inset 0 calc(var(--hairline) * -1) 0 var(--line-2);
+    transition: box-shadow var(--dur-micro) var(--ease-relay);
+  }
+  .teletype__line:focus-within {
+    box-shadow: inset 0 calc(var(--hairline) * -2) 0 var(--accent);
+  }
+  .teletype__prompt {
+    font-size: var(--step-0);
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    cursor: text;
+  }
+  .teletype__field {
+    position: relative;
+    display: block;
+  }
+  .teletype__input {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    outline: none;
+    background: transparent;
+    font: inherit;
+    font-size: var(--step-0);
+    line-height: var(--lh-0);
+    color: var(--fg-1);
+    caret-color: var(--accent);
+    caret-shape: block;
+    appearance: none;
+  }
+  .teletype__area {
+    min-height: 5lh;
+    resize: vertical;
+  }
+  .teletype__select {
+    cursor: pointer;
+  }
+  .teletype__select option {
+    background: var(--bg-raised);
+    color: var(--fg-1);
+  }
+  .teletype__caret {
+    position: absolute;
+    top: 0.18em;
+    left: 0;
+    width: 0.6em;
+    height: 1.05em;
+    background: var(--accent);
+    visibility: hidden;
+    pointer-events: none;
+    animation: teletype-caret 1060ms steps(1) infinite;
+  }
+  .teletype__line:focus-within .teletype__input:placeholder-shown + .teletype__caret {
+    visibility: visible;
+  }
+  @keyframes teletype-caret {
+    50% {
+      opacity: 0;
+    }
+  }
+  .teletype__error {
+    grid-column: 2;
+    margin: calc(var(--spacing) * 1) 0 0;
+    color: var(--hot);
+  }
+  .teletype__error:empty {
+    display: none;
+  }
+  .teletype__line:has([aria-invalid="true"]) {
+    box-shadow: inset 0 calc(var(--hairline) * -2) 0 var(--hot);
+  }
+  /* the honeypot: off screen, for scripts only */
+  .teletype__trap {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+  .teletype__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--spacing) * 4);
+  }
+  .teletype__note {
+    margin: 0;
+    color: var(--hot);
+  }
+  .teletype__note:empty {
+    display: none;
+  }
+  /* the transmission log: what really happened, typed out */
+  .teletype__log {
+    display: grid;
+    gap: calc(var(--spacing) * 1);
+    margin: 0;
+    padding: calc(var(--spacing) * 4);
+    list-style: none;
+    background: var(--bg-sunken);
+    color: var(--fg-2);
+  }
+  .teletype__logline {
+    width: calc((var(--chars) + 1) * 1ch);
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    animation: teletype-type calc(var(--chars) * 18ms) steps(var(--chars)) both;
+  }
+  @keyframes teletype-type {
+    from {
+      width: 0;
+    }
+  }
+  .teletype[data-state="received"] .teletype__line,
+  .teletype[data-state="received"] .teletype__actions,
+  .teletype[data-state="received"] .teletype__fallback {
+    display: none;
+  }
+  /* TRANSMISSION RECEIVED: a lit tube */
+  .teletype__received {
+    display: grid;
+    gap: calc(var(--spacing) * 3);
+    padding: calc(var(--spacing) * 8);
+    outline: none;
+    background: repeating-linear-gradient(0deg, color-mix(in oklch, var(--accent) 6%, transparent) 0 1px, transparent 1px 3px), var(--bg-sunken);
+    box-shadow: inset 0 0 0 var(--hairline) var(--accent);
+    color: var(--fg-2);
+  }
+  .teletype__received-title {
+    margin: 0;
+    font-family: var(--ff-mono);
+    font-size: var(--step-3);
+    line-height: 1.05;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-shadow: 0 0 calc(var(--glow) * 10px) var(--accent);
+  }
+  .teletype__received > .chip {
+    justify-self: start;
+  }
+  .teletype__fallback {
+    margin: 0;
+    color: var(--fg-2);
+  }
+  .teletype__fallback a {
+    color: var(--accent);
+  }
+  html[data-motion="reduce"] .teletype__caret,
+  html[data-motion="reduce"] .teletype__logline {
+    animation: none;
+  }
+
+  /* availability, the channels, the downloads */
+  .connect-side {
+    display: grid;
+    gap: calc(var(--spacing) * 10);
+  }
+  .availability {
+    display: grid;
+    gap: calc(var(--spacing) * 2);
+    color: var(--fg-2);
+  }
+  .availability > p {
+    margin: 0;
+  }
+  .availability__status {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 2);
+    color: var(--fg-1);
+  }
+  .availability__dot {
+    width: 0.6em;
+    height: 0.6em;
+    border-radius: var(--r-dot);
+    background: var(--fg-3);
+  }
+  .availability__dot[data-status="open"] {
+    background: var(--accent);
+    box-shadow: 0 0 calc(var(--glow) * 8px) var(--accent);
+  }
+  .availability__dot[data-status="limited"] {
+    background: color-mix(in oklch, var(--accent) 55%, var(--fg-3));
+  }
+  .availability__overlap {
+    color: var(--fg-1);
+  }
+  .channels ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--spacing) * 2) calc(var(--spacing) * 3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .connect-ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--spacing) * 3);
+  }
+
+  /* ── HALT ──────────────────────────────────────────────────────────────────────────────────── */
+  .halt-marquee {
+    padding-block: calc(var(--spacing) * 8);
+  }
+  /* the letters lit through an LED dot grid */
+  .halt-marquee__text {
+    padding-inline-end: calc(var(--spacing) * 16);
+    white-space: nowrap;
+    text-transform: uppercase;
+    mask: radial-gradient(circle at center, #000 40%, transparent 46%) 0 0 / 0.14em 0.14em;
+  }
+  .halt-grid {
+    row-gap: calc(var(--spacing) * 8);
+    padding-block: calc(var(--spacing) * 8) var(--section-y);
+  }
+  .halt-index {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: calc(var(--spacing) * 6) var(--gutter);
+  }
+  .halt-index__group {
+    display: grid;
+    align-content: start;
+    gap: calc(var(--spacing) * 2);
+  }
+  .halt-index__group ul {
+    display: grid;
+    gap: calc(var(--spacing) * 1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .halt-index__label {
+    margin: 0;
+    color: var(--fg-3);
+  }
+  .halt-index a,
+  .halt-top {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    color: var(--fg-2);
+    transition: color var(--dur-micro) var(--ease-relay);
+  }
+  .halt-index a:hover,
+  .halt-index a:focus-visible,
+  .halt-top:hover,
+  .halt-top:focus-visible {
+    color: var(--fg-1);
+  }
+  .halt-build {
+    margin: 0;
+    color: var(--fg-3);
+  }
+  .halt-top {
+    justify-self: end;
+  }
+  /* the halted screen: outside #screen, over the dark tube, never in the pointer's way */
+  .halt-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: none;
+    place-items: center;
+    pointer-events: none;
+  }
+  html[data-tube="off"] .halt-screen {
+    display: grid;
+  }
+  .halt-screen__line {
+    margin: 0;
+    padding-inline: var(--margin);
+    font-family: var(--ff-mono);
+    font-size: var(--step-0);
+    letter-spacing: 0.14em;
+    text-align: center;
+    text-transform: uppercase;
+    color: var(--fg-2);
+    text-shadow: 0 0 calc(var(--glow) * 8px) var(--fg-2);
+  }
+}

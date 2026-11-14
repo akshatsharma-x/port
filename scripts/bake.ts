@@ -2,7 +2,7 @@
  * The build-time bake (DESIGN.md §8.2, law 7). `npm run bake`, and automatically before
  * `npm run build` (prebuild) and `npm run dev` (predev, offline).
  *
- *   validate → layout-graph → citations → verify → search-index → posters (placeholders) → bluenoise → foil-grain → portrait → covers → atlases → keycaps · og (stub)
+ *   validate → layout-graph → citations → verify → search-index → posters (placeholders) → bluenoise → foil-grain → portrait → covers → atlases → keycaps → publication-list · og (stub)
  *
  * Flags: --offline (or RETROGRADE_OFFLINE=1) keeps the last network results; --verbose prints every
  * warning. RETROGRADE_BUILD_DATE=YYYY-MM-DD pins "today". Placeholder content always bakes dry.
@@ -14,6 +14,7 @@ import { citationsStep } from "./bake/citations";
 import { layoutGraphStep } from "./bake/layout-graph";
 import { blueNoiseStep } from "./bake/bluenoise";
 import { foilGrainStep } from "./bake/foil-grain";
+import { publicationListStep } from "./bake/publication-list";
 import { portraitStep } from "./bake/portrait";
 import { coversStep } from "./bake/covers";
 import { keycapsStep } from "./bake/keycaps";
@@ -94,6 +95,7 @@ async function main() {
   await step("covers", () => coversStep(), (s) => s);
   await step("atlases", () => atlasStep(), (s) => s);
   await step("keycaps", () => keycapsStep(), (s) => s);
+  await step("publication-list", () => publicationListStep(), (s) => s);
   for (const stub of STUB_STEPS) print("todo", stub.name, `${stub.summary} (${stub.part})`);
 
   printWarnings();

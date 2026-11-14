@@ -149,6 +149,13 @@ const browser = await chromium.launch({ channel: "chrome" });
 const IGNORED = [/Download the React DevTools/];
 const CLS_INIT = () => {
   window.__cls = 0;
+  // every counted shift with what moved, from where to where (x y w h), for the report
+  window.__shifts = [];
+  const desc = (n) => {
+    const el = n?.nodeType === 3 ? n.parentElement : n;
+    return el ? `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ""}${typeof el.className === "string" && el.className ? `.${el.className.split(" ").slice(0, 2).join(".")}` : ""}` : "?";
+  };
+  const rect = (r) => [r.x, r.y, r.width, r.height].map(Math.round);
   new PerformanceObserver((list) => {
     for (const e of list.getEntries()) {
       if (e.hadRecentInput) continue;
@@ -156,6 +163,7 @@ const CLS_INIT = () => {
       const el = (n) => (n.nodeType === 3 ? n.parentElement : n);
       if (nodes.length && nodes.every((n) => el(n)?.closest?.(".stage-debug"))) continue;
       window.__cls += e.value;
+      window.__shifts.push({ t: Math.round(e.startTime), v: +e.value.toFixed(4), src: (e.sources ?? []).map((s) => ({ n: desc(s.node), from: rect(s.previousRect), to: rect(s.currentRect) })) });
     }
   }).observe({ type: "layout-shift", buffered: true });
 };
@@ -469,7 +477,7 @@ let words = null;
     const { ctx, page, logs } = await open("/", { tz, hash: "#connect", ...(i % 2 ? { viewport: { width: 390, height: 844 }, mobile: true } : {}) });
     await behaviourIn(page);
     await page.waitForTimeout(400);
-    const at = await page.evaluate(() => ({ text: document.querySelector("[data-connect-overlap]").textContent, inView: document.querySelector("[data-connect-overlap]").getBoundingClientRect().top < innerHeight, cls: window.__cls }));
+    const at = await page.evaluate(() => ({ text: document.querySelector("[data-connect-overlap]").textContent, inView: document.querySelector("[data-connect-overlap]").getBoundingClientRect().top < innerHeight, cls: window.__cls, shifts: window.__shifts }));
     seen[tz] = { ...at, desk: !(i % 2), logs: logs.slice(0, 2) };
     await ctx.close();
   }
@@ -477,7 +485,7 @@ let words = null;
   const wrong = zones.filter((tz) => JSON.stringify(readOverlap(seen[tz].text)) !== JSON.stringify(expectedOverlap(mine, tz, now)));
   report.measures.overlaps = Object.fromEntries(zones.map((tz) => [tz, seen[tz].text]));
   check("the overlap, worked out here from Intl's own offsets for six zones, matches the page's to the minute", wrong.length === 0, { seen: report.measures.overlaps, wrong: wrong.map((tz) => [tz, expectedOverlap(mine, tz, now)]) });
-  check("landing on #connect (desk and phone): COPY and the readout arrive on idle without moving anything (CLS 0), console clean", zones.every((tz) => (seen[tz].inView || !seen[tz].desk) && seen[tz].cls < 0.001 && seen[tz].logs.length === 0), Object.fromEntries(zones.map((tz) => [tz, [seen[tz].inView, +seen[tz].cls.toFixed(4), seen[tz].logs]])));
+  check("landing on #connect (desk and phone): COPY and the readout arrive on idle without moving anything (CLS 0), console clean", zones.every((tz) => (seen[tz].inView || !seen[tz].desk) && seen[tz].cls < 0.001 && seen[tz].logs.length === 0), Object.fromEntries(zones.map((tz) => [tz, [seen[tz].inView, +seen[tz].cls.toFixed(4), seen[tz].logs, ...(seen[tz].cls ? [seen[tz].shifts] : [])]])));
   const { ctx, page } = await open("/", { tz: "Europe/London", fixed: new Date("2026-01-15T12:00:00Z") });
   await toSection(page, "connect");
   await page.locator("#cx-name").focus();

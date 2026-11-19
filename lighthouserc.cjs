@@ -8,8 +8,10 @@
  *
  * The CPU is throttled to one machine: the reference method's 4x on a benchmarkIndex of ~4,500
  * (§8.3), an effective ~1,125. A slower machine throttles less to measure the same phone:
- * LHCI_CPU_SLOWDOWN (CI sets 2.4 for GitHub's ~2,650 runner, whose 4x measured a slower phone and
- * failed every budget on its first run). The network stays Lighthouse's mobile defaults.
+ * LHCI_CPU_SLOWDOWN, which CI measures on every run (scripts/audit/calibrate.mjs: benchmarkIndex /
+ * 1,125). GitHub's runner varies — ~2,650 on its first Part 16 run, ~2,470 on a later one, where a
+ * fixed 2.4x measured a phone 9% slower than the reference. The network stays Lighthouse's mobile
+ * defaults.
  */
 const CPU = Number(process.env.LHCI_CPU_SLOWDOWN ?? 4);
 const BASE = process.env.BASE_URL ?? "http://localhost:3200";

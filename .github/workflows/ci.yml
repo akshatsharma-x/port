@@ -53,15 +53,18 @@ jobs:
           node scripts/boot-manifest.mjs
       - name: Bundles and assets (size-limit)
         run: npx size-limit
-      - name: Web vitals (Lighthouse CI)
-        # the runner's CPU benchmarks ~2,650 (its first run, Part 16) against the reference machine's
-        # ~4,500: 2.4x here is the reference method's 4x (lighthouserc.cjs)
-        env: { CHROME_PATH: /usr/bin/google-chrome, LHCI_CPU_SLOWDOWN: "2.4" }
-        run: npx lhci autorun
-      - name: Serve the build for the gates
+      - name: Serve the build (Lighthouse CI and the gates)
         run: |
           npx next start -p 3200 &
           for i in $(seq 1 120); do curl -sf -o /dev/null http://localhost:3200/ && break; sleep 1; done
+      - name: Calibrate the CPU to the reference phone
+        # the runner's speed varies (benchmarkIndex ~2,470-2,650 warm, 1,886 cold): measured each run,
+        # the throttle is benchmarkIndex / 1,125, the reference method's 4x at ~4,500 (lighthouserc.cjs)
+        env: { CHROME_PATH: /usr/bin/google-chrome }
+        run: node scripts/audit/calibrate.mjs >> "$GITHUB_ENV"
+      - name: Web vitals (Lighthouse CI)
+        env: { CHROME_PATH: /usr/bin/google-chrome, LHCI_NO_SERVER: "1" }
+        run: npx lhci autorun
       - name: Audit gate
         run: node scripts/audit-gate.mjs --ci # --ci: the checks that need a real GPU say SKIP
       - name: Smoke and weight

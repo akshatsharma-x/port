@@ -2,6 +2,7 @@
 @import "../styles/tokens.css";
 @import "../styles/font-fallbacks.css";
 @import "../styles/font-fallbacks-display.css";
+@import "../styles/font-fallbacks-body.css";
 @import "../styles/theme.css";
 @import "../styles/base.css";
 @import "../styles/type.css";

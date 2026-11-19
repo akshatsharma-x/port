@@ -2,9 +2,10 @@ import localFont from "next/font/local";
 
 /**
  * DESIGN.md §2.5 — three OFL variable families, baked by scripts/fonts (Latin, axes trimmed).
- * Display + mono preload; body loads lazily. Mona Sans gets next/font's metric-adjusted Arial
- * fallback; Hubot Sans gets one measured at each display step's width (styles/font-fallbacks-
- * display.css); mono uses the hand-tuned faces in styles/font-fallbacks.css.
+ * Display + mono preload; body loads lazily. Mona Sans's fallback is next/font's metric-adjusted
+ * Arial, with Arial's metric twins for Linux and ChromeOS (styles/font-fallbacks-body.css); Hubot
+ * Sans gets one measured at each display step's width (styles/font-fallbacks-display.css); mono
+ * uses the hand-tuned faces in styles/font-fallbacks.css.
  */
 export const hubotSans = localFont({
   src: "./fonts/HubotSans-Variable.woff2",
@@ -27,8 +28,9 @@ export const monaSans = localFont({
   style: "normal",
   display: "swap",
   preload: false,
-  adjustFontFallback: "Arial",
-  fallback: ["ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Arial", "sans-serif"],
+  // next/font's own Arial numbers, with Liberation Sans and Arimo beside Arial (it named Arial alone)
+  adjustFontFallback: false,
+  fallback: ["Mona Sans Fallback", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Arial", "sans-serif"],
 });
 
 export const jetbrainsMono = localFont({

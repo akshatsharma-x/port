@@ -1,0 +1,15 @@
+/* Mona Sans's fallback (DESIGN.md §2.5: "a late font swap moves nothing"; Part 16). The numbers
+   are next/font's own for Arial (`adjustFontFallback: "Arial"`, read from the build); re-read them
+   if app/fonts/MonaSans-Variable.woff2 changes. next/font wrote `src: local(Arial)` alone, so
+   where there is no Arial (Linux; GitHub's runner) the body text first painted in an unadjusted
+   system face and reflowed when Mona Sans arrived: a paper's TLDR, CLS 0.0215 on every CI run.
+   Liberation Sans (which Chrome's Linux package installs) and Arimo (ChromeOS) are built on
+   Arial's metrics, so the same overrides hold for them — as the display steps' fallbacks have. */
+@font-face {
+  font-family: "Mona Sans Fallback";
+  src: local("Arial"), local("ArialMT"), local("Liberation Sans"), local("Arimo");
+  ascent-override: 105.85%;
+  descent-override: 31.08%;
+  line-gap-override: 0%;
+  size-adjust: 102.98%;
+}

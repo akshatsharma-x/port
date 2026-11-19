@@ -143,6 +143,10 @@
   .shape-glyph--faint {
     opacity: 0.45;
   }
+  /* the tuned star's colour, in the legend as on the stage: the accent is a state */
+  .shape-glyph--tuned {
+    color: var(--accent);
+  }
 
   /* ── the sky's HTML layer: the slot's own box, so the stage's slot px are its px ── */
   .sky-overlay {
@@ -153,19 +157,72 @@
   }
   .sky-label,
   .sky-tip,
-  .sky-node {
+  .sky-node,
+  .sky-tag {
     position: absolute;
     left: 0;
     top: 0;
     opacity: 0;
     will-change: transform;
   }
+  /* a label sits on a plate of the ground (Part 16): an edge passes behind the word, not through it —
+     as the camera orbits, the cluster's label lay across its own edge */
   .sky-label {
     translate: -50% calc(-100% - var(--spacing) * 2);
+    padding: 0 calc(var(--spacing) * 1.5);
+    background: var(--bg);
     color: var(--fg-2);
     white-space: nowrap;
     pointer-events: none;
     transition: opacity var(--dur-micro) var(--ease-relay);
+  }
+  /* a sparse sky's tags (ARCHIVE.sparse): each record's title and facts beside its star, on a plate;
+     the tuned one in full ink with its facts in the accent — the star's own state — the rest a step back */
+  .sky-tag {
+    display: grid;
+    gap: calc(var(--spacing) * 1);
+    /* its own width, not the room left after its offset: near an edge an absolute box shrank to a
+       column ("Short- / Term PM2.5 / Forecastin…") */
+    width: max-content;
+    max-width: 30ch;
+    padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2);
+    translate: 0 -50%;
+    background: color-mix(in oklab, var(--bg) 88%, transparent);
+    pointer-events: none;
+    transition: opacity var(--dur-micro) var(--ease-relay);
+  }
+  .sky-tag[data-side="left"] {
+    translate: -100% -50%;
+    text-align: end;
+  }
+  .sky-tag[data-side="above"] {
+    translate: -50% -100%;
+    text-align: center;
+  }
+  .sky-tag[data-side="below"] {
+    translate: -50% 0;
+    text-align: center;
+  }
+  .sky-tag__title {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: var(--step--1);
+    line-height: 1.3;
+    color: var(--fg-2);
+    text-wrap: balance;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    transition: color var(--dur-micro) var(--ease-relay);
+  }
+  .sky-tag__meta {
+    color: var(--fg-3);
+    transition: color var(--dur-micro) var(--ease-relay);
+  }
+  .sky-tag[data-on="true"] .sky-tag__title {
+    color: var(--fg-1);
+  }
+  .sky-tag[data-on="true"] .sky-tag__meta {
+    color: var(--accent);
   }
   .sky-label--year,
   .sky-label--venue {
@@ -289,9 +346,31 @@
     left: calc(var(--x) * 100%);
     top: calc(var(--y) * 100%);
     translate: calc(var(--x) * -100%) calc(-100% - var(--spacing) * 2);
+    padding: 0 calc(var(--spacing) * 1.5);
+    background: var(--bg);
     color: var(--fg-2);
     white-space: nowrap;
     pointer-events: none;
+  }
+  /* the drawing's tags: at the star, beside its glyph (its radius, --r), always shown */
+  .sky-tag--svg {
+    opacity: 1;
+    left: calc(var(--x) * 100% + var(--r) + var(--spacing) * 3);
+    top: calc(var(--y) * 100%);
+    will-change: auto;
+  }
+  .sky-tag--svg[data-side="left"] {
+    left: calc(var(--x) * 100% - var(--r) - var(--spacing) * 3);
+  }
+  .sky-tag--svg[data-side="above"],
+  .sky-tag--svg[data-side="below"] {
+    left: calc(var(--x) * 100% + var(--dx, 0px));
+  }
+  .sky-tag--svg[data-side="above"] {
+    top: calc(var(--y) * 100% - var(--r) - var(--spacing) * 3);
+  }
+  .sky-tag--svg[data-side="below"] {
+    top: calc(var(--y) * 100% + var(--r) + var(--spacing) * 3);
   }
   .sky-svg__edge {
     fill: none;
@@ -545,6 +624,11 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0 calc(var(--spacing) * 2);
+  }
+  /* the column's header stays a cell: as a flex box it was its content's height, and its rule sat
+     3 px above the row's (Part 16) */
+  .ledger thead .ledger__authors {
+    display: table-cell;
   }
   .author-me {
     color: var(--accent);

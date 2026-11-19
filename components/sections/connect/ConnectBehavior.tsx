@@ -9,6 +9,7 @@ import { CheckGlyph } from "@/components/research/CheckGlyph";
 import { CONTACT, ContactSchema, duration, mailtoFor, overlap, type ContactInput, type ErrorCode, type Intent } from "@/lib/contact";
 import { cue } from "@/lib/cues";
 import { HUD_HZ, localClock, onHud } from "@/lib/hud";
+import { feedback } from "@/lib/motion";
 
 export interface ConnectLabels {
   errors: Record<ErrorCode, string>;
@@ -181,7 +182,7 @@ export default function ConnectBehavior({ labels, owner }: { labels: ConnectLabe
         window.clearTimeout(timer);
         timer = window.setTimeout(() => {
           if (copied) copied.hidden = true;
-        }, COPIED_MS);
+        }, feedback.copiedMs);
       } catch {
         /* no clipboard here (an insecure context, a denied permission): nothing copied, no toast */
       }
@@ -247,6 +248,3 @@ export default function ConnectBehavior({ labels, owner }: { labels: ConnectLabe
     </>
   );
 }
-
-/** the toast stays this long (ms) */
-const COPIED_MS = 1600;

@@ -22,6 +22,7 @@ export function Chrome() {
     .filter((s) => s.index >= RAIL_RANGE.first && s.index <= RAIL_RANGE.last)
     .map(({ id, index, code, title }) => ({ id, index, code, title }));
   return (
+    <>
     <header id="hud">
       {/* the bezel: four corner brackets and hairline rules at the viewport edges (§2.9) */}
       <span className="hud-bezel" aria-hidden="true">
@@ -57,10 +58,18 @@ export function Chrome() {
         }}
       />
     </header>
+    {/* a TV's on-screen display for the number keys' channels (lib/channels.ts fills it), hidden until
+        tuned: outside the HUD's layer, over the tear's static as a set's own overlay is (z 61) */}
+    <p className="channel-osd" aria-hidden="true" hidden>
+      <span className="channel-osd__ch t-micro">{labels.chrome.channel}</span>
+      <span className="channel-osd__n led" data-osd-n="" />
+      <span className="channel-osd__name t-micro" data-osd-name="" />
+    </p>
+    </>
   );
 }
 
-/** #cursor (z40, DESIGN.md §4.1): above the HUD, under #fx-css's glass. */
+/** #cursor (z62, DESIGN.md §4.1): above every layer the page draws; only the top layer is over it. */
 export function CursorLayer() {
   return <Cursor labels={derived.site.labels.cursor} />;
 }

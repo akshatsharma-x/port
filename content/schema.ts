@@ -149,7 +149,7 @@ export const SiteSchema = z.strictObject({
       layouts: z.strictObject({ topic: sentence(12), year: sentence(12), venue: sentence(12) }),
       /** the shape legend's names, and a cited work's when it fits no venue type */
       venueTypes: z.strictObject({ journal: sentence(24), conference: sentence(24), workshop: sentence(24), preprint: sentence(24), patent: sentence(24), thesis: sentence(24), chapter: sentence(24), other: sentence(24) }),
-      legend: z.strictObject({ label: sentence(32), filled: sentence(40), dashed: sentence(40), mine: sentence(40), cited: sentence(40) }),
+      legend: z.strictObject({ label: sentence(32), filled: sentence(40), dashed: sentence(40), mine: sentence(40), cited: sentence(40), tuned: sentence(40) }),
       sky: z.strictObject({
         label: sentence(40),
         /** what the (aria-hidden) stage shows, for screen readers */
@@ -194,6 +194,7 @@ export const SiteSchema = z.strictObject({
         impactFactor: text,
         year: text,
         citations: text,
+        notCited: sentence(24),
         source: text,
         authors: sentence(24),
         venue: sentence(24),
@@ -351,6 +352,8 @@ export const SiteSchema = z.strictObject({
       host: z.string().regex(/^[a-z][a-z0-9-]{0,15}$/, "a host name"),
       tty: sentence(8),
       banner: z.array(sentence(120)).min(1).max(4),
+      /** a returning visitor's greeting, as a tty's (Part 16): {when} in their zone, {tty} */
+      lastLogin: sentence(60),
       loading: sentence(60),
       offline: sentence(160),
       notFound: sentence(60),
@@ -436,6 +439,8 @@ export const SiteSchema = z.strictObject({
       newTab: sentence(32),
       /** the skip link, the first stop on every page (WCAG 2.4.1) */
       skip: sentence(32),
+      /** the number keys tune the sections like channels (lib/channels.ts): the on-screen display's word */
+      channel: sentence(8),
     }),
     /** 404 / 500 — NO SIGNAL (§7.4): an empty tube, a drifting on-screen box, the way back */
     noSignal: z.strictObject({

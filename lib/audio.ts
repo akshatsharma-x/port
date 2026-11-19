@@ -460,15 +460,22 @@ class Engine {
     }
     if (this.voices >= MIX.voices) return; // the cap: a busy moment drops the newest voice
     if (cue === "KEYCAP" && this.keycaps >= KEYCAP_CUE.voices) return; // six clacks at once at most
-    const at = this.ctx.currentTime + 0.005;
+    const delay = Math.max(0, detail.delayMs ?? 0) / 1000;
+    const at = this.ctx.currentTime + 0.005 + delay;
     const length = buildCue(this.ctx, this.input, cue, detail, at);
     if (length <= 0) return;
-    this.voices++;
-    if (cue === "KEYCAP") this.keycaps++;
-    window.setTimeout(() => {
-      this.voices--;
-      if (cue === "KEYCAP") this.keycaps--;
-    }, length * 1000 + 30);
+    // a voice counts while it sounds: a delayed one from its start (the sound itself is already on
+    // the audio clock; these timers only keep the books)
+    const sound = () => {
+      this.voices++;
+      if (cue === "KEYCAP") this.keycaps++;
+      window.setTimeout(() => {
+        this.voices--;
+        if (cue === "KEYCAP") this.keycaps--;
+      }, length * 1000 + 30);
+    };
+    if (delay > 0) window.setTimeout(sound, delay * 1000);
+    else sound();
   }
 
   /**

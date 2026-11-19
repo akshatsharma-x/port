@@ -191,6 +191,8 @@
   --dur-scene: 900ms;
   --dur-scene-out: 600ms;
   --blink: 1060ms;
+  /* §3.4 rate-based text: one character at the typewriter's 45 cps (lib/motion.ts artifact) */
+  --typewriter-char: 22.222ms;
 
   /* FX master switch, read by the Part 5 overlay layers */
   --fx-on: 1;

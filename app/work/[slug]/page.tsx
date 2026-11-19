@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { CasePush } from "@/components/work/CasePush";
 import { CaseStudy } from "@/components/work/CaseStudy";
 import { derived } from "@/content/derive";
+import { HudPage } from "@/components/chrome/HudPage";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { projectGraph } from "@/lib/jsonld";
 import { ogPath, projectAlt } from "@/lib/og-meta";
@@ -29,6 +30,7 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ slug
   return (
     <>
       <JsonLd graph={projectGraph(p)} />
+      <HudPage section="work" />
       <CasePush>
         <CaseStudy slug={slug} />
       </CasePush>

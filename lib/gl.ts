@@ -6,6 +6,19 @@
  */
 export type ContextName = "stage" | "fx-gl";
 
+/**
+ * Both contexts ask with `failIfMajorPerformanceCaveat` (Part 16), which the browser refuses on a
+ * software rasterizer — SwiftShader, WARP, llvmpipe — where the scenes would run on the CPU. A
+ * refusal is OFF, the posters (components/stage/Stage.tsx), and this is how the runtime says so.
+ */
+export const SOFTWARE_GL = "software rasterizer";
+
+/**
+ * …and when the browser grants the context anyway (a software backend chosen, not fallen back to:
+ * Chrome forcing ANGLE's SwiftShader, other engines' llvmpipe or WARP), its renderer says so.
+ */
+export const isSoftwareRenderer = (renderer: string | null): boolean => !!renderer && /swiftshader|llvmpipe|softpipe|software|basic render|\bwarp\b/i.test(renderer);
+
 export interface ContextRecord {
   name: ContextName;
   gl: WebGL2RenderingContext;

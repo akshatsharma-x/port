@@ -32,6 +32,9 @@ export function ScrollProvider({ children }: { children: ReactNode }) {
     let stopAnalytics: (() => void) | null = null;
     let live = true;
     const cancelAnalytics = whenIdle(() => void import("@/lib/analytics-start").then((m) => live && (stopAnalytics = m.startAnalytics())));
+    // the number keys' channels (lib/channels.ts, a seeded delight): after idle, in its own small chunk
+    let stopChannels: (() => void) | null = null;
+    const cancelChannels = whenIdle(() => void import("@/lib/channels").then((m) => live && (stopChannels = m.startChannels())));
     const loadedAt = performance.now();
     // a deep link lands once (after the first measure), as a jump: no SECTION cue, no glitch
     const offRefresh = onScrollRefresh(function landHash() {
@@ -49,6 +52,8 @@ export function ScrollProvider({ children }: { children: ReactNode }) {
       live = false;
       cancelAnalytics();
       stopAnalytics?.();
+      cancelChannels();
+      stopChannels?.();
       cancelIdle();
       offRefresh();
       stopNav();

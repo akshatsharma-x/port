@@ -85,7 +85,8 @@
     text-decoration: none;
   }
 
-  /* ── the microfiche frame: it settles flat (rotateX 8° → 0) under a scan bar ── */
+  /* ── the microfiche frame: it settles flat (rotateX 8° → 0) under a scan bar, on the element tier
+     (§4.4 B3; it ran 1.5× that until Part 16, the one panel that lingered) ── */
   .dossier__fiche {
     position: relative;
     display: grid;
@@ -94,7 +95,7 @@
     overflow: clip;
   }
   html.js:not([data-motion="reduce"]) .dossier__fiche {
-    animation: fiche-in calc(var(--dur-element) * 1.5) var(--ease-settle) both;
+    animation: fiche-in var(--dur-element) var(--ease-settle) both;
   }
   /* the scan bar: a layer the fiche's size with the bar on its top edge, swept down by transform
      (sweeping `top` was a layout shift every frame) */
@@ -104,7 +105,7 @@
     inset: 0;
     background: linear-gradient(to bottom, var(--accent) 0 2px, color-mix(in oklab, var(--accent) 28%, transparent) 2px, transparent calc(var(--spacing) * 4));
     pointer-events: none;
-    animation: fiche-scan calc(var(--dur-element) * 1.5) var(--ease-settle) both;
+    animation: fiche-scan var(--dur-element) var(--ease-settle) both;
   }
   @keyframes fiche-in {
     from {
@@ -130,13 +131,15 @@
     }
   }
 
-  /* the reversed-type header strip: ID · YEAR · VENUE · TITLE… */
+  /* the reversed-type header strip: ID · YEAR · VENUE · TITLE… — on --fg-3, not --fg-1 (Part 16): in
+     the brightest ink it was the page's first read, over the title it heads. --bg on it: 7.3 / 7.2 /
+     5.8 : 1 in Phosphor, Amber, Paper (AA for its micro type) */
   .dossier__strip {
     display: flex;
     gap: calc(var(--spacing) * 3);
     margin: 0;
     padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 3);
-    background: var(--fg-1);
+    background: var(--fg-3);
     color: var(--bg);
     white-space: nowrap;
     overflow: hidden;
@@ -193,6 +196,13 @@
   }
   .dossier__tldr p::before {
     content: "“";
+  }
+  /* the opening mark hangs into the margin, so the words line up and the mark doesn't (Part 16): its
+     own width in Mona, measured (0.358 em). Safari hangs it itself (hanging-punctuation, base.css) */
+  @supports not (hanging-punctuation: first) {
+    .dossier__tldr p {
+      text-indent: -0.358em;
+    }
   }
   .dossier__tldr p::after {
     content: "”";
@@ -298,6 +308,12 @@
   }
   .dossier__from {
     color: var(--fg-3);
+  }
+  .dossier__none {
+    margin: 0;
+    font-family: var(--ff-mono);
+    font-size: var(--step--1);
+    color: var(--fg-2);
   }
   .dossier__actions {
     display: flex;

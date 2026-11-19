@@ -22,10 +22,14 @@
     flex-wrap: wrap;
     align-items: baseline;
     gap: calc(var(--spacing) * 2) calc(var(--spacing) * 4);
+    container-type: inline-size;
   }
+  /* the address on one line, a step under the headline (Part 16): --step-3 at most, else what its
+     measure holds — its characters (--chars, from the component) at Hubot's 0.56 em average
+     (measured), with room. At --step-4 it was a second mega line, and on a phone it broke at the @ */
   .connect-email__link {
     font-family: var(--ff-display-face), "Hubot Sans Fallback heading", ui-sans-serif, system-ui, sans-serif;
-    font-size: var(--step-4);
+    font-size: min(var(--step-3), 100cqi / (var(--chars, 27) * 0.58));
     line-height: 1.05;
     overflow-wrap: anywhere;
     color: var(--fg-1);
@@ -49,14 +53,20 @@
   }
 
   /* the teletype: a prompt, a field, a block caret while it's empty, the error under it */
+  /* one prompt column for every line (subgrid, Part 16): each line's own max-content started its
+     field and its error after its own prompt — three left edges for one form */
   .teletype {
     display: grid;
-    gap: calc(var(--spacing) * 5);
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: calc(var(--spacing) * 5) calc(var(--spacing) * 3);
     font-family: var(--ff-mono);
+  }
+  .teletype > * {
+    grid-column: 1 / -1;
   }
   .teletype__line {
     display: grid;
-    grid-template-columns: max-content minmax(0, 1fr);
+    grid-template-columns: subgrid;
     /* the prompt and the field share one face and size: top-aligned they share a first line too
        (baseline put MESSAGE> at a textarea's last line) */
     align-items: start;
@@ -171,7 +181,7 @@
     max-width: 100%;
     overflow: hidden;
     white-space: nowrap;
-    animation: teletype-type calc(var(--chars) * 18ms) steps(var(--chars)) both;
+    animation: teletype-type calc(var(--chars) * var(--typewriter-char)) steps(var(--chars)) both;
   }
   @keyframes teletype-type {
     from {
@@ -255,10 +265,12 @@
     min-height: 2lh;
     color: var(--fg-1);
   }
+  /* the brackets reach 4 px past each key (--bracket-inset): at a 12 px gap a pair stood 4 px apart, a
+     "][" crowd; at 24 px each key's set is its own (Part 16) */
   .channels ul {
     display: flex;
     flex-wrap: wrap;
-    gap: calc(var(--spacing) * 2) calc(var(--spacing) * 3);
+    gap: calc(var(--spacing) * 2) calc(var(--spacing) * 6);
     margin: 0;
     padding: 0;
     list-style: none;

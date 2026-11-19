@@ -26,5 +26,14 @@ const GL_CENSUS_SCRIPT = `(function(w){if(!/[?&]debug=1(&|$)/.test(w.location.se
  */
 export const BOOT_SCRIPT = `(function(w,d){var h=d.documentElement,m="fast",k="retrograde:booted";try{if(w.location.pathname==="/"&&!w.location.hash&&!w.sessionStorage.getItem(k))m="run";w.sessionStorage.setItem(k,"1")}catch(e){}h.setAttribute("data-boot",m);var b=w.__boot={mode:m,t0:w.performance.now(),skip:0};if(m!=="run")return;var o=function(){w.removeEventListener("keydown",s,true);w.removeEventListener("pointerdown",s,true)},s=function(e){if(e.type==="keydown"&&e.key!=="Escape")return;o();if(w.performance.now()-b.t0>${boot.capMs})return;b.skip=w.performance.now();h.setAttribute("data-boot-skip","")};b.off=o;w.addEventListener("keydown",s,true);w.addEventListener("pointerdown",s,true)})(window,document);`;
 
-/** Everything <head> runs before first paint: the one-RAF funnel first, then theme, motion and the boot. */
-export const headScript = RAF_FUNNEL_SCRIPT + GL_CENSUS_SCRIPT + themeScript + BOOT_SCRIPT;
+/**
+ * The print edition's sheet (DESIGN.md §2.4, public/print.css), linked from here rather than rendered:
+ * React preloads every stylesheet <link> it renders, and a preload of a print sheet is a warning
+ * in Firefox on every load (its media never matches a screen). Appended by script, it's fetched as
+ * a print link is — last, never render-blocking. The layout's <noscript> carries it without JS.
+ */
+export const PRINT_HREF = "/print.css";
+const PRINT_SCRIPT = `(function(d){var l=d.createElement("link");l.rel="stylesheet";l.href=${JSON.stringify(PRINT_HREF)};l.media="print";d.head.appendChild(l)})(document);`;
+
+/** Everything <head> runs before first paint: the one-RAF funnel first, then theme, motion and the boot, then the print sheet. */
+export const headScript = RAF_FUNNEL_SCRIPT + GL_CENSUS_SCRIPT + themeScript + BOOT_SCRIPT + PRINT_SCRIPT;

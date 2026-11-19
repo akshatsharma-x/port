@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HudPage } from "@/components/chrome/HudPage";
 import type { ReactNode } from "react";
 import { derived } from "@/content/derive";
 
@@ -10,6 +11,7 @@ export default function ResearchLayout({ children }: { children: ReactNode }) {
   const d = derived;
   return (
     <main id="main" tabIndex={-1} className="dossier-page">
+      <HudPage section="archive" />
       <p className="dossier-page__back">
         <Link href="/#archive" className="t-micro">{`← ${d.site.labels.archive.dossier.back}`}</Link>
       </p>

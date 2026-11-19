@@ -86,7 +86,7 @@ export const site = {
       query: { label: "Archive query", all: "Query all", scope: "Query", match: "match", matches: "matches", clear: "Clear", record: "record", records: "records", cited: "cited works", citation: "citation", citations: "citations", layout: "Layout" },
       layouts: { topic: "Topic", year: "Year", venue: "Venue" },
       venueTypes: { journal: "Journal", conference: "Conference", workshop: "Workshop", preprint: "Preprint", patent: "Patent", thesis: "Thesis", chapter: "Chapter", other: "Other source" },
-      legend: { label: "Shape legend", filled: "Published", dashed: "Under review or in prep", mine: "My records", cited: "Works they cite" },
+      legend: { label: "Shape legend", filled: "Published", dashed: "Under review or in prep", mine: "My records", cited: "Works they cite", tuned: "Tuned in" },
       sky: {
         label: "Citation constellation",
         stage:
@@ -128,6 +128,7 @@ export const site = {
         impactFactor: "Impact factor",
         year: "Year",
         citations: "Citations",
+        notCited: "Not yet cited",
         source: "Source",
         authors: "Authors",
         venue: "Venue",
@@ -259,6 +260,7 @@ export const site = {
       host: "retrograde",
       tty: "tty1",
       banner: ["{os} {version} · {sha} · {tty}", "{name} — {role}", "Type help for the commands. Tab completes, ↑ ↓ walk the history, Esc closes."],
+      lastLogin: "Last login: {when} on {tty}",
       loading: "Reading the index…",
       offline: "The index didn't load, so the commands that read the site can't see it. The rest still work.",
       notFound: "command not found: {command}",
@@ -435,7 +437,7 @@ export const site = {
       decode: { list: "Cards", header: "{title} · {holes} holes in {columns} columns", reads: "reads: {text}", unknown: "decode: no card called {name}" },
       debug: "The dev overlay is {state}.",
     },
-    chrome: { os: "RETROGRADE/OS", rail: "Sections", newTab: "(opens in a new tab)", skip: "Skip to content" },
+    chrome: { os: "RETROGRADE/OS", rail: "Sections", newTab: "(opens in a new tab)", skip: "Skip to content", channel: "Ch" },
     noSignal,
     nav: {
       label: "Primary",

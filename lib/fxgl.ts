@@ -100,7 +100,7 @@ class FxLayer implements FrameOverlay {
 
   attach(canvas: HTMLCanvasElement): boolean {
     this.canvas = canvas;
-    this.gl = createGlContext("fx-gl", canvas, { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false });
+    this.gl = createGlContext("fx-gl", canvas, { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false, failIfMajorPerformanceCaveat: true });
     if (!this.gl) return false;
     canvas.addEventListener("webglcontextlost", this.onLost);
     canvas.addEventListener("webglcontextrestored", this.onRestored);

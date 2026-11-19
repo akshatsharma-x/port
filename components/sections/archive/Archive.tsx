@@ -64,6 +64,10 @@ export function Archive() {
     ];
   });
 
+  // a sparse sky's tags (ARCHIVE.sparse, Part 16): its records, labelled in place in the drawing too
+  const recordNodes = nodes.filter((n) => n.kind === "record");
+  const sparseTags = recordNodes.length <= ARCHIVE.sparse ? recordNodes.map((n) => ({ i: n.i, title: n.title, meta: n.meta })) : [];
+
   const years = d.graph.labels.year.map((l) => Number(l.id));
   const mine = new Set(d.publications.map((p) => p.year));
   const labels: Record<(typeof LAYOUTS)[number], SkyLabel[]> = {
@@ -119,6 +123,8 @@ export function Archive() {
               ))}
             </p>
             <LayoutChips legend={L.query.layout} options={LAYOUTS.map((value) => ({ value, label: L.layouts[value] }))} />
+            {/* the shape legend is always visible (§4.3 A3, §7.4): it teaches the language before the sky
+                holds every type. Part 16 keys the tuned star's colour, which nothing named */}
             <ul className="shape-legend" aria-label={L.legend.label}>
               {SHAPE_ORDER.map((t) => (
                 <li key={t} className="shape-legend__item t-micro">
@@ -130,6 +136,10 @@ export function Archive() {
                 <ShapeGlyph type="journal" dashed />
                 {L.legend.dashed}
               </li>
+              <li className="shape-legend__item shape-legend__item--key t-micro">
+                <ShapeGlyph type="conference" tuned />
+                {L.legend.tuned}
+              </li>
               {hasCited && (
                 <li className="shape-legend__item shape-legend__item--key t-micro">
                   <ShapeGlyph type="journal" faint />
@@ -140,7 +150,7 @@ export function Archive() {
           </div>
           {/* without a stage the drawing is the header, in the frame's flow under the query bar: it fills
               what the bar leaves (the bar's height varies with the width; a fixed offset collided at 360 px) */}
-          <SkySvg label={L.sky.label} topics={labels.topic.map((l) => l.text)} className="archive-sky-svg" />
+          <SkySvg label={L.sky.label} topics={labels.topic.map((l) => l.text)} tags={sparseTags} className="archive-sky-svg" />
           <SkyLayer nodes={nodes} labels={labels} listLabel={L.sky.label} hint={L.sky.hint} />
           <p className="sr-only">{`${L.sky.stage} ${L.sky.keys}`}</p>
         </div>

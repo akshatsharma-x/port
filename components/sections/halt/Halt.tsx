@@ -20,7 +20,8 @@ export function Halt({ d }: { d: Derived }) {
   const L = d.site.labels.halt;
   const p = d.profile;
   const b = buildInfo();
-  const line = [`v${b.version}`, b.sha, `${L.build.deployed} ${d.buildDate}`, `${L.build.built} NEXT ${b.next} · THREE ${b.three}`].filter(Boolean).join(" · ");
+  // the build date is UTC's (content/selectors.ts isoDay): it says so, beside a clock in the owner's zone
+  const line = [`v${b.version}`, b.sha, `${L.build.deployed} ${d.buildDate} UTC`, `${L.build.built} NEXT ${b.next} · THREE ${b.three}`].filter(Boolean).join(" · ");
   const sections = d.site.sections.filter((s) => s.id !== "post" && s.id !== "shell");
   return (
     <>
@@ -49,7 +50,8 @@ export function Halt({ d }: { d: Derived }) {
               <ul>
                 {d.projects.map((pr) => (
                   <li key={pr.slug}>
-                    <a href={`/work/${pr.slug}`} className="t-micro">
+                    {/* titles are the human's: sentence case (§2.5), not the machine's uppercase labels */}
+                    <a href={`/work/${pr.slug}`} className="t-small">
                       {pr.title}
                     </a>
                   </li>
@@ -63,7 +65,7 @@ export function Halt({ d }: { d: Derived }) {
               <ul>
                 {d.publications.map((pub) => (
                   <li key={pub.slug}>
-                    <a href={`/research/${pub.slug}`} className="t-micro">
+                    <a href={`/research/${pub.slug}`} className="t-small">
                       {pub.title}
                     </a>
                   </li>

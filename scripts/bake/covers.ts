@@ -7,7 +7,7 @@
  * stage's three tier files, each an AVIF of at most 120 KB (the build fails past it). The picture
  * is the screenshot in content/covers/<slug>.(avif|webp|png|jpg|jpeg) when there is one, cropped to
  * 3:2 by attention. Until then it's a title card: the project's own category, title, subtitle and
- * stack, set in the site's faces in the installed Chrome over a light in the card's hue — type on
+ * stack, set in the site's faces in the installed Chrome over a neutral light — type on
  * a ground, plainly not a screenshot (the alt text says so too). Dropping a screenshot in changes
  * no code: same paths, same sizes.
  *
@@ -83,7 +83,7 @@ const escape = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").rep
 /** The title card's page: 2400 × 1600, the site's faces inlined. */
 function cardHtml(spec: CoverSpec, faces: Record<keyof typeof FACES, string>): string {
   const { width, height } = COVER.master;
-  const hue = TITLE_CARD.hues[spec.index % TITLE_CARD.hues.length] ?? 0;
+  const hue = 0; // moot at chroma 0: the card is achromatic (lib/covers.ts TITLE_CARD)
   const L = TITLE_CARD.lightness;
   const C = TITLE_CARD.chroma;
   const light = (l: number, c: number, h: number, a: number) => `oklch(${l} ${c} ${h} / ${a})`;

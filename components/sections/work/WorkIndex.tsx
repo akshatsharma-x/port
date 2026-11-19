@@ -36,6 +36,10 @@ function Pending({ text }: { text: string }) {
  * (IndexEnhance). A year or role not yet in shows as pending.
  */
 export function WorkIndex({ rows, labels, pending }: { rows: IndexRow[]; labels: Labels; pending: string }) {
+  // a column no row fills yet isn't drawn (Part 16; §10 #42 refined): a dash marks a pending fact in
+  // a drawn column, but a column of nothing but dashes is no column — and its width wrapped titles
+  const hasRole = rows.some((r) => r.role !== null);
+  const hasYear = rows.some((r) => r.year !== null);
   const categories = [...new Set(rows.map((r) => r.category))];
   const counts = new Map<string, number>();
   for (const r of rows) for (const t of r.stack) counts.set(t, (counts.get(t) ?? 0) + 1);
@@ -70,8 +74,8 @@ export function WorkIndex({ rows, labels, pending }: { rows: IndexRow[]; labels:
               {labels.number}
             </th>
             <th scope="col">{labels.title}</th>
-            <th scope="col">{labels.role}</th>
-            <th scope="col">{labels.year}</th>
+            {hasRole && <th scope="col">{labels.role}</th>}
+            {hasYear && <th scope="col">{labels.year}</th>}
             <th scope="col" className="work-table__stack">
               {labels.stack}
             </th>
@@ -89,8 +93,8 @@ export function WorkIndex({ rows, labels, pending }: { rows: IndexRow[]; labels:
                   {r.title}
                 </a>
               </th>
-              <td className="work-table__role">{r.role ?? <Pending text={pending} />}</td>
-              <td className="work-table__year numeral">{r.year === null ? <Pending text={pending} /> : String(r.year)}</td>
+              {hasRole && <td className="work-table__role">{r.role ?? <Pending text={pending} />}</td>}
+              {hasYear && <td className="work-table__year numeral">{r.year === null ? <Pending text={pending} /> : String(r.year)}</td>}
               <td className="work-table__stack t-micro">{r.stack.join(" · ")}</td>
               <td className="work-table__go" aria-hidden="true">
                 →

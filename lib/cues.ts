@@ -25,6 +25,12 @@ export interface CueDetail {
   hz?: number;
   /** a length (ms): ARCHIVE's blip runs as long as its citations say (lib/archive.ts citationMs) */
   ms?: number;
+  /**
+   * play this long from now (ms), on the audio clock: a sound synced to a compositor animation
+   * started in the same task (the STAMP) lands with it even when the main thread is busy — a timer
+   * would be late by however long the thread was
+   */
+  delayMs?: number;
 }
 
 export type CueEngine = (cue: Cue, detail: CueDetail) => void;

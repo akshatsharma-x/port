@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ViewTransition } from "react";
+import { ViewTransition, type CSSProperties } from "react";
 import { Button } from "@/components/ui/Button";
 import { Counter } from "@/components/ui/Counter";
 import { DitherImage } from "@/components/ui/DitherImage";
@@ -58,6 +58,7 @@ export function CaseStudy({ slug, papers: listed }: { slug: string; /** dev fixt
           <p className="case__subtitle">{p.subtitle}</p>
         </header>
 
+
         <section className="case__section col-span-12 lg:col-span-7" aria-labelledby={h("context")}>
           <h2 id={h("context")} className="case__label t-micro">
             {S.context}
@@ -110,32 +111,38 @@ export function CaseStudy({ slug, papers: listed }: { slug: string; /** dev fixt
           )}
           <p className="case__outcome-text lg:max-w-[60ch]">{p.outcome}</p>
         </section>
-        <section className="case__section col-span-12" aria-labelledby={h("stack")}>
-          <h2 id={h("stack")} className="case__label t-micro">
-            {S.stack}
-          </h2>
-          <ul className="case__stack">
-            {p.stack.map((t) => (
-              <li key={t} className="chip t-micro">
-                {t}
-              </li>
-            ))}
-          </ul>
-        </section>
-        {links.length > 0 && (
-          <section className="case__section col-span-12" aria-labelledby={h("links")}>
-            <h2 id={h("links")} className="case__label t-micro">
-              {S.links}
+
+        {/* the facts rail (Part 16): what the project is built of, and where it lives. Read where the
+            stack always was, after the outcome; on a wide screen placed beside the story (row 3 on,
+            sticky) — the story's column had five empty ones beside it */}
+        <aside className="case__facts col-span-12 lg:col-span-4 lg:col-start-9" style={{ "--facts-rows": p.role ? 4 : 3 } as CSSProperties}>
+          <section className="case__section" aria-labelledby={h("stack")}>
+            <h2 id={h("stack")} className="case__label t-micro">
+              {S.stack}
             </h2>
-            <div className="case__links">
-              {links.map((l) => (
-                <Button key={l.key} href={l.href} variant="secondary" target="_blank" rel="noreferrer">
-                  {l.label}
-                </Button>
+            <ul className="case__stack">
+              {p.stack.map((t) => (
+                <li key={t} className="chip t-micro">
+                  {t}
+                </li>
               ))}
-            </div>
+            </ul>
           </section>
-        )}
+          {links.length > 0 && (
+            <section className="case__section" aria-labelledby={h("links")}>
+              <h2 id={h("links")} className="case__label t-micro">
+                {S.links}
+              </h2>
+              <div className="case__links">
+                {links.map((l) => (
+                  <Button key={l.key} href={l.href} variant="secondary" target="_blank" rel="noreferrer">
+                    {l.label}
+                  </Button>
+                ))}
+              </div>
+            </section>
+          )}
+        </aside>
         {media.length > 0 && (
           <div className="case__media col-span-12">
             {media.map((m) =>

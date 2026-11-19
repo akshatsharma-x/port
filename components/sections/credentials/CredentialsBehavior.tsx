@@ -321,10 +321,9 @@ export default function CredentialsBehavior({ labels }: { labels: BehaviorLabels
               if (!stamp) return;
               const at = delay + deal.ms * CRED.deal.stampAt;
               stamp.animate([{ scale: CRED.deal.stampScale, opacity: 0 }, { scale: 1, opacity: 1 }], { duration: deal.ms, delay: at, easing: deal.easing, fill: "backwards" });
-              if (li.dataset.stamp === "verified" || li.dataset.stamp === "expired") {
-                const t = window.setTimeout(() => cue("STAMP"), at + deal.reachMs);
-                offs.push(() => window.clearTimeout(t));
-              }
+              // the thud on the audio clock, from the same moment the stamp's animation starts on the
+              // compositor's: a timer would land late by however long the main thread was busy
+              if (li.dataset.stamp === "verified" || li.dataset.stamp === "expired") cue("STAMP", { delayMs: at + deal.reachMs });
             });
           },
           { threshold: 0.15 },

@@ -1,6 +1,6 @@
 /* ==========================================================================
    RETROGRADE · styles/boot.css — the boot (DESIGN.md §7.4 POST) and POWER ON-fast
-   z45: above #hud (30) and #cursor (40); below #fx-css (50, the glass) and #fx-gl (60, the beam)
+   z45: above #hud (30); below #fx-css (50, the glass), #fx-gl (60, the beam) and #cursor (62)
    Decided before first paint by the head script: html[data-boot="run" | "fast"]
    ========================================================================== */
 
@@ -46,11 +46,6 @@
     to {
       visibility: hidden;
     }
-  }
-  /* the boot is clickable (a press skips): it keeps a visible pointer under the custom cursor's rule */
-  html[data-reticle="on"] .boot,
-  html[data-reticle="on"] .boot * {
-    cursor: default !important;
   }
   /* §5.2 flicker: boot only, ≤ 3% luminance, never a flash (WCAG 2.3.1) */
   .boot__screen {
@@ -246,7 +241,7 @@
   html[data-motion="reduce"] .boot-shutter__bottom {
     top: 0;
     height: 100%;
-    animation: beam-fade var(--reduced) linear both;
+    animation: beam-fade var(--reduced) var(--ease-depart) both; /* the cover exits (§3.2); linear is for scrub only */
   }
   html[data-motion="reduce"] .boot-shutter__bottom,
   html[data-motion="reduce"] .boot-shutter__beam {

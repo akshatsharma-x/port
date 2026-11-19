@@ -3,6 +3,7 @@
 import { Component, useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { fx } from "@/lib/fxgl";
+import { isSoftwareRenderer, SOFTWARE_GL } from "@/lib/gl";
 import { bootHead, prefetchStageRuntime } from "@/lib/boot";
 import { heroTargets } from "@/lib/hero-targets";
 import { whenIdle } from "@/lib/idle";
@@ -29,6 +30,13 @@ function prefersReducedMotion(): boolean {
   return override === "system" ? window.matchMedia(REDUCE_QUERY).matches : override === "reduce";
 }
 const OFF: TierDecision = { tier: "OFF", phone: false, reasons: ["WebGL2 context failed"], probe: false };
+/**
+ * A software rasterizer (SwiftShader, WARP, llvmpipe) is OFF (§4.2, Part 16): there the scenes run
+ * on the CPU — GitHub's runner spent 35 s of main thread on home's load. The contexts ask with
+ * failIfMajorPerformanceCaveat, which the browser refuses exactly then; #fx-gl asks first (at
+ * mount), so the runtime's chunk is never fetched.
+ */
+const SOFTWARE: TierDecision = { ...OFF, reasons: ["software rasterizer"] };
 
 
 /**
@@ -82,7 +90,7 @@ function StageView() {
   const lvhRef = useRef<HTMLDivElement>(null);
   const runtime = useRef<RuntimeHandle | null>(null);
   const probed = useRef<Tier | null>(null);
-  const failed = useRef(false);
+  const failed = useRef<false | "failed" | "software">(false);
   const latest = useRef<TierDecision | null>(null);
   const viewport = useRef<Viewport>({ width: 0, height: 0, canvasHeight: 0, svh: 0 });
   const enabled = decision !== null && decision.tier !== "OFF";
@@ -160,7 +168,7 @@ function StageView() {
 
   // 2 · the tier: hard rules, phone policy, GFX override (§4.2); final now unless the probe runs
   useEffect(() => {
-    let d = failed.current ? OFF : provisionalTier(readTierEnvironment(gfx, prefersReducedMotion()));
+    let d = failed.current ? (failed.current === "software" ? SOFTWARE : OFF) : provisionalTier(readTierEnvironment(gfx, prefersReducedMotion()));
     const cap = debugTierCap(window.location.search);
     if (cap && d.tier !== "OFF") d = { ...d, tier: lowerTier(d.tier, cap), reasons: [...d.reasons, `debug tier ${cap}`], probe: false };
     latest.current = d;
@@ -227,11 +235,12 @@ function StageView() {
           governor.setDpr(dpr, window.devicePixelRatio);
           whenIdle(() => governor.prefetch());
         } catch (error) {
-          console.error("[stage] runtime failed — posters only", error);
-          failed.current = true;
+          const software = error instanceof Error && error.message === SOFTWARE_GL;
+          if (!software) console.error("[stage] runtime failed — posters only", error);
+          failed.current = software ? "software" : "failed";
           governor.setRuntimeStatus("failed");
-          governor.setTier(OFF, true);
-          setDecision(OFF);
+          governor.setTier(software ? SOFTWARE : OFF, true);
+          setDecision(software ? SOFTWARE : OFF);
         }
       })();
     });
@@ -252,7 +261,15 @@ function StageView() {
   useEffect(() => {
     const canvas = fxRef.current;
     if (!enabled || !canvas) return;
-    fx.attach(canvas);
+    if (!fx.attach(canvas) || isSoftwareRenderer(fx.renderer())) {
+      // refused while WebGL2 exists, or granted on a software backend: a software rasterizer — the
+      // posters, and the runtime never loads (its idle callback is cancelled as `enabled` turns off)
+      fx.detach();
+      failed.current = "software";
+      governor.setTier(SOFTWARE, true);
+      setDecision(SOFTWARE);
+      return;
+    }
     const onResize = () => fx.resize();
     window.addEventListener("resize", onResize);
     return () => {

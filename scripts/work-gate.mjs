@@ -424,8 +424,12 @@ for (const [tier, spec] of Object.entries(TIERS)) {
     links: [...document.querySelectorAll(".work-table__link")].every((a) => a.getAttribute("href")?.startsWith("/work/")),
     pending: [...document.querySelectorAll(".work-table__role, .work-table__year")].every((c) => c.querySelector("[aria-hidden]")?.textContent === "—" ? !!c.querySelector(".sr-only")?.textContent : true),
     heads: [...document.querySelectorAll(".work-table thead th")].map((t) => t.textContent.trim()),
+    // ROLE and YEAR are drawn once any row has one (Part 16): a column of nothing but dashes isn't
+    roleDrawn: !!document.querySelector(".work-table__role"),
+    yearDrawn: !!document.querySelector(".work-table__year"),
   }));
-  check("INDEX: a row per project — # · TITLE · ROLE · YEAR · STACK · → — each title its case study's link; a fact not in yet is a dash with words for a screen reader", table.rows >= 5 && table.links && table.pending && table.heads.length === 6, table);
+  const heads = 4 + Number(table.roleDrawn) + Number(table.yearDrawn);
+  check("INDEX: a row per project — # · TITLE · (ROLE) · (YEAR) · STACK · → — each title its case study's link; a column is drawn once a row fills it, and a fact not in yet is a dash with words for a screen reader", table.rows >= 5 && table.links && table.pending && table.heads.length === heads, table);
   const filter = await page.evaluate(async () => {
     // the last category: its row moves up the table, so the FLIP has somewhere to go
     const chip = [...document.querySelectorAll('.work-filters button[data-filter="category"]')].filter((b) => b.dataset.value).at(-1);

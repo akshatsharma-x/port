@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { track } from "@/lib/analytics";
+import { feedback } from "@/lib/motion";
 import { CheckGlyph } from "./CheckGlyph";
 
 /** COPY BIBTEX, and a mono "COPIED ✓" that says so (the ✓ drawn: the mono font has none, §2.10). */
@@ -10,7 +11,7 @@ export function CopyBibtex({ bibtex, label, copied }: { bibtex: string; label: s
   const [done, setDone] = useState(false);
   useEffect(() => {
     if (!done) return;
-    const t = setTimeout(() => setDone(false), 1600);
+    const t = setTimeout(() => setDone(false), feedback.copiedMs);
     return () => clearTimeout(t);
   }, [done]);
   return (

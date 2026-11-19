@@ -209,9 +209,19 @@ for (const [tier, spec] of Object.entries(TIERS)) {
   const hover = await page.evaluate(() => {
     const s = window.__retrograde.governor.dev.archive.debugState();
     const tip = document.querySelector(".sky-tip");
-    return { hovered: s.hovered, tip: tip?.querySelector(".sky-tip__title")?.textContent ?? "", tipShown: tip ? getComputedStyle(tip).opacity === "1" : false };
+    // a sparse sky (ARCHIVE.sparse, Part 16) labels its records in place: the hovered record's own
+    // tag lights and names it, and the tooltip stands aside for it
+    const tag = document.querySelector('[data-sky-tag="0"]');
+    return {
+      hovered: s.hovered,
+      tip: tip?.querySelector(".sky-tip__title")?.textContent ?? "",
+      tipShown: tip ? getComputedStyle(tip).opacity === "1" : false,
+      tag: tag?.querySelector(".sky-tag__title")?.textContent ?? null,
+      tagLit: tag?.getAttribute("data-on") === "true" && getComputedStyle(tag).opacity === "1",
+    };
   });
-  check("hover: the star under the cursor is picked, and the one tooltip names it", node0 && hover.hovered === 0 && hover.tipShown && hover.tip.length > 0 && star?.label?.startsWith(hover.tip), { node0, hover, label: star?.label });
+  const named = hover.tag !== null ? hover.tagLit && !hover.tipShown && star?.label?.startsWith(hover.tag) : hover.tipShown && hover.tip.length > 0 && star?.label?.startsWith(hover.tip);
+  check("hover: the star under the cursor is picked, and it's named — its own tag, lit, in a sparse sky; else the one tooltip", node0 && hover.hovered === 0 && named, { node0, hover, label: star?.label });
 
   // click: the dossier opens over the sky (the URL changes, the page doesn't move), HOT in the sky
   const y0 = await page.evaluate(() => Math.round(scrollY));
@@ -322,7 +332,7 @@ for (const [tier, spec] of Object.entries(TIERS)) {
   check("…pointing at a row lights its star (the shared store, the sky)", pointed.store !== null && pointed.store >= 0 && pointed.sky === pointed.store, pointed);
   check("the unit chart: a cell per paper, each its dossier's link", ledger.cells.length === shape.records && ledger.cells.every((h) => h?.startsWith("/research/")), { cells: ledger.cells.length });
   check("the metrics: every figure with its provenance; the lead is PEER-REVIEWED PAPERS until cited (v1.9)", ledger.provenance && /peer-reviewed/i.test(ledger.lead), { lead: ledger.lead, provenance: ledger.provenance });
-  check("the shape legend is on screen with the sky: the seven shapes and the dashed key", ledger.legend >= 8, { glyphs: ledger.legend });
+  check("the shape legend is on screen with the sky: the seven shapes, the dashed key (and Part 16's tuned key)", ledger.legend >= 8, { glyphs: ledger.legend });
   check("claims: console clean", logs.length === 0, logs.slice(0, 3));
   await ctx.close();
 }

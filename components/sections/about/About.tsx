@@ -30,7 +30,8 @@ export function About() {
     .find((x) => x.type === "timeZoneName")
     ?.value.replace(/^GMT/, "UTC");
   const asOf = d.research.provenance.asOf;
-  const asOfText = asOf ? ` · ${U.asOf} ${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${asOf}T00:00:00Z`))}` : "";
+  // ISO, as every date the site prints (§2.10); the record's own date, already YYYY-MM-DD
+  const asOfText = asOf ? ` · ${U.asOf} ${asOf}` : "";
   const edu = d.education[0];
   const spec = [
     { key: "role", label: L.spec.role, value: p.role },
@@ -38,7 +39,8 @@ export function About() {
     { key: "location", label: L.spec.location, value: `${p.location.city}, ${p.location.country}` },
     { key: "timezone", label: L.spec.timezone, value: [zone, offset].filter(Boolean).join(" · ") },
     { key: "stack", label: L.spec.stack, value: d.skills.primary.map((s) => s.name).join(" · ") },
-    { key: "hIndex", label: L.spec.hIndex, value: `${d.research.hIndex}${asOfText}` },
+    // an h-index joins the record once there is one: a zero here was a figure in reverse (Part 16)
+    ...(d.research.hIndex > 0 ? [{ key: "hIndex", label: L.spec.hIndex, value: `${d.research.hIndex}${asOfText}` }] : []),
     ...(edu ? [{ key: "education", label: L.spec.education, value: [`${edu.degree} ${edu.field}`, edu.institution, edu.end.slice(0, 4), edu.honors].filter(Boolean).join(" · ") }] : []),
     { key: "availability", label: L.spec.availability, value: `${d.site.labels.hero.availability[p.availability.status]} — ${p.availability.note}` },
   ];
@@ -69,7 +71,7 @@ export function About() {
   );
 }
 
-/** A paragraph with its accent phrases (≤ 3, validated in content/schema.ts) set in the accent. */
+/** A paragraph with its accent phrases (≤ 3, validated in content/schema.ts), set a step brighter in ink. */
 function accented(text: string, phrases: readonly string[]) {
   const marks = phrases
     .map((ph) => ({ ph, at: text.indexOf(ph) }))

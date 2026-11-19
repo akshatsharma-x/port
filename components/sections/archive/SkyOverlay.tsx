@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 import type { LayoutName } from "@/content/schema";
-import { skyView, useArchive } from "@/lib/archive";
+import { ARCHIVE, skyView, useArchive } from "@/lib/archive";
+import { tagSide, type TagSide } from "@/lib/sky-tags";
 import { scrollGeometry, teleport } from "@/lib/scroll";
 import { onTick } from "@/lib/ticker";
 
@@ -28,6 +29,8 @@ export interface SkyLabel {
 
 const LAYOUTS: readonly LayoutName[] = ["topic", "year", "venue"];
 const NODE_PX = 24; // a focused star's target: never under 24 px (WCAG 2.5.8)
+const TAG_GAP_PX = 12; // a record's tag stands this far off its glyph
+const LABEL_LIFT_PX = 8; // a cluster label stands this far over its point (.sky-label's translate)
 
 /**
  * The constellation's HTML layer (DESIGN.md §7.4, A3: labels are HTML). The stage is augmentative
@@ -45,6 +48,9 @@ export function SkyOverlay({ nodes, labels, listLabel, hint }: { nodes: readonly
   const ref = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(() => nodes.find((n) => n.kind === "record")?.i ?? 0);
   const point = useArchive((s) => s.point);
+  // a sparse sky labels its records in place (lib/archive.ts ARCHIVE.sparse, Part 16)
+  const records = nodes.filter((n) => n.kind === "record");
+  const sparse = records.length <= ARCHIVE.sparse;
 
   useEffect(() => {
     const root = ref.current;
@@ -54,6 +60,11 @@ export function SkyOverlay({ nodes, labels, listLabel, hint }: { nodes: readonly
     const tipTitle = tip?.querySelector<HTMLElement>(".sky-tip__title");
     const tipMeta = tip?.querySelector<HTMLElement>(".sky-tip__meta");
     const buttons = new Map([...root.querySelectorAll<HTMLElement>("[data-sky-node]")].map((b) => [Number(b.dataset.skyNode), b]));
+    const tags = [...root.querySelectorAll<HTMLElement>("[data-sky-tag]")].map((el) => ({ el, i: Number(el.dataset.skyTag), side: "" as TagSide | "", on: "", w: 0, h: 0 }));
+    const tagged = new Set(tags.map((t) => t.i));
+    // sizes, read once (and again if the sky resizes): never a layout read per frame
+    let sizedFor = -1;
+    const labelSize = new WeakMap<HTMLElement, { w: number; h: number }>();
     const shown = new WeakMap<HTMLElement, string>();
     const show = (el: HTMLElement, on: boolean) => {
       const v = on ? "1" : "0";
@@ -82,7 +93,43 @@ export function SkyOverlay({ nodes, labels, listLabel, hint }: { nodes: readonly
           show(el, visible);
         });
       }
-      // the one tooltip: the star under the cursor, else the one the keyboard is on
+      // a sparse sky's tags: each by its star, clear of the cluster labels and the view's edges
+      // (lib/archive.ts tagSide); the tuned one lit
+      if (tags.length) {
+        if (sizedFor !== width) {
+          sizedFor = width;
+          for (const t of tags) [t.w, t.h] = [t.el.offsetWidth, t.el.offsetHeight];
+          for (const el of byLayout[skyView.layout]) labelSize.set(el, { w: el.offsetWidth, h: el.offsetHeight });
+        }
+        const boxes = byLayout[skyView.layout].flatMap((el) => {
+          const k = Number(el.dataset.k);
+          const x = skyView.labels[k * 3] ?? -1e5;
+          const y = skyView.labels[k * 3 + 1] ?? -1e5;
+          const size = labelSize.get(el);
+          if (!size || x < 0 || y < 0) return [];
+          const lifted = skyView.layout === "topic" ? size.h + LABEL_LIFT_PX : 0;
+          return [{ x0: x - size.w / 2, y0: y - lifted, x1: x + size.w / 2, y1: y - lifted + size.h }];
+        });
+        const tuned = useArchive.getState().focused ?? -1;
+        for (const t of tags) {
+          const tx = skyView.nodes[t.i * 4] ?? -1e5;
+          const ty = skyView.nodes[t.i * 4 + 1] ?? -1e5;
+          const tr = skyView.nodes[t.i * 4 + 3] ?? 0;
+          const visible = tx > 0 && tx < width && ty > 0 && ty < height;
+          if (visible) {
+            const { side, dx } = tagSide({ x: tx, y: ty, r: tr }, { w: t.w, h: t.h }, boxes, { w: width, h: height }, TAG_GAP_PX);
+            if (side !== t.side) t.el.dataset.side = t.side = side;
+            const off = tr + TAG_GAP_PX;
+            const [ax, ay] = side === "right" ? [tx + off, ty] : side === "left" ? [tx - off, ty] : side === "above" ? [tx + dx, ty - off] : [tx + dx, ty + off];
+            t.el.style.transform = `translate3d(${ax.toFixed(1)}px, ${ay.toFixed(1)}px, 0)`;
+          }
+          const on = String(t.i === tuned);
+          if (on !== t.on) t.el.dataset.on = t.on = on;
+          show(t.el, visible);
+        }
+      }
+      // the one tooltip: the star under the cursor, else the one the keyboard is on (a tagged record
+      // already says what it is)
       const focusedButton = document.activeElement instanceof HTMLElement && document.activeElement.dataset.skyNode !== undefined ? Number(document.activeElement.dataset.skyNode) : -1;
       const at = skyView.hovered >= 0 ? skyView.hovered : focusedButton;
       const nx = skyView.nodes[at * 4] ?? -1e5;
@@ -95,7 +142,7 @@ export function SkyOverlay({ nodes, labels, listLabel, hint }: { nodes: readonly
           tipTitle.textContent = n?.title ?? "";
           tipMeta.textContent = n?.meta ?? "";
         }
-        const on = at >= 0 && nx > 0 && nx < width && ny > 0 && ny < height;
+        const on = at >= 0 && !tagged.has(at) && nx > 0 && nx < width && ny > 0 && ny < height;
         if (on) tip.style.transform = `translate3d(${nx.toFixed(1)}px, ${(ny - nr).toFixed(1)}px, 0)`;
         show(tip, on);
       }
@@ -181,6 +228,16 @@ export function SkyOverlay({ nodes, labels, listLabel, hint }: { nodes: readonly
           )),
         )}
       </div>
+      {sparse && (
+        <div className="sky-tags" aria-hidden="true">
+          {records.map((n) => (
+            <span key={n.i} className="sky-tag" data-sky-tag={n.i}>
+              <span className="sky-tag__title">{n.title}</span>
+              <span className="sky-tag__meta t-micro">{n.meta}</span>
+            </span>
+          ))}
+        </div>
+      )}
       <div className="sky-tip" aria-hidden="true">
         <span className="sky-tip__title" />
         <span className="sky-tip__meta t-micro" />

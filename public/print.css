@@ -1,0 +1,222 @@
+/* ==========================================================================
+   RETROGRADE · public/print.css — the print edition (DESIGN.md §2.4, PROMPTS.md Part 16).
+   Print the site and it comes out of the Paper machine: continuous-feed green-bar stock with its
+   tractor strips, the record condensed, the ledger in full, URLs after links. Paper's tokens come
+   from styles/tokens.css (@media print). Linked with media="print": fetched at the lowest
+   priority and never render-blocking, so the screen's first paint doesn't carry it.
+   No copy here: what prints is the page's own text, its URLs and the page counter.
+   ========================================================================== */
+
+@page {
+  size: auto;
+  margin: 0.45in 0;
+  @bottom-center {
+    content: counter(page);
+    font: 500 8pt/1 "JetBrains Mono", ui-monospace, monospace;
+    letter-spacing: 0.14em;
+    color: #6f6a62;
+  }
+}
+
+html,
+body {
+  background: var(--bg-raised) !important;
+}
+
+/* ── off the paper: the machine's chrome, the stages, the effects, the forms (html-prefixed, so a
+   later display rule for a grid never brings one back) ── */
+html #hud,
+html #stage,
+html #fx-gl,
+html #fx-css,
+html #cursor,
+html .boot-root,
+html .skip-link,
+html dialog,
+html canvas,
+html video,
+html .stage-slot,
+html .stage-poster,
+html .stage-dock,
+html .sticky-stack__backdrop,
+html .log-pin,
+html .archive-pin,
+html .work-band,
+html .keys-band,
+html .keys-head,
+html .identity__portrait,
+html .hero-ctas,
+html .hero-hint,
+html .teletype,
+html .connect-email__copy,
+html .marquee,
+html .halt-index,
+html .halt-top,
+html .work-filters,
+html .layout-chips,
+html .keys-chips,
+html .copy-bibtex,
+html .dossier__actions,
+html .cred-flip,
+html .cred-tilt {
+  display: none !important;
+}
+
+/* ── the form feed: green-bar bands every other half inch, tractor strips on every page ── */
+#screen {
+  --bar: color-mix(in oklab, var(--bg-raised) 82%, var(--accent));
+  padding: 0 0.85in;
+  background: repeating-linear-gradient(to bottom, var(--bar) 0 0.5in, transparent 0.5in 1in) !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+/* fixed in print: repeated on every sheet, as the strips run the whole length of the form */
+#screen::before,
+#screen::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 0.5in;
+  background: radial-gradient(circle closest-side, var(--bg) 0 34%, var(--line-2) 36%, transparent 40%) 50% 0.25in / 100% 0.5in repeat-y;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+#screen::before {
+  left: 0;
+  border-right: 0.5pt dashed var(--line-2);
+}
+#screen::after {
+  right: 0;
+  border-left: 0.5pt dashed var(--line-2);
+}
+
+/* ── the page flattened: pins are frames on the form, not scroll ── */
+.pin-track,
+.sticky-stack,
+.sticky-stack__content,
+.section {
+  position: static !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding-block: 0 !important;
+  overflow: visible !important;
+  transform: none !important;
+}
+/* a section is a chapter: its own sheet under its strip (break-after: avoid on a strip isn't honoured,
+   and strips were left alone at the foot of a page); the hero is the cover */
+.section + .section {
+  break-before: page;
+}
+/* the interlock's screens of DOM between two stages (§4.2) are a screen each — a sheet each on paper */
+.printout-wrap,
+.archive-doc,
+.work-doc,
+body {
+  min-height: 0 !important;
+}
+.printout-wrap {
+  padding-block: 0.1in !important;
+}
+[data-reveal],
+[data-reveal] * {
+  opacity: 1 !important;
+  clip-path: none !important;
+}
+.hero {
+  min-height: 0 !important;
+  padding-block: 0.2in 0 !important;
+}
+
+/* ── ink: the type scale on a sheet's root (the fluid steps read a page as a narrow screen) ── */
+html {
+  font-size: 10.5px !important;
+}
+#screen {
+  color: var(--fg-1);
+}
+/* the name on the form's measure, one line: its screen fit (size and wdth) is solved for a screen */
+.hero h1,
+.hero-name {
+  font-size: 0.5in !important;
+  font-variation-settings: "wdth" 100, "wght" 860 !important;
+  white-space: nowrap;
+}
+/* one column of record: the screen's grid spreads a sheet into partial columns — but the skills are
+   a table, four groups across two columns */
+.layout-grid,
+.hero {
+  display: block !important;
+}
+/* columns, not a grid: a multi-column block flows and breaks across sheets (a grid's rows jumped a page) */
+.keys-panel {
+  display: block !important;
+  columns: 2;
+  column-gap: 24pt;
+}
+.keys-panel > * {
+  break-inside: avoid-column;
+}
+.layout-grid > *,
+.hero > * {
+  margin-block-end: 10pt;
+}
+/* the screen's section rhythm (--section-y, 120 px a side here) is air a sheet can't spare: it pushed
+   a section's body off its strip's page and left a blank one after */
+.layout-grid {
+  padding-block: 8pt !important;
+}
+/* the printout is the sheet already: no form inside the form */
+.printout__sheet {
+  background: none !important;
+  padding-inline: 0 !important;
+}
+.printout__sheet::before,
+.printout__sheet::after {
+  display: none !important;
+}
+/* a counter prints its value: its digits wait at 0 for a count-up a sheet never scrolls into */
+.counter__wrap {
+  display: none !important;
+}
+.counter > .sr-only {
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  clip: auto !important;
+  clip-path: none !important;
+  white-space: normal !important;
+}
+.section-strip {
+  border-top: 0.5pt solid var(--line-2);
+  padding-top: 4pt;
+}
+
+/* ── what a printed page can't follow: its address, after the link ── */
+/* (an address prints itself: a mailto: link's would repeat it) */
+a[href^="http"]::after {
+  content: " (" attr(href) ")";
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 7.5pt;
+  letter-spacing: 0;
+  text-transform: none; /* a URL as written: a key's uppercase label would change its path */
+  color: var(--fg-3);
+  word-break: break-all;
+}
+
+/* ── nothing a sheet's edge cuts in two ── */
+.printout__sheet,
+.ledger__row,
+.work-table__row,
+.skill-row,
+.record,
+.records-tile,
+.case__section,
+.dossier__metrics {
+  break-inside: avoid;
+}
+.printout__sheet {
+  box-shadow: none !important;
+}

@@ -32,7 +32,7 @@ import {
 import { useStore } from "zustand";
 import { STAGE_FX, stageTheme, type StageTheme } from "@/lib/fx-stage";
 import { DITHER } from "@/lib/dither";
-import { createGlContext, releaseGlContext } from "@/lib/gl";
+import { createGlContext, releaseGlContext, SOFTWARE_GL } from "@/lib/gl";
 import { yieldToMain } from "@/lib/yield";
 import { artifact, duration, hashSeed, rng, sec } from "@/lib/motion";
 import { governor, GOVERNOR, type ProbeRecord, type RenderJob, type RenderResult, type StageRuntime } from "@/lib/sceneManager";
@@ -185,9 +185,9 @@ export interface RuntimeOptions {
 export async function startRuntime(canvas: HTMLCanvasElement, opts: RuntimeOptions): Promise<RuntimeHandle> {
   // the literal lives only in this chunk: scripts/boot-manifest.mjs finds the runtime's chunks by it
   canvas.dataset.runtime = "retrograde:stage-runtime";
-  const attributes: WebGLContextAttributes = { alpha: true, antialias: false, depth: true, stencil: false, premultipliedAlpha: true, preserveDrawingBuffer: false, powerPreference: "high-performance" };
+  const attributes: WebGLContextAttributes = { alpha: true, antialias: false, depth: true, stencil: false, premultipliedAlpha: true, preserveDrawingBuffer: false, powerPreference: "high-performance", failIfMajorPerformanceCaveat: true };
   const context = createGlContext("stage", canvas, attributes);
-  if (!context) throw new Error("WebGL2 context creation failed");
+  if (!context) throw new Error(SOFTWARE_GL); // refused: a software rasterizer (or none) — the posters
   const renderer = new WebGLRenderer({ canvas, context, ...attributes });
   renderer.info.autoReset = false;
   renderer.setClearAlpha(0);

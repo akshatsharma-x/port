@@ -125,13 +125,18 @@
   --t-feat: normal;
 }
 
-/* Numbers that change are mono (DESIGN.md §2.5): fixed pitch, nothing jitters mid-count. */
+/* Numbers that change are mono (DESIGN.md §2.5): fixed pitch, nothing jitters mid-count. The face
+   and features are set here too, not only for a step to read: on an element with no step class
+   (a ledger cell, a dossier figure) the variables alone set nothing, and until Part 16 those
+   numbers were Mona's. With a step, both say mono. */
 @utility numeral {
   --t-face: var(--ff-mono);
   --t-trim: 0;
   --t-wdth: 100%;
   --t-feat: "calt" 0, "tnum" 1, "lnum" 1;
   --t-case: none;
+  font-family: var(--ff-mono);
+  font-feature-settings: "calt" 0, "tnum" 1, "lnum" 1;
   font-variant-numeric: tabular-nums lining-nums;
 }
 

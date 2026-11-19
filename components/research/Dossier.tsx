@@ -110,9 +110,14 @@ export function Dossier({ slug, mode }: { slug: string; mode: "dialog" | "page" 
         <dl className="dossier__metrics" aria-label={D.metrics}>
           <div>
             <dt className="t-micro">{D.citations}</dt>
-            <dd className="dossier__figure numeral">
-              <Counter value={p.citations} />
-            </dd>
+            {/* a count, once there is one; until then a fact, not a zero at display size (Part 16) */}
+            {p.citations > 0 ? (
+              <dd className="dossier__figure numeral">
+                <Counter value={p.citations} />
+              </dd>
+            ) : (
+              <dd className="dossier__none">{D.notCited}</dd>
+            )}
             <dd className="dossier__from t-micro">
               <Provenance source={p.citationSource} asOf={p.citationsAsOf} label={L.metrics.asOf} />
             </dd>

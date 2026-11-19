@@ -34,14 +34,14 @@ export function coverSizes(slug: string): Record<CoverTierWidth, string> {
 }
 
 /**
- * Each title card's light, by its place in the content (OKLCH): five hues a third of the wheel
- * apart in turn, at one lightness and chroma, so no card outshouts another. A screenshot has its
- * own colors; this is only the card's.
+ * Each title card's light (OKLCH): achromatic (Part 16), a neutral ground and ink, so the theme's
+ * dither duotone carries the colour as it does a screenshot's. Until then the light took five hues a
+ * third of the wheel apart in content order — a categorical palette, which §2.4 forbids — and in
+ * Amber and Paper the cards resolved to green, salmon and blue glows that belonged to no theme.
  */
 export const TITLE_CARD = {
-  hues: [152, 32, 268, 92, 212, 332, 122, 2],
   lightness: 0.72,
-  chroma: 0.14,
-  ground: "#0b0e0d",
-  ink: "#eef3ef",
+  chroma: 0,
+  ground: "#0c0c0c",
+  ink: "#eeeeee",
 } as const;

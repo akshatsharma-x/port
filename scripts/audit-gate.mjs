@@ -18,11 +18,16 @@
  * resilience· no WebGL, failed media, no JS, NO SIGNAL (404, and 500 from /dev/throw)
  * layout    · 320–2560 px without overflow; no 100vh; touch targets ≥ 44 px on coarse pointers;
  *             no hover-only affordance; cert cards tap to flip
+ * cursor    · one of the two cursors always on screen (Part 16): the native one until the pointer
+ *             moves and in dialogs and fields, else the reticle — painted on top, proven in pixels —
+ *             over the boot, a View Transition, HALT's dark tube and the reduced tear; never neither
+ *             after a dossier or the terminal closes under a still pointer
  * Report: .artifacts/audit-gate.json (and the home page's accessibility tree, .artifacts/a11y-tree.txt)
  */
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { chromium } from "@playwright/test";
+import sharp from "sharp";
 import { inp } from "./audit/inp.mjs";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3200";
@@ -509,8 +514,9 @@ if (run("color")) await part("color", async () => {
   await page.waitForTimeout(600);
   const s = await page.evaluate(() => {
     // the constellation's venue types: a shape each, and its name
-    const legend = [...document.querySelectorAll("#archive .shape-legend__item")].map((li) => ({ d: li.querySelector("svg path")?.getAttribute("d") ?? "", label: li.textContent.trim(), dashed: !!li.querySelector(".shape-glyph__dash"), faint: !!li.querySelector(".shape-glyph--faint") }));
-    const kinds = legend.filter((l) => !l.dashed && !l.faint);
+    const legend = [...document.querySelectorAll("#archive .shape-legend__item")].map((li) => ({ d: li.querySelector("svg path")?.getAttribute("d") ?? "", label: li.textContent.trim(), dashed: !!li.querySelector(".shape-glyph__dash"), faint: !!li.querySelector(".shape-glyph--faint"), key: li.classList.contains("shape-legend__item--key") }));
+    // the venue types; the keys (dashed = not yet, faint = cited, tuned = the dial's — Part 16) aren't types
+    const kinds = legend.filter((l) => !l.dashed && !l.faint && !l.key);
     // a status is a glyph and words: availability, the ledger's statuses, the panel's LEDs (lit or hollow)
     const avail = [...document.querySelectorAll(".availability__status")].map((p) => ({ dot: !!p.querySelector(".availability__dot"), text: p.textContent.trim() }));
     const statuses = [...document.querySelectorAll(".ledger__status")].map((x) => x.textContent.trim());
@@ -934,6 +940,244 @@ if (run("layout")) await part("layout", async () => {
     await page.waitForTimeout(800);
     const twice = await card.evaluate((el) => [el.hasAttribute("data-flipped"), el.querySelector(".cred-flip")?.getAttribute("aria-pressed")]);
     check("layout", "a credential card turns over at a tap on its face, and back at the next (a phone)", once[0] && once[1] === "true" && !twice[0] && twice[1] === "false" && logs.length === 0, { once, twice, logs: logs.slice(0, 2) });
+    await ctx.close();
+  }
+});
+
+// ── the cursor: one of the two always on screen (DESIGN.md §7.3, Part 16) ─────────────────────────
+// native: the computed cursor of what's under the pointer (a modal's ::backdrop over its backdrop)
+// isn't `none`. reticle: its hotspot is visible and painted on top — a crop with it against the same
+// crop with #cursor hidden flips the hotspot's own device pixels. A View Transition's snapshots are
+// paused for the pair; where the beam (#fx-gl, drawn every tick) still moves, it's hidden for the pair.
+if (run("cursor")) await part("cursor", async () => {
+  const DPR = 2;
+  // two frames in the page (a gate's own wait, outside the site's ticker)
+  const frames = (page) => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))); // eslint-disable-line no-restricted-globals
+  const state = (page, pt) => page.evaluate(([x, y]) => {
+    const html = document.documentElement;
+    const dot = document.querySelector(".cursor__dot");
+    const cs = dot && getComputedStyle(dot);
+    const d = dot?.getBoundingClientRect();
+    const under = document.elementFromPoint(x, y);
+    const modal = document.querySelector("dialog:modal");
+    let native = getComputedStyle(under ?? html).cursor;
+    if (modal && under === modal) {
+      const r = modal.getBoundingClientRect();
+      if (x < r.left || x > r.right || y < r.top || y > r.bottom) native = getComputedStyle(modal, "::backdrop").cursor;
+    }
+    return { flag: html.dataset.reticle ?? null, drawn: cs?.visibility === "visible" && cs?.display !== "none", dot: d && { x: d.left, y: d.top, w: d.width, h: d.height }, native, modal: !!modal, under: under ? `${under.tagName.toLowerCase()}${under.classList[0] ? "." + under.classList[0] : ""}` : null };
+  }, [pt.x, pt.y]);
+  const pair = async (page, pt, dot, hideBeam) => {
+    const clip = { x: Math.max(0, pt.x - 14), y: Math.max(0, pt.y - 14), width: 28, height: 28 };
+    await page.evaluate((hideBeam) => {
+      window.__vtPaused = document.getAnimations().filter((x) => x.playState === "running" && /^::view-transition/.test(x.effect?.pseudoElement ?? ""));
+      window.__vtPaused.forEach((x) => x.pause());
+      if (hideBeam) document.head.insertAdjacentHTML("beforeend", "<style id='__nobeam'>#fx-gl{visibility:hidden!important}</style>");
+    }, hideBeam);
+    await frames(page);
+    const a = await page.screenshot({ clip });
+    await page.evaluate(() => document.head.insertAdjacentHTML("beforeend", "<style id='__nocur'>#cursor{visibility:hidden!important}</style>"));
+    await frames(page);
+    const b = await page.screenshot({ clip });
+    await page.evaluate(() => {
+      document.getElementById("__nocur")?.remove();
+      document.getElementById("__nobeam")?.remove();
+      (window.__vtPaused ?? []).forEach((x) => x.play());
+    });
+    const A = await sharp(a).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const B = await sharp(b).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    let coreN = 0, coreC = 0, restN = 0, restC = 0, contrast = 1;
+    for (let j = 0; j < A.info.height; j++) for (let i = 0; i < A.info.width; i++) {
+      const x = clip.x + (i + 0.5) / DPR, y = clip.y + (j + 0.5) / DPR, k = (j * A.info.width + i) * 4;
+      const changed = Math.max(...[0, 1, 2].map((c) => Math.abs(A.data[k + c] - B.data[k + c]))) > 40;
+      const core = x >= dot.x && x <= dot.x + dot.w && y >= dot.y && y <= dot.y + dot.h;
+      const near = x >= dot.x - 6 && x <= dot.x + dot.w + 6 && y >= dot.y - 6 && y <= dot.y + dot.h + 6;
+      if (core) {
+        coreN++;
+        if (changed) {
+          coreC++;
+          contrast = Math.max(contrast, ratio(lum([A.data[k], A.data[k + 1], A.data[k + 2]]), lum([B.data[k], B.data[k + 1], B.data[k + 2]])));
+        }
+      } else if (!near) {
+        restN++;
+        if (changed) restC++;
+      }
+    }
+    const noise = restN ? restC / restN : 0;
+    // 10 of the hotspot's 16 device pixels: a mid-tone under part of it (the SCAN's edge) is the one
+    // place `difference` gives little; by chance, under ≤ 10% noise, odds below 1e-6
+    return { painted: coreN >= 8 && coreC / coreN >= Math.max(0.6, noise + 0.5) && noise <= 0.6, core: `${coreC}/${coreN}`, noise: +noise.toFixed(3), contrast: +contrast.toFixed(1), ...(hideBeam ? { beamHidden: true } : {}) };
+  };
+  const sample = async (page, label, pt) => {
+    await frames(page);
+    const s = await state(page, pt);
+    let px = null;
+    if (s.drawn && s.dot) {
+      px = await pair(page, pt, s.dot, false);
+      if (!px.painted && px.noise > 0.1) px = await pair(page, pt, s.dot, true);
+    }
+    const native = s.native !== "none";
+    const reticle = !!px?.painted && !s.modal;
+    return { label, by: reticle ? "reticle" : native ? `native:${s.native}` : "NONE", visible: reticle || native, reticle, native, flag: s.flag, under: s.under, ...(px ? { px } : {}) };
+  };
+  const mid = (page, sel) => page.locator(sel).first().boundingBox().then((b) => ({ x: Math.round(b.x + b.width / 2), y: Math.round(b.y + b.height / 2) }));
+  const go = async (page, pt, ms = 450) => {
+    await page.mouse.move(pt.x, pt.y, { steps: 6 });
+    await page.waitForTimeout(ms);
+  };
+  const click = async (page) => {
+    await page.mouse.down();
+    await page.mouse.up();
+  };
+  const dossier = async (page) => {
+    const link = page.locator(".ledger__link").first();
+    await link.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(700);
+    const b = await link.boundingBox();
+    const pt = { x: Math.round(b.x + 24), y: Math.round(b.y + b.height / 2) };
+    await go(page, pt, 250);
+    await click(page);
+    await page.waitForSelector("dialog.dossier-dialog[open]", { timeout: 5000 });
+    await page.waitForTimeout(1100);
+    return pt;
+  };
+
+  {
+    const { ctx, page, logs } = await open("/", { debug: false, dpr: DPR });
+    await page.waitForTimeout(1300);
+    const before = await sample(page, "before any move", { x: 720, y: 450 });
+    check("cursor", "until the pointer first moves, the native cursor shows (no reticle drawn)", before.native && before.flag === null, before);
+
+    const moved = [];
+    await go(page, { x: 700, y: 430 });
+    moved.push(await sample(page, "home", { x: 700, y: 430 }));
+    const link = await mid(page, '.hud-nav__link[data-section="work"]');
+    await go(page, link);
+    moved.push(await sample(page, "over a link (brackets)", link));
+    // the ring growing to a control and back is never a layout shift (it was, its corners anchored right
+    // and bottom, once the reticle showed): sweep the nav, the rail and back, no click
+    await page.evaluate(() => {
+      window.__cursorShifts = [];
+      new PerformanceObserver((list) => {
+        for (const e of list.getEntries()) for (const src of e.sources ?? []) if (src.node?.parentElement?.closest?.("#cursor") || src.node?.closest?.("#cursor")) window.__cursorShifts.push(e.value);
+      }).observe({ type: "layout-shift" });
+    });
+    for (const sel of ['.hud-nav__link[data-section="archive"]', '.hud-nav__link[data-section="connect"]', ".hud-nav__key", ".section-rail__link"]) {
+      const at = await mid(page, sel).catch(() => null);
+      if (!at) continue;
+      await go(page, at, 350);
+      await go(page, { x: at.x - 160, y: at.y + 220 }, 350);
+    }
+    const cursorShifts = await page.evaluate(() => window.__cursorShifts);
+    check("cursor", "the ring snapping to a control and back is never a layout shift (its corners move by transform)", cursorShifts.length === 0, { shifts: cursorShifts.length, sum: cursorShifts.reduce((x, y) => x + y, 0) });
+
+    // the owner's report: a record's details, then CLOSE — and Esc, Back, the backdrop
+    const ways = [];
+    let pt = await dossier(page);
+    ways.push(await sample(page, "dossier open, pointer still", pt));
+    const close = await mid(page, ".dossier-dialog__close");
+    await go(page, close, 300);
+    ways.push(await sample(page, "over CLOSE", close));
+    await click(page);
+    await page.waitForTimeout(120);
+    ways.push(await sample(page, "CLOSE, pointer still, 120 ms", close));
+    await page.waitForTimeout(900);
+    ways.push(await sample(page, "CLOSE, pointer still, 1 s", close));
+    pt = await dossier(page);
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(1000);
+    ways.push(await sample(page, "Esc, pointer still", pt));
+    pt = await dossier(page);
+    await page.goBack();
+    await page.waitForTimeout(1000);
+    ways.push(await sample(page, "Back, pointer still", pt));
+    const inDialog = ways.slice(0, 2).every((w) => w.native && !w.reticle);
+    const afterClose = ways.slice(2).every((w) => w.visible) && ways.slice(3).every((w) => w.reticle);
+    check("cursor", "a record's dossier: the native cursor inside it; closed by CLOSE, Esc or Back under a still pointer, the reticle is back where the pointer is (the owner's report: no cursor after CLOSE)", inDialog && afterClose, ways);
+
+    const term = [];
+    const key = await mid(page, ".hud-nav__key");
+    await go(page, key, 300);
+    await click(page);
+    await page.waitForTimeout(900);
+    term.push(await sample(page, "terminal open, pointer still", key));
+    const inside = { x: 720, y: 520 };
+    await go(page, inside, 300);
+    term.push(await sample(page, "over the terminal", inside));
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(1100);
+    term.push(await sample(page, "terminal closed by Esc, pointer still", inside));
+    check("cursor", "the terminal: a cursor at every step — opened by its key, closed by Esc under a still pointer", term.every((t) => t.visible) && term[1].native && term[2].reticle, term);
+
+    await page.evaluate(() => document.querySelector("#connect .teletype__input")?.scrollIntoView({ block: "center" }));
+    await page.waitForTimeout(1200);
+    const field = await mid(page, "#connect .teletype__input");
+    await go(page, field, 300);
+    const onField = await sample(page, "over a text field", field);
+    check("cursor", "a text field: the native I-beam, the reticle aside", onField.native && /text/.test(onField.by) && !onField.reticle, onField);
+
+    // over every layer the page draws: a View Transition mid-flight (the theme's POWER CYCLE, Paper's
+    // SCAN), HALT's dark tube, the power-on after it
+    const over = [];
+    for (const theme of ["amber", "paper"]) {
+      await toSection(page, "identity");
+      await page.waitForTimeout(600);
+      const sw = await mid(page, `.fp-pos:has(input[value="${theme}"])`);
+      await go(page, sw, 300);
+      await click(page);
+      await page.waitForTimeout(60);
+      await page.mouse.move(760, 470, { steps: 2 });
+      over.push(await sample(page, `${theme}: mid View Transition, moving`, { x: 760, y: 470 }));
+      await page.waitForTimeout(1200);
+      await go(page, { x: 640, y: 380 });
+      moved.push(await sample(page, `${theme}: settled`, { x: 640, y: 380 }));
+    }
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await page.waitForTimeout(200);
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await page.waitForTimeout(1400);
+    await go(page, { x: 740, y: 470 }, 400);
+    const halted = await page.evaluate(() => document.documentElement.dataset.tube ?? null);
+    over.push({ ...(await sample(page, "HALT: the tube off", { x: 740, y: 470 })), tube: halted });
+    await click(page);
+    await page.waitForTimeout(150);
+    over.push(await sample(page, "HALT: a click powers on", { x: 740, y: 470 }));
+    check("cursor", "moved, the reticle is painted on top at ≥ 3:1 — every theme, over a link — and the native cursor hides", moved.every((m) => m.reticle && !m.native && m.px.contrast >= 3), moved);
+    check("cursor", "above every layer: a View Transition mid-flight (POWER CYCLE, SCAN) and HALT's dark tube and power-on show the reticle where the pointer is", over.every((o) => o.reticle) && halted === "off", over);
+    check("cursor", "…console clean", logs.length === 0, logs.slice(0, 4));
+    await ctx.close();
+  }
+  {
+    // the boot (a first visit: no session flag) — the reticle over the POST screen, at z62 above its z45
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: DPR });
+    const page = await ctx.newPage();
+    await page.goto(`${BASE}/`, { waitUntil: "commit" });
+    await page.waitForSelector(".boot", { state: "attached" });
+    await page.waitForTimeout(500);
+    const still = await sample(page, "boot, before any move", { x: 720, y: 450 });
+    // a cached boot can end before the pointer is first read: once hydrated, hold its overlay on screen
+    // (as it stands while the POST prints) and put the pointer over it
+    // (after its POWER ON: a View Transition's hit test is the root)
+    await page.waitForTimeout(3500);
+    await page.addStyleTag({ content: "html .boot{position:fixed!important;inset:0!important;z-index:45!important;display:block!important;opacity:1!important;visibility:visible!important;animation:none!important;pointer-events:auto!important}" });
+    await go(page, { x: 700, y: 440 }, 300);
+    const boot = await page.evaluate(() => { const b = document.querySelector(".boot"); const cs = getComputedStyle(b); return { display: cs.display, z: cs.zIndex, under: document.elementFromPoint(700, 440)?.closest(".boot") !== null }; });
+    const moved = await sample(page, "boot overlay, moved", { x: 700, y: 440 });
+    check("cursor", "the boot: the native cursor until the pointer moves, then the reticle above the POST screen (z62 over its z45)", still.native && moved.reticle && boot.display === "block" && boot.under, { still, moved, boot });
+    await ctx.close();
+  }
+  {
+    // reduced motion: the tear is a 160 ms cover (z60) — the reticle is above it
+    const { ctx, page } = await open("/", { debug: false, dpr: DPR, reduced: true });
+    await page.waitForTimeout(1300);
+    await go(page, { x: 700, y: 430 }, 300);
+    const nav = await mid(page, '.hud-nav__link[data-section="work"]');
+    await go(page, nav, 200);
+    await click(page);
+    await page.waitForTimeout(40);
+    await page.mouse.move(nav.x - 150, nav.y + 250, { steps: 2 });
+    const cover = await sample(page, "reduced: the tear's cover, moving", { x: nav.x - 150, y: nav.y + 250 });
+    check("cursor", "reduced motion: the reticle over the tear's cover (no lag, never covered)", cover.reticle, cover);
     await ctx.close();
   }
 });

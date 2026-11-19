@@ -85,6 +85,13 @@ export function IdCard({ c, L }: { c: Cert; L: Labels }) {
             </span>
           </div>
           <div className="cred-face cred-back">
+            {/* the back is a security document too (Part 16): the card's own guilloche, mirrored, as an
+                underprint; a microprint rule of its ID; the MRZ in its zone */}
+            <svg className="cred-guilloche cred-guilloche--back" viewBox={`0 0 ${CARD_UNITS.width} ${CARD_UNITS.height}`} preserveAspectRatio="none" aria-hidden="true" focusable="false">
+              {guillocheFor(c.credentialId).map((u) => (
+                <use key={u.href + u.transform} href={u.href} transform={u.transform} />
+              ))}
+            </svg>
             <dl className="cred-facts">
               <div>
                 <dt>{L.back.id}</dt>
@@ -116,6 +123,9 @@ export function IdCard({ c, L }: { c: Cert; L: Labels }) {
                 {`${L.back.verify} ↗`}
               </a>
             )}
+            <p className="cred-micro" aria-hidden="true">
+              {Array.from({ length: 8 }, () => c.credentialId).join(" · ")}
+            </p>
             <p className="cred-mrz" aria-hidden="true">
               <span>{mrz1}</span>
               <span>{mrz2}</span>

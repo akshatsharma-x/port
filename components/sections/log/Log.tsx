@@ -27,7 +27,10 @@ export function Log() {
   const roles = d.experience;
   const cards = stageData(d).log.cards;
   const now = d.buildDate.slice(0, 7);
-  const dates = (start: string, end: string) => `${month(start)} – ${end === "present" ? L.present : month(end)}`;
+  // the panel prints its dates as the printout does, ISO (§2.10); the scale's spoken label keeps the
+  // month's name, which a screen reader says better than "2026-06"
+  const dates = (start: string, end: string) => `${start} – ${end === "present" ? L.present : end}`;
+  const spoken = (start: string, end: string) => `${month(start)} – ${end === "present" ? L.present : month(end)}`;
 
   // the scale: newest at the top, a month per step, each role's span and the playhead's stop on it
   const top = Math.max(...roles.map((r) => monthIndex(r.end === "present" ? now : r.end)));
@@ -37,7 +40,7 @@ export function Log() {
   const scaleRoles: ScaleRole[] = roles.map((r) => {
     const end = monthIndex(r.end === "present" ? now : r.end);
     const start = monthIndex(r.start);
-    return { slug: r.slug, label: `${r.company}, ${dates(r.start, r.end)}`, from: at(end) - 0.5 / span, to: at(start) + 0.5 / span, stop: at((start + end) / 2) };
+    return { slug: r.slug, label: `${r.company}, ${spoken(r.start, r.end)}`, from: at(end) - 0.5 / span, to: at(start) + 0.5 / span, stop: at((start + end) / 2) };
   });
   const years = [...new Set(roles.flatMap((r) => [Number(r.start.slice(0, 4)), Number((r.end === "present" ? now : r.end).slice(0, 4))]))].sort((a, b) => b - a);
   const yearMarks = years.map((y) => ({

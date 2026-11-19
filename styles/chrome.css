@@ -27,15 +27,17 @@
     /* sized from tokens, not from the measured bands (they arrive after hydration, and a backing
        that resized then would be a layout shift — measured 0.0012 when it did) */
     height: calc(var(--hud-inset) + var(--spacing) * 14);
-    --osd: color-mix(in oklab, var(--bg) 84%, transparent);
+    /* 92%, solid for 65% (Part 16; 84% / 55% until then): a case study's lead, scrolling under the
+       readout's line at the solid part's edge, still read through RETROGRADE/OS */
+    --osd: color-mix(in oklab, var(--bg) 92%, transparent);
   }
   #hud::before {
     top: 0;
-    background: linear-gradient(to bottom, var(--osd) 0, var(--osd) 55%, transparent);
+    background: linear-gradient(to bottom, var(--osd) 0, var(--osd) 65%, transparent);
   }
   #hud::after {
     bottom: 0;
-    background: linear-gradient(to top, var(--osd) 0, var(--osd) 55%, transparent);
+    background: linear-gradient(to top, var(--osd) 0, var(--osd) 65%, transparent);
   }
   /* below 48 rem the top band stacks: its backing takes the nav's row too */
   @media (max-width: 47.99rem) {
@@ -153,6 +155,33 @@
   }
   .hud-readout__fps {
     color: var(--accent);
+  }
+
+  /* the channels' on-screen display (lib/channels.ts): a set's OSD, top right under the band — the
+     number through the LED dots (§2.11's home for a big number), the section's name under it */
+  .channel-osd {
+    position: fixed;
+    z-index: 61; /* over #fx-gl's tear (60): the static never covers a set's OSD */
+    top: calc(var(--hud-inset) + var(--spacing) * 16);
+    right: calc(var(--hud-inset) + var(--spacing) * 8);
+    display: grid;
+    justify-items: end;
+    gap: var(--spacing);
+    margin: 0;
+    color: var(--accent);
+    pointer-events: none;
+  }
+  .channel-osd[hidden] {
+    display: none;
+  }
+  .channel-osd__n {
+    font-family: var(--ff-mono);
+    font-size: var(--step-4);
+    line-height: 0.9;
+  }
+  .channel-osd__ch,
+  .channel-osd__name {
+    color: var(--fg-1);
   }
 
   /* <Nav>: mono labels, magnetic (--mag-x/y from useMagnetic), one shared active indicator */
@@ -448,24 +477,42 @@
     }
   }
 
-  /* ── #cursor (z40) ───────────────────────────────────────────────────────────────── */
+  /* ── #cursor (z62) ─────────────────────────────────────────────────────────────────
+     Above every layer the page draws (Part 16): the boot (45), the glass (50), the tear's cover and
+     HALT's screen (60), the channels' OSD (61). At z40 the boot and the tear covered it while the
+     native cursor was hidden. Only the top layer is above it — a modal dialog, where the native
+     cursor shows — and in a View Transition its parts are groups of their own, live, over the
+     snapshots (below). #cursor draws no box: each part is a fixed layer in the page's stacking
+     context, so its `difference` blends with the page. (Inside a fixed #cursor, itself a stacking
+     context, it blended with nothing: the white ink drew white, and on Paper it was white on paper.) */
   #cursor {
-    position: fixed;
-    inset: 0;
-    z-index: 40;
-    pointer-events: none;
-    contain: strict;
+    display: contents;
   }
-  html:not([data-cursor="on"]) #cursor,
-  #cursor[data-hidden] {
+  .cursor__dot,
+  .cursor__ring,
+  .cursor__chip {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 62;
+    pointer-events: none;
+  }
+  /* data-reticle (Cursor.tsx) is on exactly while the reticle is drawn at the pointer: one flag shows
+     it and hides the native cursor, so one of the two is always on screen — before the first move,
+     over a text field or a modal, off the window, the native cursor. (Part 16: this read
+     data-cursor, which nothing set, beside a data-hidden that hid the reticle alone. On a mouse there
+     was no cursor at all, but in a modal dialog.) */
+  html:not([data-reticle="on"]) #cursor {
     visibility: hidden;
   }
   html[data-reticle="on"],
   html[data-reticle="on"] * {
     cursor: none !important;
   }
-  /* a modal <dialog> (a record's dossier, the terminal) sits in the top layer, over the reticle: inside
-     it — its backdrop too — the native cursors come back, and the reticle steps aside (Cursor.tsx) */
+  /* Belt and braces for the frame before Cursor.tsx looks again (a dialog opened by a key under a
+     still pointer): a modal <dialog> (a record's dossier, the terminal) sits in the top layer, over
+     the reticle, so inside it — its backdrop too — the native cursors come back; text fields keep
+     the native I-beam. Once the pointer is looked at, the flag is off there and these rest. */
   html[data-reticle="on"] :is(dialog:modal, dialog:modal *) {
     cursor: auto !important;
   }
@@ -475,15 +522,40 @@
   html[data-reticle="on"] dialog:modal :is(input:not([type="radio"], [type="checkbox"], [type="button"], [type="submit"]), textarea) {
     cursor: text !important;
   }
-  /* text fields keep the native I-beam (and the custom cursor hides there) */
   html[data-reticle="on"] :is(input:not([type="radio"], [type="checkbox"], [type="button"], [type="submit"]), textarea, [contenteditable="true"], [contenteditable=""]) {
     cursor: text !important;
   }
+  /* a View Transition (POWER CYCLE, the theme's SCAN) paints snapshots of the page for up to 600 ms,
+     collapsing and stretching them: the reticle's parts are captured as their own groups, shown live
+     (the new state follows the element every frame) and unanimated, so the pointer moves over a
+     collapsing picture instead of freezing in it. Only in the full edition: there `#fx-gl` is a group
+     already, and three more cost nothing measurable, while the reduced crossfade has no other — and
+     a first named element made it 35 ms longer at 2× (353 → 391 ms, its 200 ms fade unchanged).
+     A crossfade only fades: its new snapshot is live, so the reticle follows the pointer in it. */
+  html[data-motion="full"] .cursor__dot {
+    view-transition-name: cursor-dot;
+  }
+  html[data-motion="full"] .cursor__ring {
+    view-transition-name: cursor-ring;
+  }
+  html[data-motion="full"] .cursor__chip {
+    view-transition-name: cursor-chip;
+  }
+  ::view-transition-old(cursor-dot),
+  ::view-transition-old(cursor-ring),
+  ::view-transition-old(cursor-chip) {
+    display: none;
+  }
+  ::view-transition-group(cursor-dot),
+  ::view-transition-group(cursor-ring),
+  ::view-transition-group(cursor-chip),
+  ::view-transition-new(cursor-dot),
+  ::view-transition-new(cursor-ring),
+  ::view-transition-new(cursor-chip) {
+    animation: none;
+  }
   .cursor__dot,
   .cursor__ring {
-    position: absolute;
-    top: 0;
-    left: 0;
     mix-blend-mode: difference;
     will-change: transform;
   }
@@ -499,41 +571,38 @@
     width: 10px;
     height: 10px;
   }
+  /* each corner sits at the ring's top-left and is placed by transform (Cursor.tsx, every tick): the
+     ring's box grows to a control without moving a corner in layout — anchored right and bottom,
+     every frame of a snap was a layout shift (Part 16). At rest, the 10 px square. */
   .cursor__ring > i {
     position: absolute;
+    top: 0;
+    left: 0;
     width: min(5px, 50%);
     height: min(5px, 50%);
     border: 0 solid var(--cursor-ink);
   }
   .cursor__ring > i:nth-child(1) {
-    top: 0;
-    left: 0;
     border-top-width: var(--hairline);
     border-left-width: var(--hairline);
   }
   .cursor__ring > i:nth-child(2) {
-    top: 0;
-    right: 0;
+    transform: translate3d(5px, 0, 0);
     border-top-width: var(--hairline);
     border-right-width: var(--hairline);
   }
   .cursor__ring > i:nth-child(3) {
-    bottom: 0;
-    left: 0;
+    transform: translate3d(0, 5px, 0);
     border-bottom-width: var(--hairline);
     border-left-width: var(--hairline);
   }
   .cursor__ring > i:nth-child(4) {
-    right: 0;
-    bottom: 0;
+    transform: translate3d(5px, 5px, 0);
     border-right-width: var(--hairline);
     border-bottom-width: var(--hairline);
   }
   /* the media chip (VIEW / DRAG / FLIP / OPEN): normal blending, so it reads over any image */
   .cursor__chip {
-    position: absolute;
-    top: 0;
-    left: 0;
     padding: 0.125rem 0.375rem;
     border-radius: var(--r-1);
     background: var(--bg-raised);

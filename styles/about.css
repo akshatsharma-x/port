@@ -24,8 +24,10 @@
   .identity__bio + .identity__bio {
     max-width: 64ch;
   }
+  /* emphasis by ink, not hue (§2.4: colour carries only state): --fg-1 over the bio's --fg-2.
+     In the accent they read as eight links, and the squint found no first read (Part 16) */
   .identity__accent {
-    color: var(--accent);
+    color: var(--fg-1);
   }
   .identity__spec {
     margin-block-start: calc(var(--spacing) * 4);

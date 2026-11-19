@@ -262,12 +262,14 @@ export function derive(c: Content, o: Overlays, now: Date) {
 
   // ── hero spec strip ──────────────────────────────────────────────────────────────────────
   const labels = c.site.labels.heroStrip;
-  const heroStrip = [
+  // citations join the strip once there are some, as ARCHIVE's LED figure waits for them (Part 16):
+  // a zero on the first screen is a figure in reverse, and on a phone it wrapped to a line alone
+  const heroStrip: readonly { key: "years" | "shipped" | "papers" | "citations"; label: string; value: number }[] = [
     { key: "years", label: labels.years, value: experienceYears },
     { key: "shipped", label: labels.shipped, value: c.projects.length },
     { key: "papers", label: labels.papers, value: research.counted },
-    { key: "citations", label: labels.citations, value: research.citations },
-  ] as const;
+    ...(research.citations > 0 ? [{ key: "citations" as const, label: labels.citations, value: research.citations }] : []),
+  ];
 
   // ── the works my papers cite (ARCHIVE's faint stars, v1.9) ───────────────────────────────
   const citedWorks = c.citedWorks

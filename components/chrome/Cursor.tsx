@@ -16,6 +16,8 @@ export interface CursorLabels {
 const SNAP_PAD = 4;
 /** the reticle's size at rest, CSS px */
 const RETICLE = 10;
+/** a bracket's arm, CSS px (styles/chrome.css: a corner's box) */
+const ARM = 5;
 /** what the ring snaps to as brackets (media — data-cursor — gets the chip, not brackets) */
 const INTERACTIVE = "a[href], button, [role='button'], [role='switch'], [role='tab'], summary, label, select, input[type='radio'], input[type='checkbox']";
 /** never bracket something that is most of the screen (a full-bleed link): the reticle stays */
@@ -26,27 +28,62 @@ const TEXT_FIELD = "input:not([type='radio']):not([type='checkbox']):not([type='
  * <Cursor> (DESIGN.md §7.3): a 10 px hollow-square reticle with an unlagged 2 px center dot (the
  * hotspot, moved in the pointer event itself — never a frame late) and a ring that trails at λ 24.
  * Over an interactive element the ring snaps to it as four brackets; over media (data-cursor) it
- * grows a label chip — VIEW / DRAG / FLIP / OPEN — at λ 12. Drawn with mix-blend-mode: difference.
- * Absent on coarse pointers and in forced-colors mode; inside text fields the native I-beam
- * shows instead. Reduced motion: no lag (the ring is where the pointer is).
+ * grows a label chip — VIEW / DRAG / FLIP / OPEN — at λ 12. Drawn with mix-blend-mode: difference,
+ * above every layer the page draws (z62). Absent on coarse pointers and in forced-colors mode;
+ * inside text fields and modal dialogs the native cursor shows instead — never neither (data-reticle).
+ * Reduced motion: no lag (the ring is where the pointer is).
  */
 export function Cursor({ labels }: { labels: CursorLabels }) {
-  const rootRef = useRef<HTMLDivElement>(null);
   const dotRef = useRef<HTMLSpanElement>(null);
   const ringRef = useRef<HTMLSpanElement>(null);
   const chipRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    const root = rootRef.current;
     const dot = dotRef.current;
     const ring = ringRef.current;
     const chip = chipRef.current;
-    if (!root || !dot || !ring || !chip) return;
+    if (!dot || !ring || !chip) return;
     const html = document.documentElement;
+    // the brackets: each corner anchored at the ring's top-left and placed by transform, so a ring that
+    // grows to a control never moves a corner in layout (Part 16: anchored right and bottom, they were
+    // a layout shift every frame of a snap, 0.0000018 once the reticle showed)
+    const [, tr, bl, br] = [...ring.children] as (HTMLElement | undefined)[];
+    if (!tr || !bl || !br) return;
     const fine = matchMedia("(pointer: fine)");
     const forced = matchMedia("(forced-colors: active)");
     if (!fine.matches || forced.matches) return;
-    html.dataset.reticle = "on";
+    // data-reticle on <html> while the reticle is drawn: the one flag both cursors read
+    // (styles/chrome.css), so the reticle shows and the native cursor hides together, and one of the
+    // two is always on screen. It's off until the pointer first moves (a pointer that hasn't moved
+    // since the load keeps the native cursor), over a text field or a modal dialog, and off the
+    // window (Part 16: a second flag, data-hidden, hid the reticle without bringing the native cursor
+    // back, so a stale one — a dossier closed under a still pointer — left no cursor at all)
+    // The flag is written after the next paint, never in the event: it restyles the whole page (its
+    // rule reaches every element), and in the event it landed inside the click that followed — the
+    // visit's first click waited 31 ms at 4× CPU (5 without it; scripts/audit/inp.mjs). Waiting is
+    // safe: whichever state is on screen meanwhile shows a cursor (off, the native one; on, the
+    // reticle drawn), so a late flag is never neither.
+    let drawn = false;
+    let want = false;
+    let pending: (() => void) | null = null;
+    let timer = 0;
+    const apply = () => {
+      timer = 0;
+      if (want === drawn) return;
+      drawn = want;
+      if (drawn) html.dataset.reticle = "on";
+      else delete html.dataset.reticle;
+    };
+    const draw = (on: boolean) => {
+      want = on && fine.matches && !forced.matches;
+      if (want === drawn || pending || timer) return;
+      // one tick (the frame), then a task: the paint lands between them
+      pending = onTick(() => {
+        pending?.();
+        pending = null;
+        timer = window.setTimeout(apply, 0);
+      });
+    };
 
     const p = { x: -100, y: -100, seen: false };
     // the ring's state: center and size, damped toward its target
@@ -55,14 +92,6 @@ export function Cursor({ labels }: { labels: CursorLabels }) {
     let snapped: Element | null = null;
     let chipShown = 0;
     let chipTarget = 0;
-    let hidden = true;
-
-    const setHidden = (h: boolean) => {
-      if (h === hidden) return;
-      hidden = h;
-      if (h) root.dataset.hidden = "";
-      else delete root.dataset.hidden;
-    };
 
     const retarget = () => {
       if (snapped && snapped.isConnected) {
@@ -90,12 +119,17 @@ export function Cursor({ labels }: { labels: CursorLabels }) {
         p.seen = true;
         r.x = p.x;
         r.y = p.y;
+        // drawn where it is from its first frame (the tick would place it a frame later, at 0,0)
+        ring.style.transform = `translate3d(${p.x - r.w / 2}px, ${p.y - r.h / 2}px, 0)`;
       }
-      const under = e.target instanceof Element ? e.target : null;
+      look(e.target instanceof Element ? e.target : null);
+    };
+    // what's under the pointer decides who draws it: inside a text field or over a modal dialog (in the
+    // top layer, above the reticle) the native cursor shows and the reticle steps aside
+    const look = (under: Element | null) => {
       const inText = !!under?.closest(TEXT_FIELD);
-      // a modal dialog is in the top layer, above the reticle: over it (or its backdrop) the native cursor shows instead
       const inModal = !!under?.closest("dialog:modal");
-      setHidden(inText || inModal);
+      draw(!inText && !inModal);
       const hit = inText || inModal ? null : (under?.closest(INTERACTIVE) ?? null);
       const box = hit?.getBoundingClientRect();
       const huge = !!box && box.width > window.innerWidth * MAX_SNAP && box.height > window.innerHeight * MAX_SNAP;
@@ -106,7 +140,21 @@ export function Cursor({ labels }: { labels: CursorLabels }) {
       chipTarget = label ? 1 : 0;
       retarget();
     };
-    const onLeave = () => setHidden(true);
+    // a dialog opened or closed (a record's dossier, the terminal — by a key, CLOSE, Esc) under a pointer
+    // that hasn't moved: no pointermove comes, so look again at what's under it — the native cursor in
+    // the dialog, the reticle back on the page at once (until then the native cursor shows: the flag
+    // was off)
+    let relook: (() => void) | null = null;
+    const lookAgain = () => {
+      if (!p.seen || relook) return;
+      // the next frame (one tick, the site's one rAF): the dialog has entered or left the top layer
+      relook = onTick(() => {
+        relook?.();
+        relook = null;
+        look(document.elementFromPoint(p.x, p.y));
+      });
+    };
+    const onLeave = () => draw(false);
     const onScroll = () => retarget();
 
     const reduced = () => html.dataset.motion === "reduce";
@@ -120,6 +168,11 @@ export function Cursor({ labels }: { labels: CursorLabels }) {
       ring.style.transform = `translate3d(${(r.x - r.w / 2).toFixed(2)}px, ${(r.y - r.h / 2).toFixed(2)}px, 0)`;
       ring.style.width = `${r.w.toFixed(2)}px`;
       ring.style.height = `${r.h.toFixed(2)}px`;
+      const dx = (r.w - Math.min(ARM, r.w / 2)).toFixed(2);
+      const dy = (r.h - Math.min(ARM, r.h / 2)).toFixed(2);
+      tr.style.transform = `translate3d(${dx}px, 0, 0)`;
+      bl.style.transform = `translate3d(0, ${dy}px, 0)`;
+      br.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
       chipShown = instant ? chipTarget : damp(chipShown, chipTarget, followers.cursorLabel, dt);
       chip.style.transform = `translate3d(${(r.x + r.w / 2 + 4).toFixed(2)}px, ${(r.y + r.h / 2 + 4).toFixed(2)}px, 0) scale(${chipShown.toFixed(3)})`;
       chip.style.opacity = chipShown.toFixed(3);
@@ -127,22 +180,31 @@ export function Cursor({ labels }: { labels: CursorLabels }) {
 
     window.addEventListener("pointermove", onMove, { passive: true });
     window.addEventListener("pointerdown", onMove, { passive: true });
+    // over: the element under a still pointer changed (a scroll, a dialog removed with its route)
+    window.addEventListener("pointerover", onMove, { passive: true });
     document.documentElement.addEventListener("pointerleave", onLeave);
     window.addEventListener("scroll", onScroll, { passive: true });
+    // a dialog's `toggle` and `close` don't bubble: caught on their way down
+    document.addEventListener("toggle", lookAgain, true);
+    document.addEventListener("close", lookAgain, true);
     const onMedia = () => {
-      if (!fine.matches || forced.matches) {
-        setHidden(true);
-        delete html.dataset.reticle;
-      } else html.dataset.reticle = "on";
+      if (!fine.matches || forced.matches) draw(false);
+      else if (p.seen) look(document.elementFromPoint(p.x, p.y));
     };
     fine.addEventListener("change", onMedia);
     forced.addEventListener("change", onMedia);
     return () => {
       offTick();
+      relook?.();
+      pending?.();
+      window.clearTimeout(timer);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerdown", onMove);
+      window.removeEventListener("pointerover", onMove);
       document.documentElement.removeEventListener("pointerleave", onLeave);
       window.removeEventListener("scroll", onScroll);
+      document.removeEventListener("toggle", lookAgain, true);
+      document.removeEventListener("close", lookAgain, true);
       fine.removeEventListener("change", onMedia);
       forced.removeEventListener("change", onMedia);
       delete html.dataset.reticle;
@@ -150,7 +212,7 @@ export function Cursor({ labels }: { labels: CursorLabels }) {
   }, [labels]);
 
   return (
-    <div ref={rootRef} id="cursor" aria-hidden="true" data-hidden="">
+    <div id="cursor" aria-hidden="true">
       <span ref={ringRef} className="cursor__ring">
         <i />
         <i />

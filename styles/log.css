@@ -312,15 +312,22 @@
     container-type: inline-size;
     /* one inch of the form: its 9½ in across this column */
     --in: calc(100cqi / 9.5);
+
     --bar: color-mix(in oklab, var(--bg-raised) 88%, var(--accent));
   }
   [data-theme="paper"] .printout {
     --bar: color-mix(in oklab, var(--bg-raised) 82%, var(--accent));
   }
+  /* a printed line is a whole share of a ½ in band, so every row registers to the green-bar instead
+     of straddling it (Part 16): two lines a band where the form is wide enough to read them (≈ 22 px
+     at 1440), one where it isn't (a phone's 9½ in is ≈ 350 px). Declared here, beside the count, so
+     the container query's count is the one it reads */
   .printout__sheet {
+    --lines-per-band: 2;
+    --line: calc(var(--in) * 0.5 / var(--lines-per-band));
     position: relative;
     width: 100%;
-    padding: calc(var(--in) * 0.55) calc(var(--in) * 0.95);
+    padding: calc(var(--in) * 0.5) calc(var(--in) * 0.95);
     background-color: var(--bg-raised);
     background-image:
       /* the perforation at each 11 in */
@@ -356,11 +363,11 @@
   /* dot-matrix: the mono print under a fine dot mask */
   .printout__text {
     display: grid;
-    gap: calc(var(--spacing) * 4);
+    gap: var(--line);
     color: var(--fg-1);
     font-family: var(--ff-mono);
     font-size: var(--step--1);
-    line-height: 1.5;
+    line-height: var(--line);
     letter-spacing: 0.04em;
     -webkit-mask: radial-gradient(circle closest-side, #000 75%, transparent 100%) 0 0 / 2px 2px repeat;
     mask: radial-gradient(circle closest-side, #000 75%, transparent 100%) 0 0 / 2px 2px repeat;
@@ -377,7 +384,7 @@
   }
   .printout__rows {
     display: grid;
-    gap: calc(var(--spacing) * 1);
+    gap: 0;
     padding: 0;
     list-style: none;
   }
@@ -390,6 +397,12 @@
     .printout__rows > li {
       grid-template-columns: 1fr;
       gap: 0;
+    }
+  }
+  /* a narrow form: a line a band (its ½ in is about the type's own line) */
+  @container (max-width: 36rem) {
+    .printout__sheet {
+      --lines-per-band: 1;
     }
   }
 }

@@ -50,6 +50,27 @@ function loadHistory(): string[] {
   }
 }
 
+/**
+ * The previous open's time (YYYY-MM-DD HH:MM and the visitor's zone, §2.10's ISO), and this one's
+ * written for next time. Local only (localStorage, beside the history), never sent anywhere.
+ */
+function lastLogin(): string | null {
+  const KEY = "retrograde:last-login";
+  let prev: string | null = null;
+  try {
+    prev = localStorage.getItem(KEY);
+    localStorage.setItem(KEY, new Date().toISOString());
+  } catch {
+    return null; // storage refused (a private mode): no greeting, nothing kept
+  }
+  const at = prev ? new Date(prev) : null;
+  if (!at || Number.isNaN(at.getTime())) return null;
+  // the digits ISO's (en-GB's Latin numerals); the zone named as the visitor's own locale names it
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-GB", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(at).map((p) => [p.type, p.value]));
+  const zone = new Intl.DateTimeFormat(undefined, { timeZoneName: "short" }).formatToParts(at).find((p) => p.type === "timeZoneName")?.value ?? "";
+  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute} ${zone}`.trim();
+}
+
 export default function Terminal({ boot }: { boot: ShellBoot }) {
   const open = useUI((s) => s.terminalOpen);
   const id = useId();
@@ -148,7 +169,12 @@ export default function Terminal({ boot }: { boot: ShellBoot }) {
       }
       const S = j.labels.shell;
       const vars = { os: j.labels.os, version: j.build.version ?? S.none, sha: j.build.sha ?? S.none, tty: S.tty, name: j.profile.name, role: j.profile.role };
-      print(S.banner.map((b, i) => [seg(fill(b, vars), i ? "dim" : "bold")]));
+      const lines = S.banner.map((b, i) => [seg(fill(b, vars), i ? "dim" : "bold")]);
+      // LAST LOGIN (a seeded delight, Part 16): a returning visitor is greeted as a tty greets you —
+      // the last time this terminal opened here, in their own zone, under the system's line
+      const last = lastLogin();
+      if (last) lines.splice(1, 0, [seg(fill(S.lastLogin, { when: last, tty: S.tty }), "dim")]);
+      print(lines);
     });
   }, [boot, loadIndex, print]);
 

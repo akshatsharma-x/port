@@ -3,28 +3,28 @@
   "covers": {
     "cognivault-ai": {
       "source": "title-card",
-      "inputHash": "c941b9c4",
-      "bytes": {"640":9447,"768":12676,"1024":17309,"master":39238}
+      "inputHash": "05e525d8",
+      "bytes": {"640":8669,"768":11665,"1024":15921,"master":32021}
     },
     "quizmuj": {
       "source": "title-card",
-      "inputHash": "e70cc0e0",
-      "bytes": {"640":8599,"768":12201,"1024":15886,"master":36671}
+      "inputHash": "9ef256ec",
+      "bytes": {"640":7766,"768":10940,"1024":14033,"master":28970}
     },
     "resume-screening": {
       "source": "title-card",
-      "inputHash": "97fae4aa",
-      "bytes": {"640":12459,"768":16461,"1024":21608,"master":48496}
+      "inputHash": "50510006",
+      "bytes": {"640":11682,"768":15451,"1024":19828,"master":41998}
     },
     "churn-prediction": {
       "source": "title-card",
-      "inputHash": "a9342009",
-      "bytes": {"640":12760,"768":16332,"1024":20921,"master":46643}
+      "inputHash": "8171203d",
+      "bytes": {"640":11773,"768":14991,"1024":18884,"master":39474}
     },
     "wcag-analyzer": {
       "source": "title-card",
-      "inputHash": "05a08a43",
-      "bytes": {"640":12980,"768":16254,"1024":21128,"master":48999}
+      "inputHash": "9308ca97",
+      "bytes": {"640":11797,"768":14498,"1024":18762,"master":39698}
     }
   }
 }

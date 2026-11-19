@@ -65,6 +65,12 @@ export const ARCHIVE = {
   dial: { hysteresisPx: 18, within: 0.4 },
   /** labels: at most this many year ticks show in the YEAR layout (always the first, the last and my years) */
   yearTicks: 7,
+  /**
+   * a sky of this many records or fewer labels each in place, its title and its facts (Part 16): with
+   * two stars nothing said what a star was until you hovered one, and the second-loudest beat read
+   * as decoration. The tuned record (the dial's, the cursor's, the keyboard's) reads in full.
+   */
+  sparse: 6,
   /** the unit chart (§7.4): a cell per paper (px), a 2 px surface gap, a column per year */
   unit: { cell: 16, gap: 2, column: 26, tick: 5, label: 18 },
   /**

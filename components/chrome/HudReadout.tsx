@@ -6,6 +6,7 @@ import { governor } from "@/lib/sceneManager";
 import { clockCells, HUD_HZ, localClock, onHud, setText } from "@/lib/hud";
 import { artifact, followers } from "@/lib/motion";
 import { runScramble } from "@/lib/scramble";
+import { onCommit } from "@/lib/navigation";
 import { scrollSignal, scrollStore, type ScrollSnapshot } from "@/lib/scroll";
 import { onTick } from "@/lib/ticker";
 import { sectionLabel, type ChromeSection } from "./types";
@@ -29,11 +30,11 @@ export function HudReadout({ os, sections, timeZone, countryCode }: { os: string
 
   useEffect(() => {
     const isReduced = () => document.documentElement.dataset.motion === "reduce";
-    // no section here (a route without tracked sections, or before they register): a dash holds
-    // the fixed-width field, so nothing moves when a section arrives
+    // no section here: a page names the section it belongs to (a case study "05 WORK", a paper
+    // "04 ARCHIVE", NO SIGNAL — data-hud-page, Part 16), else a dash holds the fixed-width field
     const labelOf = (id: string | null) => {
       const s = sections.find((x) => x.id === id);
-      return s ? sectionLabel(s) : NO_SECTION;
+      return s ? sectionLabel(s) : (document.querySelector<HTMLElement>("[data-hud-page]")?.dataset.hudPage ?? NO_SECTION);
     };
     let shown = scrollSignal.progress;
     const offTick = onTick((dt) => {
@@ -65,8 +66,13 @@ export function HudReadout({ os, sections, timeZone, countryCode }: { os: string
     };
     write(labelOf(scrollStore.getState().section));
     const unsubscribe = scrollStore.subscribe(onChange);
+    // a route that swaps in under the same (absent) section — one case study to the next — renames
+    const offCommit = onCommit(() => {
+      if (scrollStore.getState().section === null) write(labelOf(null));
+    });
     return () => {
       unsubscribe();
+      offCommit();
       glitch?.();
       offHud();
       offClock();

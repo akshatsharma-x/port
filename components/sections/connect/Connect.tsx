@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { join } from "node:path";
 import { CheckGlyph } from "@/components/research/CheckGlyph";
 import { Button } from "@/components/ui/Button";
@@ -49,7 +49,7 @@ export function Connect({ d }: { d: Derived }) {
         {L.invitation}
       </Reveal>
       <div className="connect-email col-span-12">
-        <a className="connect-email__link" href={`mailto:${p.email}`}>
+        <a className="connect-email__link" href={`mailto:${p.email}`} style={{ "--chars": p.email.length } as CSSProperties}>
           {p.email}
         </a>
         {/* pending until its behaviour is in: its place kept, so its arrival moves nothing (CLS); gone without JS */}

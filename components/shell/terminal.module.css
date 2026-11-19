@@ -84,6 +84,9 @@
 .close:hover {
   color: var(--fg-1);
 }
+.close:active {
+  scale: 0.97; /* the site's press (§3.4): this frame, no transition */
+}
 .close:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;

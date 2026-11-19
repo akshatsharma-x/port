@@ -16,6 +16,8 @@ export interface SkyDrawing {
   height: number;
   edges: { d: string; cited: boolean; delay: number }[];
   nodes: { d: string; kind: 0 | 1; dashed: boolean; type: CitedVenueType }[];
+  /** each record's place (the graph index, and x, y as shares of the drawing): a sparse sky's tags */
+  records: { i: number; x: number; y: number; r: number }[];
   /** the TOPIC clusters' label anchors, as shares of the drawing (the header sets their text in HTML) */
   labels: { k: number; x: number; y: number }[];
 }
@@ -67,7 +69,12 @@ export function drawSky(graph: StageData["graph"], width: number, height: number
     return { d: translate(shapePath(type, r), p.x, p.y), kind: n.kind, dashed: n.dashed, type };
   });
   const labels = marks.map((m, j) => ({ k: j, x: (ox + m.x * k) / width, y: (oy + m.y * k) / height }));
-  return { width, height, edges, nodes, labels };
+  const records = graph.nodes.flatMap((n, i) => {
+    const p = at[i];
+    if (n.kind !== 0 || !p) return [];
+    return [{ i, x: p.x / width, y: p.y / height, r: PX.record.min + (PX.record.max - PX.record.min) * citationNorm(n.citations, maxBy[0]) }];
+  });
+  return { width, height, edges, nodes, labels, records };
 }
 
 /** Moves an absolute M/L/a path drawn about the origin to (x, y). */

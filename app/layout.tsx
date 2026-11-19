@@ -7,7 +7,7 @@ import { Stage } from "@/components/stage/Stage";
 import { Providers } from "@/components/ui/Providers";
 import { derived } from "@/content/derive";
 import { rootMeta } from "@/lib/seo";
-import { headScript } from "@/lib/theme-script";
+import { headScript, PRINT_HREF } from "@/lib/theme-script";
 import { THEME_BG } from "@/lib/tokens";
 import { hubotSans, jetbrainsMono, monaSans } from "./typefaces";
 import "./globals.css";
@@ -37,6 +37,13 @@ export default function RootLayout({ children, modal }: LayoutProps<"/">) {
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: headScript }} />
+        {/* the print edition (DESIGN.md §2.4): a print-only sheet, fetched last and never render-blocking
+            (through the bundle it would be render-blocking bytes on every screen's first paint). The head
+            script links it — a rendered <link> gets a preload from React, a warning in Firefox — and
+            this carries it without JS */}
+        <noscript>
+          <link rel="stylesheet" href={PRINT_HREF} media="print" />
+        </noscript>
       </head>
       <body>
         <Providers labels={{ newTab: derived.site.labels.chrome.newTab }}>

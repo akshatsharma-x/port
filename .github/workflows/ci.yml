@@ -54,7 +54,9 @@ jobs:
       - name: Bundles and assets (size-limit)
         run: npx size-limit
       - name: Web vitals (Lighthouse CI)
-        env: { CHROME_PATH: /usr/bin/google-chrome }
+        # the runner's CPU benchmarks ~2,650 (its first run, Part 16) against the reference machine's
+        # ~4,500: 2.4x here is the reference method's 4x (lighthouserc.cjs)
+        env: { CHROME_PATH: /usr/bin/google-chrome, LHCI_CPU_SLOWDOWN: "2.4" }
         run: npx lhci autorun
       - name: Serve the build for the gates
         run: |

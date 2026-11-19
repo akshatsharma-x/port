@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { cssEase, duration, EASE_NAMES, ease } from "@/lib/motion";
+import { artifact, cssEase, duration, EASE_NAMES, ease } from "@/lib/motion";
 import { THEME_BG, THEMES } from "@/lib/tokens";
 import { block, mediaRule, readCss, themeBlock } from "./helpers/css";
 import { table } from "./helpers/design";
@@ -63,6 +63,13 @@ describe("duration tiers — DESIGN.md §3.4 = lib/motion.ts = tokens.css", () =
       expect(root[`--dur-${tier}`]).toBe(`${t.in}ms`);
       expect(root[`--dur-${tier}-out`]).toBe(`${t.out}ms`);
     }
+  });
+});
+
+describe("rate-based artifacts — lib/motion.ts = tokens.css", () => {
+  it("the caret blink and the typewriter's character", () => {
+    expect(root["--blink"]).toBe(`${artifact.caretBlinkMs}ms`);
+    expect(root["--typewriter-char"]).toBe(`${(1000 / artifact.typewriterCps).toFixed(3)}ms`);
   });
 });
 

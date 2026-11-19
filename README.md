@@ -38,9 +38,10 @@ Node 20.9+ for the site; Node 22.19+ for Lighthouse CI.
 │            docked (position: sticky) into whichever scene's slot is LIVE
 ├─ #screen   all the DOM. Tier-A sections hold <StageSlot id="…">, each with its poster
 ├─ #hud      z30 — the persistent chrome: readout, nav, section rail, front panel
-├─ #cursor   z40 — the reticle
 ├─ #fx-css   z50 — the glass: grain, scanlines, the refresh roll (CSS, compositor-only)
 ├─ #fx-gl    z60 — WebGL2 context #2, raw, ~4 KB: the transitions only, idle otherwise
+├─ #cursor   z62 — the reticle, above every layer the page draws (the native cursor shows until
+│            the pointer moves, and in fields and dialogs: one of the two is always on screen)
 └─ <dialog>  top layer — the terminal, a record's dossier
 ```
 
@@ -49,6 +50,7 @@ Node 20.9+ for the site; Node 22.19+ for Lighthouse CI.
 - **The FX layers**: `#fx-css` is the glass every pixel is seen through; `#fx-gl` draws the three signature transitions (POWER CYCLE, TRACKING TEAR, DITHER RESOLVE) and nothing else.
 - **The interlock**: between any two stage slots there are at least 100 svh of DOM-only content, so two stages never share the screen and the governor swaps scenes where nobody can see it. The rhythm and the performance budget are the same rule (§4.2).
 - **Every edition is complete**: reduced motion creates no WebGL context at all (§3.9); tier OFF, no JS and a lost context show baked posters; NO SIGNAL takes a 404 or any error.
+- **Print** is an edition too (DESIGN.md §2.4): `public/print.css`, a print-only sheet outside the bundle (`media="print"`, so it never blocks the screen's first paint; the head script links it, with a `<noscript>` copy, because React preloads a rendered stylesheet link and Firefox warns about a print preload), lays the site out as a fanfold printout. A software rasterizer (no GPU) is tier OFF before the runtime loads (§4.2).
 
 ## Content
 
@@ -147,4 +149,6 @@ lib/            the governor, tier, scroll, navigation, motion, tokens, analytic
 scripts/        bake.ts + bake/, fonts/, posters.ts, the gates, audit/
 styles/         tokens.css and one stylesheet per section
 e2e/            the visual matrix and its baselines
+public/         posters, covers, share cards, icons, print.css (the print edition)
+docs/           LAUNCH.md (the launch checklist, walked); CRITIQUE.md at the root (the polish pass)
 ```

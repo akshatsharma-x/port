@@ -519,7 +519,8 @@ let words = null;
   const pages = [...foot.groups[1], ...foot.groups[2]];
   const statuses = await Promise.all(pages.map(async (h) => (await fetch(BASE + h)).status));
   check("the index: every section (01 SYSTEM … 09 HALT, each a target on the page), every project and publication (each a 200)", foot.sections.length === 9 && foot.sections.every(([, , there]) => there) && /^01 SYSTEM$/.test(foot.sections[0][0]) && /^09 HALT$/.test(foot.sections[8][0]) && statuses.every((s) => s === 200) && foot.groups[1].length > 0 && foot.groups[2].length > 0, { sections: foot.sections.map((s) => s[0]), projects: foot.groups[1].length, publications: foot.groups[2].length, statuses });
-  const m = /^v(\S+) · ([0-9a-f]{7,})(\+?) · \S+ (\d{4}-\d{2}-\d{2}) · .+ NEXT (\d+) · THREE (r\d+)$/.exec(foot.build ?? "");
+  // the deploy date says its zone (UTC, Part 16)
+  const m = /^v(\S+) · ([0-9a-f]{7,})(\+?) · \S+ (\d{4}-\d{2}-\d{2})(?: UTC)? · .+ NEXT (\d+) · THREE (r\d+)$/.exec(foot.build ?? "");
   let commit = false;
   try {
     execSync(`git cat-file -e ${m?.[2]}^{commit}`, { cwd: ROOT, stdio: "ignore" });

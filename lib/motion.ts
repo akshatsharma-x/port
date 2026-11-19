@@ -180,6 +180,13 @@ export const artifact = {
   ditherSceneSteps: 32,
 } as const;
 
+/** A state the visitor's action set that says so, then lets go: COPY's "COPIED ✓" (CONNECT's address, a paper's BibTeX). */
+export const feedback = {
+  copiedMs: 1600,
+  /** the number keys' on-screen display ("CH 04 · ARCHIVE", lib/channels.ts) holds this long */
+  channelMs: 1500,
+} as const;
+
 /**
  * §7.4 IDENTITY — the portrait's exposure lamp and the CURRENTLY line. The lamp develops the photo
  * where it shines (over duration.micro.in) and the exposure fades back with τ, like phosphor.

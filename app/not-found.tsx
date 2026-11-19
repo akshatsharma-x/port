@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { HudPage } from "@/components/chrome/HudPage";
 import { NoSignal } from "@/components/no-signal/NoSignal";
 import { derived } from "@/content/derive";
 
@@ -7,5 +8,10 @@ export const metadata: Metadata = { title: derived.site.labels.noSignal.title, r
 
 /** 404 — NO SIGNAL (DESIGN.md §7.4), for a missing record and for any URL that matches nothing. */
 export default function NotFound() {
-  return <NoSignal labels={derived.site.labels.noSignal} code={404} kind="notFound" />;
+  return (
+    <>
+      <HudPage label={derived.site.labels.noSignal.title} />
+      <NoSignal labels={derived.site.labels.noSignal} code={404} kind="notFound" />
+    </>
+  );
 }

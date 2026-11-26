@@ -1,1 +1,126 @@
-{"version":1,"mode":"dry","results":{}}
+{
+  "version": 1,
+  "mode": "live",
+  "results": {
+    "verifyUrl:aws-cloud-practitioner-essentials": {
+      "kind": "verifyUrl",
+      "owner": "aws-cloud-practitioner-essentials",
+      "target": "https://www.linkedin.com/in/akshatsharma-in/details/certifications/",
+      "status": "blocked",
+      "httpStatus": null,
+      "checkedAt": "2026-11-26"
+    },
+    "verifyUrl:cisco-network-fundamentals": {
+      "kind": "verifyUrl",
+      "owner": "cisco-network-fundamentals",
+      "target": "https://www.linkedin.com/in/akshatsharma-in/details/certifications/",
+      "status": "blocked",
+      "httpStatus": null,
+      "checkedAt": "2026-11-26"
+    },
+    "verifyUrl:claude-code-in-action": {
+      "kind": "verifyUrl",
+      "owner": "claude-code-in-action",
+      "target": "https://www.linkedin.com/in/akshatsharma-in/details/certifications/",
+      "status": "blocked",
+      "httpStatus": null,
+      "checkedAt": "2026-11-26"
+    },
+    "verifyUrl:codechef-dsa-lab": {
+      "kind": "verifyUrl",
+      "owner": "codechef-dsa-lab",
+      "target": "https://www.linkedin.com/in/akshatsharma-in/details/certifications/",
+      "status": "blocked",
+      "httpStatus": null,
+      "checkedAt": "2026-11-26"
+    },
+    "verifyUrl:coding-ninjas-data-analytics-workshop": {
+      "kind": "verifyUrl",
+      "owner": "coding-ninjas-data-analytics-workshop",
+      "target": "https://www.linkedin.com/in/akshatsharma-in/details/certifications/",
+      "status": "blocked",
+      "httpStatus": null,
+      "checkedAt": "2026-11-26"
+    },
+    "verifyUrl:gfg-oop-java": {
+      "kind": "verifyUrl",
+      "owner": "gfg-oop-java",
+      "target": "https://www.linkedin.com/in/akshatsharma-in/details/certifications/",
+      "status": "blocked",
+      "httpStatus": null,
+      "checkedAt": "2026-11-26"
+    },
+    "verifyUrl:ibm-containers-docker-kubernetes-openshift": {
+      "kind": "verifyUrl",
+      "owner": "ibm-containers-docker-kubernetes-openshift",
+      "target": "https://www.linkedin.com/in/akshatsharma-in/details/certifications/",
+      "status": "blocked",
+      "httpStatus": null,
+      "checkedAt": "2026-11-26"
+    },
+    "verifyUrl:ibm-java-programming-for-beginners": {
+      "kind": "verifyUrl",
+      "owner": "ibm-java-programming-for-beginners",
+      "target": "https://www.linkedin.com/in/akshatsharma-in/details/certifications/",
+      "status": "blocked",
+      "httpStatus": null,
+      "checkedAt": "2026-11-26"
+    },
+    "verifyUrl:nptel-design-analysis-algorithms": {
+      "kind": "verifyUrl",
+      "owner": "nptel-design-analysis-algorithms",
+      "target": "https://www.linkedin.com/in/akshatsharma-in/details/certifications/",
+      "status": "blocked",
+      "httpStatus": null,
+      "checkedAt": "2026-11-26"
+    },
+    "verifyUrl:nptel-dsa-java": {
+      "kind": "verifyUrl",
+      "owner": "nptel-dsa-java",
+      "target": "https://www.linkedin.com/in/akshatsharma-in/details/certifications/",
+      "status": "blocked",
+      "httpStatus": null,
+      "checkedAt": "2026-11-26"
+    },
+    "verifyUrl:oracle-database-design": {
+      "kind": "verifyUrl",
+      "owner": "oracle-database-design",
+      "target": "https://www.linkedin.com/in/akshatsharma-in/details/certifications/",
+      "status": "blocked",
+      "httpStatus": null,
+      "checkedAt": "2026-11-26"
+    },
+    "verifyUrl:oracle-database-programming-sql": {
+      "kind": "verifyUrl",
+      "owner": "oracle-database-programming-sql",
+      "target": "https://www.linkedin.com/in/akshatsharma-in/details/certifications/",
+      "status": "blocked",
+      "httpStatus": null,
+      "checkedAt": "2026-11-26"
+    },
+    "verifyUrl:red-hat-system-administration-i": {
+      "kind": "verifyUrl",
+      "owner": "red-hat-system-administration-i",
+      "target": "https://www.linkedin.com/in/akshatsharma-in/details/certifications/",
+      "status": "blocked",
+      "httpStatus": null,
+      "checkedAt": "2026-11-26"
+    },
+    "verifyUrl:red-hat-system-administration-ii": {
+      "kind": "verifyUrl",
+      "owner": "red-hat-system-administration-ii",
+      "target": "https://www.linkedin.com/in/akshatsharma-in/details/certifications/",
+      "status": "blocked",
+      "httpStatus": null,
+      "checkedAt": "2026-11-26"
+    },
+    "verifyUrl:simplilearn-devops-git": {
+      "kind": "verifyUrl",
+      "owner": "simplilearn-devops-git",
+      "target": "https://www.linkedin.com/in/akshatsharma-in/details/certifications/",
+      "status": "blocked",
+      "httpStatus": null,
+      "checkedAt": "2026-11-26"
+    }
+  }
+}

@@ -101,6 +101,9 @@
     /* the playhead moves by transform against the scale's own height: moving it by `top` was a
        layout shift every frame (CLS 0.00002 in the scroll gate) */
     container-type: size;
+    /* the role spans stack by length inside it, shortest on top and over the year labels' edges
+       (YearScale.tsx): every span keeps a clear 24 px target (WCAG 2.5.8). Their z-index stays in here */
+    isolation: isolate;
   }
   .year-scale__rule {
     position: absolute;

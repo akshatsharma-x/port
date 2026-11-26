@@ -47,9 +47,10 @@ export function credential(c: Certificate): EducationalOccupationalCredential {
     credentialCategory: "certificate",
     educationalLevel: c.level,
     recognizedBy: { "@type": "Organization", name: c.issuer },
-    dateCreated: c.issueDate,
+    // a month-only date is ISO 8601 too (2026-07); what isn't listed is left out, never null (v2.8)
+    ...(c.issueDate ? { dateCreated: c.issueDate } : {}),
     ...(c.expiryDate ? { expires: c.expiryDate } : {}),
-    identifier: c.credentialId,
+    ...(c.credentialId ? { identifier: c.credentialId } : {}),
     ...(c.verifyUrl ? { url: c.verifyUrl } : {}),
     competencyRequired: c.skillsCovered,
   };

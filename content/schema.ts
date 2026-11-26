@@ -280,7 +280,7 @@ export const SiteSchema = z.strictObject({
       /** the stamps tell the truth: VERIFIED only when the build reached the verify URL */
       stamps: z.strictObject({ verified: sentence(12), onFile: sentence(12), expired: sentence(12) }),
       front: z.strictObject({ serial: sentence(8), issued: sentence(16) }),
-      back: z.strictObject({ id: sentence(24), issued: sentence(16), expires: sentence(16), noExpiry: sentence(16), skills: sentence(24), proves: sentence(24), verify: sentence(16), mrz: sentence(40) }),
+      back: z.strictObject({ id: sentence(24), issued: sentence(16), expires: sentence(16), noExpiry: sentence(16), notListed: sentence(16), skills: sentence(24), proves: sentence(24), verify: sentence(16), mrz: sentence(40) }),
       /** the turn button (the card's title follows it, for screen readers) */
       turn: z.strictObject({ over: sentence(24), back: sentence(24) }),
       /** phones: device motion is asked for only from this chip, never on its own */
@@ -685,9 +685,11 @@ export const CertificateSchema = z
     title: sentence(120),
     issuer: text,
     issuerLogo: assetPath.optional(),
-    issueDate: isoDate,
+    /** a day or only the month, as the certificate (or its listing) prints it; null when undated (v2.8) */
+    issueDate: z.union([isoDate, yearMonth]).nullable(),
     expiryDate: isoDate.nullable(),
-    credentialId: text,
+    /** null when none is printed or listed: the card's guilloche then takes its seed from the slug (v2.8) */
+    credentialId: text.nullable(),
     verifyUrl: httpsUrl.nullable(),
     skillsCovered: z.array(text).min(1).max(8),
     domain: sentence(32),
@@ -695,7 +697,7 @@ export const CertificateSchema = z
     proves: sentence(140),
     featured: z.boolean(),
   })
-  .refine((c) => c.expiryDate === null || c.expiryDate > c.issueDate, { message: "expiryDate must be after issueDate", path: ["expiryDate"] });
+  .refine((c) => c.expiryDate === null || c.issueDate === null || c.expiryDate > c.issueDate, { message: "expiryDate must be after issueDate", path: ["expiryDate"] });
 
 export const AchievementSchema = z.strictObject({
   title: sentence(120),

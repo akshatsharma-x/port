@@ -5,7 +5,7 @@
  *
  *   BASE_URL=http://localhost:3200 node scripts/credentials-gate.mjs      (a production build, RETROGRADE_DEV_ROUTES=1)
  *
- * Home, on the owner's real content (no certificates yet): no wall and never a zero, RECORDS with
+ * Home, on the owner's real content (their credentials since v2.8): the wall and never a zero, RECORDS with
  * its true figures, the records' 6° tilt. The wall, on /dev/credentials/<state> (the fixture
  * persona's certificates): ID-1 geometry, the guilloche unique and stable, foil never under text,
  * the stamps' truth, the turn (click, Enter, Escape), the MRZ's check digits recomputed here, the
@@ -96,7 +96,7 @@ const cues = (page) => page.evaluate(() => Object.fromEntries(window.__retrograd
 /** the behaviour arrives on idle: wait for its marker */
 const behaviour = (page) => page.waitForFunction(() => document.querySelector("[data-cred-root] .cred-back a[tabindex='-1'], .records") && (document.querySelector("[data-cred-root]") ? !!document.querySelector("[data-cred-root]").style.getPropertyValue("--turn-ms") : true), null, { timeout: 15_000 }).catch(() => null);
 
-// ── 1 · home, the owner's content: no certificates yet ──────────────────────────────────────
+// ── 1 · home, the owner's content: their credentials since 2026-11-26 (v2.8) ──────────────
 {
   const { ctx, page, logs } = await open("/#credentials");
   await scrollTo(page, "#credentials");
@@ -106,8 +106,12 @@ const behaviour = (page) => page.waitForFunction(() => document.querySelector("[
     // a Counter says its value twice (an sr-only copy and the animated digits): read the copy
     const said = (el) => el?.querySelector(".sr-only")?.textContent ?? el?.textContent ?? "";
     const lead = said(sec.querySelector(".records-lead__figure")).replace(/\D/g, "");
+    const cards = [...sec.querySelectorAll(".cred")];
     return {
       wall: !!sec.querySelector(".cred-wall-wrap"),
+      cards: cards.length,
+      issuers: new Set(cards.map((c) => c.dataset.issuer)).size,
+      active: cards.filter((c) => !c.hasAttribute("data-expired")).length,
       text: sec.innerText,
       strip: sec.querySelector(".section-strip__counts")?.textContent ?? null,
       records: [...sec.querySelectorAll(".record")].map((r) => ({ kind: r.dataset.kind, drawn: r.hasAttribute("data-drawn"), glyph: r.querySelector("use")?.getAttribute("href"), proof: !!r.querySelector(".record__proof") })),
@@ -120,15 +124,21 @@ const behaviour = (page) => page.waitForFunction(() => document.querySelector("[
     };
   });
   const kinds = home.records.reduce((m, r) => ({ ...m, [r.kind]: (m[r.kind] ?? 0) + 1 }), {});
-  check("home: no certificates yet, so no wall — and no zero anywhere in the section", !home.wall && !/\b0 credentials?\b/i.test(home.text) && !/\b0\b/.test(home.strip ?? ""), { wall: home.wall, strip: home.strip });
-  check("home: the strip counts the records, truly", home.strip === `${home.records.length} RECORDS` || home.strip?.toUpperCase() === `${home.records.length} RECORDS`, home.strip);
+  const many = (n, one, more) => `${n} ${n === 1 ? one : more}`;
+  check("home: the owner's credentials on the wall (v2.8) — and no zero anywhere in the section", home.wall && home.cards > 0 && !/\b0 credentials?\b/i.test(home.text) && !/\b0\b/.test(home.strip ?? ""), { wall: home.wall, cards: home.cards, strip: home.strip });
+  check(
+    "home: the strip counts the credentials, their issuers, the active ones and the records, truly",
+    home.strip?.toLowerCase() === [many(home.cards, "credential", "credentials"), many(home.issuers, "issuer", "issuers"), `${home.active} active`, many(home.records.length, "record", "records")].join(" · "),
+    { strip: home.strip, cards: home.cards, issuers: home.issuers, active: home.active, records: home.records.length },
+  );
   check(
     "home: RECORDS — one LED figure (every record) and three tiles, none a zero; the kind tiles count the cards",
     home.lead === home.records.length && home.tiles.length === 3 && home.tiles.every((t) => Number(String(t.value).replace(/\D/g, "")) > 0) && home.tiles.filter((t) => /honor/i.test(t.label ?? "")).every((t) => Number(t.value) === kinds.honor) && home.tiles.filter((t) => /award/i.test(t.label ?? "")).every((t) => Number(t.value) === kinds.award),
     { lead: home.lead, tiles: home.tiles, kinds },
   );
   check("home: record cards — bracketed, a kind glyph each (defined on the page), proof links only where there's proof; no empty press or transmissions", home.records.length > 0 && home.records.every((r) => r.drawn && r.glyph === `#rec-${r.kind}`) && home.glyphsDefined && !home.press && !home.transmissions && home.canvases === 0, home.records);
-  // the records' tilt: at most 6°
+  // the records' tilt: at most 6° (below the wall since v2.8: brought into view first)
+  await scrollTo(page, ".record", -240);
   await page.waitForTimeout(1500);
   const box = await page.locator(".record").first().boundingBox();
   for (let i = 0; i <= 10; i++) {
@@ -422,7 +432,7 @@ for (const path of ["/dev/credentials/full", "/"]) {
       verify: document.querySelectorAll(".cred-verify[href]").length,
     };
   });
-  check(`no JS (${path}): every card whole with its back under it and VERIFY reachable; no dead chips or buttons; the records there`, n.records > 0 && (path === "/" ? n.cards === 0 : n.cards === 12 && n.backs && n.chips === "none" && n.flips && n.verify > 0), n);
+  check(`no JS (${path}): every card whole with its back under it and VERIFY reachable; no dead chips or buttons; the records there`, n.records > 0 && (path === "/" ? n.cards > 0 : n.cards === 12) && n.backs && n.chips === "none" && n.flips && n.verify > 0, n);
   await ctx.close();
 }
 

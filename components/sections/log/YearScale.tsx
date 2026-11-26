@@ -80,8 +80,10 @@ export function YearScale({ label, roles, years, ticks }: { label: string; roles
           <i key={t} className="year-scale__tick" style={{ "--at": t } as CSSProperties} />
         ))}
       </div>
+      {/* the shorter span paints on top (v2.8): a one-month role's 24 px target reaches into its neighbour's
+          span, and drawn under it, it would be cut below 24 px (WCAG 2.5.8) */}
       {roles.map((r, i) => (
-        <button key={r.slug} type="button" className="year-scale__role" data-role={i} aria-label={r.label} style={{ "--from": r.from, "--to": r.to } as CSSProperties} onClick={() => scrollToStep("log", i)} />
+        <button key={r.slug} type="button" className="year-scale__role" data-role={i} aria-label={r.label} style={{ "--from": r.from, "--to": r.to, zIndex: 1 + roles.filter((o) => o.to - o.from > r.to - r.from).length } as CSSProperties} onClick={() => scrollToStep("log", i)} />
       ))}
       {years.map((y) => (
         <button key={y.year} type="button" className="year-scale__year t-micro" data-role={y.role} style={{ "--at": y.at } as CSSProperties} onClick={() => scrollToStep("log", y.role)}>

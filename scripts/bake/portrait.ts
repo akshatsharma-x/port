@@ -3,7 +3,9 @@
  * source, 180 × 225 8-bit grayscale — one pixel per dot-matrix cell (lib/identity.ts).
  *
  * From the owner's photo when there is one (public/media/profile/photo.{jpg,jpeg,png,webp,avif}):
- * cropped to 4:5 around the most salient region, grayscaled and contrast-normalized. Until then,
+ * turned upright by its EXIF orientation, cropped to 4:5 around the most salient region, grayscaled
+ * and contrast-normalized. The dither wants a head and shoulders, so frame the photo that way (the
+ * owner's is cut from a full-length shot, at 960 × 1200). Until then,
  * a placeholder — a soft-lit head-and-shoulders silhouette that reads as one in the dither and
  * says what it is in its alt text (content/data.ts).
  *
@@ -63,6 +65,8 @@ export async function portraitStep(): Promise<string> {
   const photo = PHOTO.find((p) => existsSync(join(ROOT, p)));
   const png = photo
     ? await sharp(join(ROOT, photo))
+        // upright first: a phone stores its pixels sideways and an EXIF Orientation to turn them by
+        .rotate()
         .resize(PORTRAIT.cols, PORTRAIT.rows, { fit: "cover", position: sharp.strategy.attention })
         .grayscale()
         .normalise()

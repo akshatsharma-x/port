@@ -28,8 +28,8 @@ describe("the real content", () => {
     expect(all).not.toMatch(/\+?\d[\d\s-]{9,}\d/);
   });
 
-  it("derives the hero strip from the record: 1 year since July 2025, 5 projects, 2 papers — and no citations figure while there are none", () => {
-    expect(Object.fromEntries(d.heroStrip.map((s) => [s.key, s.value]))).toEqual({ years: 1, shipped: 5, papers: 2 });
+  it("derives the hero strip from the record: 1 year since July 2025, 11 projects, 2 papers — and no citations figure while there are none", () => {
+    expect(Object.fromEntries(d.heroStrip.map((s) => [s.key, s.value]))).toEqual({ years: 1, shipped: 11, papers: 2 });
   });
 
   it("has a fresh graph: my papers first, then the works they cite, one cites edge per citing pair", () => {

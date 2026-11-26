@@ -198,7 +198,7 @@ export const site = {
       levels: { foundational: "Foundational", associate: "Associate", professional: "Professional", expert: "Expert" },
       stamps: { verified: "Verified", onFile: "On file", expired: "Expired" },
       front: { serial: "No.", issued: "Issued" },
-      back: { id: "Credential ID", issued: "Issued", expires: "Expires", noExpiry: "No expiry", skills: "Skills covered", proves: "What it proves", verify: "Verify", mrz: "Machine-readable zone" },
+      back: { id: "Credential ID", issued: "Issued", expires: "Expires", noExpiry: "No expiry", notListed: "Not listed", skills: "Skills covered", proves: "What it proves", verify: "Verify", mrz: "Machine-readable zone" },
       turn: { over: "Turn over", back: "Turn back" },
       tilt: { ask: "Tilt to inspect", on: "Tilting", denied: "Motion access was declined; tap a card to turn it." },
       none: "No credential matches these filters.",
@@ -499,21 +499,21 @@ export const profile = {
   initials: "AS",
   // TODO(akshat): the headline and tagline are drafts written from the résumé
   role: "AI & ML engineer · full-stack developer",
-  tagline: "Building generative-AI systems at United Airlines, and researching interpretable ML.",
+  tagline: "Building generative-AI systems and researching interpretable ML. Now at Merck Group.",
   // TODO(akshat): the résumés name no city; Jaipur is inferred from Manipal University Jaipur
   location: { city: "Jaipur", country: "India", countryCode: "IN" },
   coordinates: { lat: 26.9124, lon: 75.7873 },
   timezone: "Asia/Kolkata",
   // working hours: confirmed by the owner (2026-11-14); CONNECT computes a visitor's overlap from them
   workingHours: { start: "10:00", end: "18:00" },
-  // TODO(akshat): availability is inferred (interning now; the B.Tech ends July 2027)
-  availability: { status: "limited", note: "Interning at United Airlines; graduating with a B.Tech in July 2027." },
+  // TODO(akshat): availability is inferred (interning at Merck Group from December 2026; the B.Tech ends July 2027)
+  availability: { status: "limited", note: "Interning at Merck Group from December 2026; graduating with a B.Tech in July 2027." },
   // TODO(akshat): the bio is a draft, written only from facts on the résumé
   bio: {
     short:
-      "Computer science undergraduate at Manipal University Jaipur, building generative-AI systems at United Airlines and researching interpretable machine learning.",
+      "Computer science undergraduate at Manipal University Jaipur, building generative-AI systems and researching interpretable machine learning; interning at Merck Group from December 2026.",
     long: [
-      "I'm a computer science undergraduate at Manipal University Jaipur, graduating in 2027, and I work where large language models meet production software. At United Airlines I'm building Cartographer, a LangGraph system that writes six documentation artifacts in two LLM calls on top of a code knowledge graph, at $0.08–0.11 a run.",
+      "I'm a computer science undergraduate at Manipal University Jaipur, graduating in 2027, and I work where large language models meet production software. From December 2026 I'm an associate analyst intern at Merck Group, in Clinical and Digital Innovation and Applications. At United Airlines, from June to November 2026, I built Cartographer, a LangGraph system that writes six documentation artifacts in two LLM calls on top of a code knowledge graph, at $0.08–0.11 a run.",
       "Before that I built full-stack features with Next.js and Django REST Framework for a TRAI engagement at EY, a Core Java backend at Truechip, and parts of Engazewell, an employee-management system with 2,500+ daily users, at WalkingTree. My research applies interpretable machine learning to sustainability — food waste in cold-chain logistics and short-term PM2.5 forecasting — and was presented at SCI-2026 (Springer LNNS).",
     ],
     accents: [
@@ -521,8 +521,9 @@ export const profile = {
       ["a TRAI engagement at EY", "interpretable machine learning", "SCI-2026"],
     ],
   },
-  // TODO(akshat): no photo yet — this is a generated placeholder (scripts/bake/portrait.ts)
-  avatar: { src: "/media/profile/portrait.png", alt: "A placeholder portrait: a soft-lit head-and-shoulders silhouette, until the real photo arrives." },
+  // the owner's photo (2026-11-26): public/media/profile/photo.jpg, cut to a head and shoulders from
+  // their full-length me.jpeg; the bake dithers it into portrait.png (scripts/bake/portrait.ts)
+  avatar: { src: "/media/profile/portrait.png", alt: "Akshat Sharma, smiling, in glasses and a dark jacket, leaning on a red bookshelf full of books." },
   // no résumé published for now (the owner's call, 2026-11-14): every version carries their phone
   // number. A phone-free PDF dropped in public/media/profile/ and named here brings the buttons back
   resumeUrl: null,
@@ -538,12 +539,27 @@ export const profile = {
 // TODO(akshat): the résumés give no work locations; "India" stands in for each
 
 export const experience = [
+  // the owner's next role (2026-11-26): "associate analyst - clinical and digital innovation and
+  // applications as an intern for now, from December 2026". The title's team is in the blurb (role ≤ 60)
+  // TODO(akshat): its location, stack and highlights once the work has started
+  {
+    company: "Merck Group",
+    role: "Associate Analyst (Intern)",
+    type: "internship",
+    start: "2026-12",
+    end: "present",
+    location: "India",
+    blurb: "Associate analyst intern in Merck Group's Clinical and Digital Innovation and Applications team.",
+    highlights: ["Joining in December 2026, straight after the generative-AI internship at United Airlines."],
+    metrics: [],
+    stack: [],
+  },
   {
     company: "United Airlines",
     role: "AI & ML Intern (Generative AI)",
     type: "internship",
     start: "2026-06",
-    end: "present",
+    end: "2026-11",
     location: "India",
     blurb: "Generative-AI intern on LLM model monitoring and automation for United's enterprise-level ML models.",
     highlights: [
@@ -698,12 +714,231 @@ export const publications = [
 export const citedWorks = [] satisfies In["citedWorks"];
 
 // ── projects ─────────────────────────────────────────────────────────────────────────────────
-// TODO(akshat): for each project — the year, your role, repo/live links and screenshots. Until the
-// year and role arrive they're null and show as pending (Part 9, the owner's call). Each cover is a
-// build-time title card drawn from the project's own words (scripts/bake/covers.ts) until a real
-// screenshot is dropped into content/covers/<slug>.(png|jpg|webp|avif): same path, no code change.
+// From the owner's GitHub repositories (2026-11-26): each one's description and README, its live
+// link and its own screenshots. The cover is pre-cut to 3:2 in content/covers/<slug>.webp (the bake
+// crops nothing further); the rest are in public/media/projects/<slug>/. The first six are the WORK
+// slides (featured), the rest are the index; the résumé's three have only a title card until their
+// repos and screenshots arrive. Every number is the README's own.
+// TODO(akshat): for each project — the year and your role. Until they arrive they're null and show as
+// pending (Part 9, the owner's call). All eight repos were first committed in 2026, but MyHUB, BBC
+// News Retrieval and Vistara on 2026-11-25, which looks like the upload, not the build.
 
 export const projects = [
+  {
+    slug: "nexus",
+    title: "NEXUS",
+    subtitle: "A personalized learning platform for career transitions",
+    year: null,
+    role: null,
+    category: "Learning platform",
+    summary: "Conversational onboarding, an adaptive learning path, a 3D map of what you know, assessments that update it, and a tutor that runs offline.",
+    problem: "Someone changing careers knows where they want to go, not how far they are from it or what to learn next, and a generic course list doesn't track what they actually know.",
+    approach:
+      "Onboarding is a conversation: NEXUS extracts the target role, timeline, experience and skills, asks the follow-ups it needs, and shows the profile it's building for you to correct before the path is built. The path is staged, and steps unlock as their prerequisites complete. Assessments are scored per skill and written back into mastery, so the 3D Skill Universe (Three.js with React Three Fiber) and the path follow your results. Home leads with one next best move and the reasoning behind it. The tutor answers from your own progress in the browser, with no model call; Claude is optional, behind two settings. There are no accounts and no database: everything stays in localStorage, with export and reset.",
+    outcome: "A live Next.js 16 app on Vercel that needs no environment variables, with light and dark themes and layouts down to phone widths.",
+    metrics: [],
+    stack: ["Next.js", "React", "TypeScript", "Tailwind CSS", "Framer Motion", "Three.js", "React Three Fiber", "Anthropic SDK"],
+    links: { live: "https://nexus-opal-phi-60.vercel.app", repo: "https://github.com/akshatsharma-x/nexus" },
+    media: [
+      { type: "image", src: "/media/projects/nexus/cover.avif", alt: "NEXUS's home screen in the dark theme: the target role, ML Engineer, as the headline, then the journey's progress, level, streak, weekly time and target date, and the next best move with its reasoning." },
+      { type: "image", src: "/media/projects/nexus/onboarding.avif", alt: "Onboarding: the conversation, with the learner profile filling in beside it as NEXUS understands it.", width: 1440, height: 900 },
+      { type: "image", src: "/media/projects/nexus/skills.avif", alt: "The Skill Universe: every skill placed on a 3D knowledge map and coloured by mastery, with Python's detail panel open.", width: 1440, height: 900 },
+      { type: "image", src: "/media/projects/nexus/tutor.avif", alt: "The tutor answering how far the learner is from being job-ready, from their own progress data, its status panel reading AI Tutor · Offline.", width: 1440, height: 900 },
+    ],
+    featured: true,
+    relatedPublicationSlugs: [],
+  },
+  {
+    slug: "researchx",
+    title: "ResearchX",
+    subtitle: "A 17-agent research pipeline that checks every citation",
+    year: null,
+    // TODO(akshat): a fork of Adyashas/ResearchX: Adyashas made the first commit (2026-08-12), your two
+    // (2026-11-26) wire up the full research pipeline and make it deployable. Say what your role was
+    role: null,
+    category: "AI system",
+    summary: "Ask a hard question: 17 LangGraph agents plan the research, search the web, papers and news in parallel, fact-check each claim and write a report whose every citation points to a real source.",
+    problem: "An LLM asked a research question answers fluently and cites loosely: sources it never read, numbers it misremembers, and nothing that argues the other side.",
+    approach:
+      "A Query Analyzer splits the question into sub-questions and a Planner turns them into typed web, academic and news searches, run in parallel through Tavily. A Source Analyzer rates reliability; evidence is quoted verbatim per source and condensed into atomic claims, each fact-checked against its quote, numbers and dates included. Contradictions are flagged, and the strongest claims are challenged with searches for counter-evidence. Two budgeted loops close it: a Replanner adds searches while sub-questions stay open, and a Critic and a Citation Verifier send weak drafts back. The reference list is generated from the source data, not by the model. FastAPI runs each job on Celery with Redis, and the graph's state is checkpointed to PostgreSQL after every step, so a job whose worker dies resumes where it stopped.",
+    outcome: "A deployable pipeline that writes a cited Markdown report in about 13 Gemini calls when no loop runs, with every agent's trace shown live, and per-IP and daily job limits that cap the cost.",
+    metrics: [
+      { label: "Agents", value: 17 },
+      { label: "Gemini calls, no loops", value: 13 },
+      { label: "Feedback loops", value: 2 },
+    ],
+    stack: ["LangGraph", "LangChain", "Gemini", "Tavily", "FastAPI", "Celery", "Redis", "PostgreSQL", "Next.js", "Docker"],
+    links: { repo: "https://github.com/akshatsharma-x/ResearchX" },
+    media: [
+      { type: "image", src: "/media/projects/researchx/cover.avif", alt: "ResearchX's landing page: “From question to verified report,” over a line on agents that plan, search, verify and synthesize through a LangGraph state machine." },
+      { type: "image", src: "/media/projects/researchx/pipeline-running.avif", alt: "The live pipeline view: finished agents are checked off and the running agent is highlighted.", width: 2400, height: 1442 },
+      { type: "image", src: "/media/projects/researchx/agent-trace.avif", alt: "The agent execution trace: a card for each agent, with its input, status and expandable details.", width: 1360, height: 1374 },
+    ],
+    featured: true,
+    relatedPublicationSlugs: [],
+  },
+  {
+    // the résumé's "Automated Resume Screening"; its repo calls it CV-Scan (the slug, its URL, stays)
+    slug: "resume-screening",
+    title: "CV-Scan",
+    subtitle: "Explainable resume screening: TF-IDF and Sentence-BERT, scored together",
+    year: null,
+    role: null,
+    category: "NLP",
+    summary: "Ranks resumes against a job description with a hybrid TF-IDF and Sentence-BERT score, shows which skills drive each score, and benchmarks every candidate against 2,361 historical resumes.",
+    problem: "Screening resumes by hand is slow and inconsistent, and an automated screen is only useful if people can see why it ranked someone where it did.",
+    approach:
+      "Resumes (PDF, DOCX or TXT) are parsed, cleaned and lemmatized. A TF-IDF engine, fitted per run so every term of the job is in its vocabulary, makes each matched term's share of the score exact; a Sentence-BERT engine (all-MiniLM-L6-v2) reads each resume in 150-word chunks. Both are normalized against the historical resumes scored for the same job, then fused at 30% keyword to 70% semantic, the weight that gave the best Precision@5. A calibrated SVM predicts each resume's domain out of 24 and flags a mismatch. The Streamlit dashboard adds a pool benchmark, a 2D and 3D PCA map of the embedding space, and a model-evaluation page with the confusion matrices and parameter sweeps.",
+    outcome: "On held-out resumes the hybrid beats either engine alone: 0.786 category accuracy against 0.704 for TF-IDF, and job-to-resume ranking at 0.892 ROC-AUC and 0.832 MRR.",
+    metrics: [
+      { label: "Ranking ROC-AUC", value: 0.892 },
+      { label: "Ranking MRR", value: 0.832 },
+      { label: "Category accuracy", value: 0.786 },
+      { label: "Historical resumes", value: 2361 },
+    ],
+    stack: ["Python", "Streamlit", "Sentence-BERT", "Transformers", "TF-IDF", "LinearSVC", "PCA", "NLTK", "Plotly"],
+    links: { repo: "https://github.com/akshatsharma-x/cv-scan" },
+    media: [
+      { type: "image", src: "/media/projects/resume-screening/cover.avif", alt: "CV-Scan's home page: “Screen resumes with intelligent precision,” its live figures (2,361 historical resumes, 24 categories, a 0.89 ranking ROC-AUC) and the two scan modes." },
+      { type: "image", src: "/media/projects/resume-screening/results.avif", alt: "The ranked leaderboard in the dark theme: hybrid, keyword and semantic scores, pool rank and predicted domain for every candidate.", width: 2296, height: 1314 },
+      { type: "image", src: "/media/projects/resume-screening/deep-dive.avif", alt: "A candidate's deep-dive: each term's share of the keyword score, and the job's key requirements found and missing.", width: 2296, height: 1832 },
+      { type: "image", src: "/media/projects/resume-screening/semantic-map.avif", alt: "The semantic map: a PCA of the Sentence-BERT space, the historical pool coloured by match score, with the candidates and the job description.", width: 2296, height: 1410 },
+    ],
+    featured: true,
+    relatedPublicationSlugs: [],
+  },
+  {
+    slug: "quizmuj",
+    title: "QuizMUJ",
+    subtitle: "Proctored quizzes and exams for Manipal University Jaipur",
+    year: null,
+    role: null,
+    category: "Full-stack",
+    summary: "Timed exams in a distraction-free focus mode, live proctoring streamed to faculty, instant topic-level feedback, and per-quiz analytics down to each question's most common wrong answer.",
+    problem: "Running exams online needs a timer students can't pause, a way for faculty to see what candidates do while they sit it, and results that say more than a score.",
+    approach:
+      "A Node.js and Express 5 API on MongoDB (Mongoose) serves a plain HTML, CSS and JavaScript front end. The exam timer is the server's: the deadline is the earlier of the start plus the time limit and the quiz's close. Answers autosave to the server and the device, so a reload, a crash or a switch of device resumes the attempt. Socket.io, authenticated with the same JWT as the REST API, streams tab switches, leaving the window, exiting full screen, copy attempts and disconnects to the faculty's live monitor, and more than 3 violations flags an attempt. Faculty build quizzes for exact cohorts from a question bank or a CSV, and sign-up takes only university email addresses, verified by one-time codes.",
+    outcome: "A containerized platform (Docker Compose, or a one-click Render blueprint) with dashboards, leaderboards and analytics for students and faculty, in dark and light themes.",
+    metrics: [],
+    stack: ["Node.js", "Express", "MongoDB", "Mongoose", "Socket.io", "JavaScript", "HTML", "CSS", "Nodemailer", "Docker"],
+    links: { repo: "https://github.com/akshatsharma-x/Quiz-App" },
+    media: [
+      { type: "image", src: "/media/projects/quizmuj/cover.avif", alt: "QuizMUJ's student dashboard: XP, tier progress, global rank and streak, the live and upcoming quizzes with their countdowns, and recent results." },
+      { type: "image", src: "/media/projects/quizmuj/exam-focus-mode.avif", alt: "A focus-mode exam: the server's timer, the question palette, mark-for-review and autosave.", width: 1440, height: 900 },
+      { type: "image", src: "/media/projects/quizmuj/live-monitor.avif", alt: "The faculty's live monitor: every student in the exam with progress, time left and presence, and tab switches arriving in the security feed.", width: 1440, height: 900 },
+      { type: "image", src: "/media/projects/quizmuj/results-analytics.avif", alt: "Results for one quiz: pass rate, score distribution, question difficulty and each student's integrity status.", width: 1440, height: 900 },
+    ],
+    featured: true,
+    relatedPublicationSlugs: [],
+  },
+  {
+    slug: "bbc-news-retrieval",
+    title: "BBC News Retrieval",
+    subtitle: "Lexical, semantic and hybrid search over the BBC News archive",
+    year: null,
+    role: null,
+    category: "Information retrieval",
+    summary: "Four rankers over one inverted index, a test collection built from scratch, a full evaluation, and a search app that runs entirely in the browser. An Information Retrieval course project.",
+    problem: "Keyword search misses a question asked in other words, and the BBC News corpus has no official queries to measure whether semantic search does better, or by how much.",
+    approach:
+      "2,126 unique articles from 2004–2005 go into one inverted index (20,485 terms, 315,438 postings), a TF-IDF matrix and 7,146 passage embeddings. TF-IDF, BM25 and a Sentence Transformer (all-MiniLM-L6-v2, best-passage cosine) each rank, and Reciprocal Rank Fusion combines BM25 with the Sentence Transformer. A TREC-style collection judges them: 25 topics, 12 of them deliberately paraphrased, pooled from five runs into 957 graded judgments, with paired randomization tests. The browser app is a JavaScript port of the engine, with the encoder as a half-precision ONNX model through transformers.js. It matches the Python engine: TF-IDF and BM25 exactly, the neural models' MAP to 3 decimals.",
+    outcome: "The hybrid is the only model at the top of both tests: MAP 0.811 on the 25 topics, and MRR 0.812 on 2,066 known-item queries, ahead of every other model (p < 0.001), at about 4 ms a query.",
+    metrics: [
+      { label: "Hybrid MAP", value: 0.811 },
+      { label: "Known-item MRR", value: 0.812 },
+      { label: "Graded judgments", value: 957 },
+      { label: "Hybrid query, median", value: 4, unit: "ms" },
+    ],
+    stack: ["Python", "Sentence Transformers", "BM25", "TF-IDF", "NLTK", "Streamlit", "Altair", "transformers.js", "ONNX", "JavaScript"],
+    links: { live: "https://akshatsharma-x.github.io/BBC-News-Retrieval/app/", repo: "https://github.com/akshatsharma-x/BBC-News-Retrieval" },
+    media: [
+      { type: "image", src: "/media/projects/bbc-news-retrieval/cover.avif", alt: "The search app's front page: BBC News Retrieval, the archive's figures (2,126 articles, 7,146 passages, 4 ranking models), the query box, example searches, and the model and desk selectors." },
+      { type: "image", src: "/media/projects/bbc-news-retrieval/compare-models.avif", alt: "Compare models: the top results for one query from TF-IDF, BM25, the Sentence Transformer and the hybrid, side by side.", width: 2280, height: 1538 },
+      { type: "image", src: "/media/projects/bbc-news-retrieval/benchmark.avif", alt: "The benchmark tab: interactive charts of every model's results on the test collection.", width: 2280, height: 1838 },
+    ],
+    featured: true,
+    relatedPublicationSlugs: [],
+  },
+  {
+    slug: "vistara",
+    title: "Vistara",
+    subtitle: "Credit scoring for thin-file applicants, from the rhythm of daily life",
+    year: null,
+    role: null,
+    category: "Fintech",
+    summary: "Scores people with no bureau history on the timing of recurring life events (vehicle service, UPI mandates, utility bills, phone recharges, FASTag), never the amounts. Built for the TVS Credit hackathon.",
+    problem: "People with no bureau history are hard to lend to, because the usual signals (a credit file, balances, past loans) are exactly what they don't have.",
+    approach:
+      "Five consented signals, each with an expected cadence and a weight: vehicle service every 90 days (30%), UPI recurring payments (25%) and the electricity bill (20%) every 30, phone recharges every 28 (15%) and FASTag tolls every 7 (10%). Each is scored on the spread of the gaps between its events, rescaled to a 30-day cadence so weekly and quarterly rhythms compare fairly, with a bonus for the current streak and a penalty for slow recovery after a slip. Coherence across signals carries 25% of the score, so being evenly consistent beats excelling at one habit. A signal that's absent is left out and the weights renormalized; nothing is imputed. The engine is plain TypeScript with no ML library, seeded and in UTC, so the same input always gives the same score.",
+    outcome: "A Next.js prototype that turns a history into a 300–900 score with a tier, a loan offer, a recommended EMI date and a dated path to the next tier, plus a loan officer's queue. All data is synthetic: whether rhythm predicts repayment is what a pilot would test.",
+    metrics: [
+      { label: "Signals", value: 5 },
+      { label: "Coherence weight", value: 25, unit: "%" },
+      { label: "Sample applicants", value: 12 },
+    ],
+    stack: ["Next.js", "TypeScript"],
+    links: { live: "https://vistara-delta-fawn.vercel.app", repo: "https://github.com/akshatsharma-x/Vistara" },
+    media: [
+      { type: "image", src: "/media/projects/vistara/cover.avif", alt: "Vistara's landing page: “Credit scoring that reads how you live,” with Apply for a Loan and See a Demo, above the figures for the invisible customer." },
+      { type: "image", src: "/media/projects/vistara/scorecard.avif", alt: "A scorecard: 708 of 900, Near Prime, on the tier scale, beside a bureau check that finds no file, with the score's reasoning below.", width: 2400, height: 867 },
+      { type: "image", src: "/media/projects/vistara/event-strips.avif", alt: "Eighteen months of event strips for the five signals, each dot one event: on the beat, off it, or missed.", width: 2400, height: 1955 },
+      { type: "image", src: "/media/projects/vistara/path-to-prime.avif", alt: "The path to Prime: each step re-runs the engine on the applicant's own data, such as anchoring recurring UPI payments to one date for 45 points.", width: 2400, height: 1431 },
+    ],
+    featured: true,
+    relatedPublicationSlugs: [],
+  },
+  {
+    slug: "cabinmuj",
+    title: "CabinMUJ",
+    subtitle: "Find any MUJ faculty member's block, floor and cabin in seconds",
+    year: null,
+    role: null,
+    category: "Campus tool",
+    summary: "Students search and browse Manipal University Jaipur's faculty by department, block and floor; an admin keeps the locations accurate from a panel with reports, history and backups.",
+    problem: "At Manipal University Jaipur, finding a faculty member's cabin means walking the corridors and guessing the block; the information isn't in one place.",
+    approach:
+      "A Next.js and TypeScript app on Vercel keeps its data as one JSON document in Upstash Redis: each server instance holds a copy in memory and checks a version key, and saves are atomic. Live search suggests block, floor and cabin as you type, the directory filters by department, block, floor, designation or HoD, and a campus map browses each block floor by floor. Students report outdated locations. The admin panel tracks verification, resolves reports with a reply by email, keeps every change with its before and after values, and restores from JSON backups. Every admin page and server action checks the session on the server, and logins and reports are rate-limited.",
+    outcome: "A live directory of 806 faculty across four blocks. Its seed data's cabin locations are placeholders, so every record shows as unverified until an admin confirms it.",
+    metrics: [{ label: "Faculty listed", value: 806 }],
+    stack: ["Next.js", "TypeScript", "Upstash Redis", "Vercel", "Python"],
+    links: { live: "https://cabin-muj.vercel.app", repo: "https://github.com/akshatsharma-x/CabinMUJ" },
+    media: [
+      { type: "image", src: "/media/projects/cabinmuj/cover.avif", alt: "CabinMUJ's home page: “Find Any Faculty at MUJ in Seconds,” with Search Faculty and Explore Departments beside a drawing of a campus building." },
+      { type: "image", src: "/media/projects/cabinmuj/campus-map.avif", alt: "The campus directory: the four blocks with their faculty counts, and each block's floors listed for browsing.", width: 1280, height: 800 },
+      { type: "image", src: "/media/projects/cabinmuj/admin-dashboard.avif", alt: "The admin dashboard: 806 faculty listed, no cabin location verified yet, and a notice that the imported locations are placeholders to confirm.", width: 1280, height: 800 },
+    ],
+    featured: false,
+    relatedPublicationSlugs: [],
+  },
+  {
+    slug: "myhub",
+    title: "MyHUB",
+    subtitle: "Your life, in receipts: a decade read from three public datasets",
+    year: null,
+    role: null,
+    category: "Data storytelling",
+    summary: "Three public datasets, 162,588 rows, read as one person's decade: 2,411 receipts in nine kinds, the threads between them, and a ten-beat story about what they add up to.",
+    problem: "A pile of logs (plays, purchases, transfers) says what happened, not what connects it or what it means, and a timeline of cards hides exactly that.",
+    approach:
+      "A deterministic build-time ETL turns the three CSVs into one committed JSON file. Everything else (threads, links, entities, patterns, chapters, the story) is derived in the browser from it, with no server, no API and no network call at run time. Eight routes answer one question each: search with faceted filters, 120 threads with the reason printed on every link, a constellation of 131 entities on a deterministic dial, six eras on shared scales, rhythms with 14 findings, the story, and the sources, which say plainly that none of the rows is the owner's. A verification suite drives the production build in headless Chrome across 8 pages, 4 widths and 2 themes, for overflow, an 11px type floor, keyboard paths, WCAG contrast and layout shift.",
+    outcome: "A fully static site on GitHub Pages, where 2,204 of the 2,411 receipts are observed rows and 207 are reconstructed under a stated rule, each stamped with its provenance.",
+    metrics: [
+      { label: "Rows read", value: 162588 },
+      { label: "Receipts", value: 2411 },
+      { label: "Threads", value: 120 },
+      { label: "Entities", value: 131 },
+    ],
+    stack: ["Next.js", "React", "TypeScript", "Tailwind CSS", "Framer Motion", "GitHub Pages"],
+    links: { live: "https://akshatsharma-x.github.io/MyHub/", repo: "https://github.com/akshatsharma-x/MyHub" },
+    media: [
+      { type: "image", src: "/media/projects/myhub/cover.avif", alt: "MyHUB's archive page in the dark theme: the owner's masthead, the decade spine and ten years in one band." },
+      { type: "image", src: "/media/projects/myhub/story.avif", alt: "The story, beat one of ten: a sentence and the evidence that earns it.", width: 1440, height: 900 },
+      { type: "image", src: "/media/projects/myhub/constellation.avif", alt: "The constellation: 131 recurring names on a deterministic dial.", width: 1440, height: 900 },
+      { type: "image", src: "/media/projects/myhub/rhythms.avif", alt: "The rhythms page in the light theme: the hour dial and the week grid, where the archive has no noon.", width: 1440, height: 900 },
+    ],
+    featured: false,
+    relatedPublicationSlugs: [],
+  },
   {
     slug: "cognivault-ai",
     title: "Cognivault AI",
@@ -720,45 +955,7 @@ export const projects = [
     stack: ["FastAPI", "LangChain", "Gemini 1.5", "FAISS", "HyDE", "PostgreSQL", "Next.js", "Docker", "Ragas"],
     links: {},
     media: [{ type: "image", src: "/media/projects/cognivault-ai/cover.avif", alt: "A title card for Cognivault AI: its name, category and stack, set in type. The screenshot is to come." }],
-    featured: true,
-    relatedPublicationSlugs: [],
-  },
-  {
-    slug: "quizmuj",
-    title: "QuizMUJ",
-    subtitle: "A real-time learning management system",
-    year: null,
-    role: null,
-    category: "Full-stack",
-    summary: "A role-based examination platform with a live exam room, tab-switch proctoring, bulk CSV uploads and an analytics API for results.",
-    problem: "Running exams online needs roles, a live room where proctors can see what candidates do, and an easy way to load questions and export results.",
-    approach:
-      "A Node.js, Express and MongoDB backend with a Tailwind CSS front end. A live exam room on Socket.io carries proctoring signals such as browser tab switches. Admin tools take CSV bulk uploads, and an analytics API exports results. The app runs in Docker.",
-    outcome: "A containerized, full-stack platform with secure session handling and data integrity built into the backend design.",
-    metrics: [],
-    stack: ["Node.js", "Express", "MongoDB", "Socket.io", "Tailwind CSS", "Docker"],
-    links: {},
-    media: [{ type: "image", src: "/media/projects/quizmuj/cover.avif", alt: "A title card for QuizMUJ: its name, category and stack, set in type. The screenshot is to come." }],
-    featured: true,
-    relatedPublicationSlugs: [],
-  },
-  {
-    slug: "resume-screening",
-    title: "Automated Resume Screening",
-    subtitle: "NLP candidate classification with an explainability dashboard",
-    year: null,
-    role: null,
-    category: "NLP",
-    summary: "An NLP pipeline that classifies candidates and extracts their data with a TF-IDF + BERT ensemble, plus an XAI dashboard to show why.",
-    problem: "Screening resumes by hand is slow and inconsistent, and an automated screen is only useful if people can see why it ranked someone.",
-    approach:
-      "A Python and Streamlit app on Transformers. A hybrid model pairs TF-IDF with BERT in a weighted ensemble, tuned to improve candidate matching. An XAI dashboard with PCA visualizations shows how candidates separate.",
-    outcome: "An end-to-end screening pipeline for automated classification and data extraction, with an interpretable dashboard on top.",
-    metrics: [],
-    stack: ["Python", "Streamlit", "Transformers", "BERT", "TF-IDF", "PCA"],
-    links: {},
-    media: [{ type: "image", src: "/media/projects/resume-screening/cover.avif", alt: "A title card for Automated Resume Screening: its name, category and stack, set in type. The screenshot is to come." }],
-    featured: true,
+    featured: false,
     relatedPublicationSlugs: [],
   },
   {
@@ -777,9 +974,9 @@ export const projects = [
       { label: "ROC-AUC", value: 0.98 },
     ],
     stack: ["Python", "TensorFlow", "KerasTuner", "SMOTE"],
-    links: {},
+    links: { repo: "https://github.com/akshatsharma-x/customer-churn-prediction" },
     media: [{ type: "image", src: "/media/projects/churn-prediction/cover.avif", alt: "A title card for Customer Churn Prediction: its name, category and stack, set in type. The screenshot is to come." }],
-    featured: true,
+    featured: false,
     relatedPublicationSlugs: [],
   },
   {
@@ -798,7 +995,7 @@ export const projects = [
     stack: ["WCAG 2.1", "ARIA", "Headless crawler"],
     links: {},
     media: [{ type: "image", src: "/media/projects/wcag-analyzer/cover.avif", alt: "A title card for Web Accessibility Analyzer: its name, category and stack, set in type. The screenshot is to come." }],
-    featured: true,
+    featured: false,
     relatedPublicationSlugs: [],
   },
 ] satisfies In["projects"];
@@ -846,9 +1043,229 @@ export const skills = [
 ] satisfies In["skills"];
 
 // ── certificates ─────────────────────────────────────────────────────────────────────────────
-// TODO(akshat): the résumés list no certificates; Part 11 needs them (with verify URLs)
+// From the owner's LinkedIn (2026-11-25; content/portfolio-additions.md has the table as listed).
+// Every credential links to their LinkedIn certifications page, as they asked. It needs a sign-in, so
+// the bake never fetches it and the cards read ON FILE (scripts/bake/verify.ts, SIGN_IN_WALLS).
+// LinkedIn gives months, not days, and no ID for ten of them: those stay as listed (v2.8). The Smart
+// India Hackathon round is the record's proof below, not a sixteenth card.
+// TODO(akshat): the domain, level and "proves" lines are drafts from each course's title and
+// syllabus; the day each was issued, the missing IDs and the skills LinkedIn folds into "+1 skill";
+// and each issuer's own verify link (behind LinkedIn's Show credential), which would earn VERIFIED.
 
-export const certificates = [] satisfies In["certificates"];
+const LINKEDIN_CERTS = "https://www.linkedin.com/in/akshatsharma-in/details/certifications/";
+
+export const certificates = [
+  {
+    slug: "claude-code-in-action",
+    title: "Claude Code in Action",
+    issuer: "Anthropic",
+    issueDate: "2026-07",
+    expiryDate: null,
+    credentialId: "A3WZHUFAVB2T",
+    verifyUrl: LINKEDIN_CERTS,
+    skillsCovered: ["Claude Code"],
+    domain: "AI",
+    level: "foundational",
+    proves: "Can put Claude Code, Anthropic's agentic coding tool, to work in a real development workflow.",
+    featured: true,
+  },
+  {
+    slug: "red-hat-system-administration-ii",
+    title: "Red Hat System Administration II (RH134 - RHA) - Ver. 9.3",
+    issuer: "Red Hat",
+    issueDate: "2025-03",
+    expiryDate: null,
+    credentialId: null,
+    verifyUrl: LINKEDIN_CERTS,
+    skillsCovered: ["Linux", "Red Hat Enterprise Linux"],
+    domain: "Linux & networking",
+    level: "foundational",
+    proves: "Can manage storage, scheduled jobs, SELinux, firewalls and containers on Red Hat Enterprise Linux 9.",
+    featured: true,
+  },
+  {
+    slug: "red-hat-system-administration-i",
+    title: "Red Hat System Administration I (RH124 - RHA) - Ver. 9.3",
+    issuer: "Red Hat",
+    issueDate: "2025-03",
+    expiryDate: null,
+    credentialId: null,
+    verifyUrl: LINKEDIN_CERTS,
+    skillsCovered: ["Linux", "Red Hat Enterprise Linux"],
+    domain: "Linux & networking",
+    level: "foundational",
+    proves: "Can work at the Linux command line: files, users and permissions, processes, services, SSH and logs.",
+    featured: false,
+  },
+  {
+    slug: "ibm-containers-docker-kubernetes-openshift",
+    title: "Introduction to Containers w/ Docker, Kubernetes & OpenShift",
+    issuer: "IBM",
+    issueDate: "2026-03",
+    expiryDate: null,
+    credentialId: "Z8JB88YRGJCV",
+    verifyUrl: LINKEDIN_CERTS,
+    skillsCovered: ["Docker", "Kubernetes", "OpenShift"],
+    domain: "Cloud & DevOps",
+    level: "foundational",
+    proves: "Can build container images with Docker and run, scale and update apps on Kubernetes and OpenShift.",
+    featured: true,
+  },
+  {
+    slug: "simplilearn-devops-git",
+    title: "Introduction to DevOps and Git for Beginners",
+    issuer: "Simplilearn",
+    issueDate: "2026-03",
+    expiryDate: null,
+    credentialId: "EO663YJ19PUX",
+    verifyUrl: LINKEDIN_CERTS,
+    skillsCovered: ["DevOps", "Git"],
+    domain: "Cloud & DevOps",
+    level: "foundational",
+    proves: "Knows the DevOps lifecycle and the everyday Git workflow: commits, branches and merges.",
+    featured: false,
+  },
+  {
+    slug: "aws-cloud-practitioner-essentials",
+    title: "AWS Cloud Practitioner Essentials",
+    issuer: "Amazon Web Services",
+    issueDate: "2026-07",
+    expiryDate: null,
+    credentialId: "CO9GMSYMB8XC",
+    verifyUrl: LINKEDIN_CERTS,
+    skillsCovered: ["Amazon Web Services (AWS)"],
+    domain: "Cloud & DevOps",
+    level: "foundational",
+    proves: "Knows AWS's core services, global infrastructure, security model and pricing.",
+    featured: true,
+  },
+  {
+    slug: "cisco-network-fundamentals",
+    title: "Network Fundamentals",
+    issuer: "Cisco",
+    issueDate: null,
+    expiryDate: null,
+    credentialId: "UOTYMANQCF0A",
+    verifyUrl: LINKEDIN_CERTS,
+    skillsCovered: ["Networking"],
+    domain: "Linux & networking",
+    level: "foundational",
+    proves: "Knows how networks carry data: devices, media, IP addressing and the protocols that connect them.",
+    featured: false,
+  },
+  {
+    slug: "coding-ninjas-data-analytics-workshop",
+    title: "Data Analytics Workshop",
+    issuer: "Coding Ninjas 10X Club",
+    issueDate: null,
+    expiryDate: null,
+    credentialId: null,
+    verifyUrl: LINKEDIN_CERTS,
+    skillsCovered: ["Data Analysis", "Microsoft Power BI"],
+    domain: "Data",
+    level: "foundational",
+    proves: "Took part in “Break into Data Analytics”, a workshop by Coding Ninjas with KodeinKGP, IIT Kharagpur.",
+    featured: false,
+  },
+  {
+    slug: "ibm-java-programming-for-beginners",
+    title: "Java Programming for Beginners",
+    issuer: "IBM",
+    issueDate: "2025-07",
+    expiryDate: null,
+    credentialId: null,
+    verifyUrl: LINKEDIN_CERTS,
+    skillsCovered: ["Java", "Object-Oriented Programming (OOP)"],
+    domain: "Programming",
+    level: "foundational",
+    proves: "Knows Java's fundamentals and its object model: classes, objects, inheritance and interfaces.",
+    featured: false,
+  },
+  {
+    slug: "oracle-database-design",
+    title: "Database Design",
+    issuer: "Oracle",
+    issueDate: "2024-11",
+    expiryDate: null,
+    credentialId: null,
+    verifyUrl: LINKEDIN_CERTS,
+    skillsCovered: ["Oracle Database", "Database Design"],
+    domain: "Data",
+    level: "foundational",
+    proves: "Can model data as entities and relationships and normalize it into a relational schema.",
+    featured: false,
+  },
+  {
+    slug: "oracle-database-programming-sql",
+    title: "Database Programming with SQL",
+    issuer: "Oracle",
+    issueDate: "2024-11",
+    expiryDate: null,
+    credentialId: null,
+    verifyUrl: LINKEDIN_CERTS,
+    skillsCovered: ["Oracle Database", "SQL"],
+    domain: "Data",
+    level: "foundational",
+    proves: "Can query and change data in SQL: joins, subqueries, aggregates, DML and DDL.",
+    featured: false,
+  },
+  {
+    slug: "codechef-dsa-lab",
+    title: "Data Structures & Algorithms lab",
+    issuer: "CodeChef",
+    issueDate: "2024-11",
+    expiryDate: null,
+    credentialId: "6d3d989",
+    verifyUrl: LINKEDIN_CERTS,
+    skillsCovered: ["Data Structures", "C (Programming Language)"],
+    domain: "Algorithms",
+    level: "foundational",
+    proves: "Can implement the core data structures and algorithms in C.",
+    featured: false,
+  },
+  {
+    slug: "gfg-oop-java",
+    title: "Object Oriented Programming Using JAVA",
+    issuer: "GeeksforGeeks",
+    issueDate: null,
+    expiryDate: null,
+    credentialId: null,
+    verifyUrl: LINKEDIN_CERTS,
+    skillsCovered: ["Java", "Object-Oriented Programming (OOP)"],
+    domain: "Programming",
+    level: "foundational",
+    proves: "Can design Java programs around objects: encapsulation, inheritance, polymorphism and abstraction.",
+    featured: false,
+  },
+  {
+    slug: "nptel-design-analysis-algorithms",
+    title: "Design and Analysis of Algorithms",
+    issuer: "NPTEL",
+    issueDate: "2025-04",
+    expiryDate: null,
+    credentialId: null,
+    verifyUrl: LINKEDIN_CERTS,
+    skillsCovered: ["Data Structures", "Algorithm Design"],
+    domain: "Algorithms",
+    level: "foundational",
+    proves: "Can analyze an algorithm's cost and design with divide and conquer, greedy choices, dynamic programming and graphs.",
+    featured: false,
+  },
+  {
+    slug: "nptel-dsa-java",
+    title: "Data Structures and Algorithms using Java",
+    issuer: "NPTEL",
+    issueDate: "2024-11",
+    expiryDate: null,
+    credentialId: null,
+    verifyUrl: LINKEDIN_CERTS,
+    skillsCovered: ["Data Structures", "Java"],
+    domain: "Algorithms",
+    level: "foundational",
+    proves: "Can implement and analyze the standard data structures in Java: lists, stacks, queues, trees, heaps and hashing.",
+    featured: false,
+  },
+] satisfies In["certificates"];
 
 // ── achievements ─────────────────────────────────────────────────────────────────────────────
 
@@ -859,6 +1276,9 @@ export const achievements = [
     date: "2025",
     description: "Ranked among the top 50 teams selected from over 300 at Manipal University Jaipur's college round, in 2024 and again in 2025.",
     kind: "honor",
+    // the 2024 internal round's certificate (Manipal University Jaipur, Sep 2024) is on LinkedIn: this
+    // record's proof, rather than a second card on the CREDENTIALS wall (portfolio-additions.md)
+    proofUrl: "https://www.linkedin.com/in/akshatsharma-in/details/certifications/",
     metric: { label: "Teams in the round", value: 300, unit: "+" },
   },
   {
@@ -898,6 +1318,7 @@ export const testimonials = [] satisfies In["testimonials"];
 // ── currently ────────────────────────────────────────────────────────────────────────────────
 
 export const currentFocus = [
+  // TODO(akshat): Cartographer was United Airlines' (June to November 2026): say what you're building from December
   { kind: "building", title: "Cartographer — LLM documentation tooling at United Airlines", detail: "LangGraph, GPT-4.1 and Claude Sonnet 4.5 on a code knowledge graph." },
   // TODO(akshat): what you're reading isn't on the résumé
   { kind: "reading", title: "(to add)" },

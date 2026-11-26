@@ -7,8 +7,8 @@ import { derive } from "@/content/selectors";
 import { data } from "@/tests/fixtures/placeholder-content";
 
 /**
- * Dev only (RETROGRADE_DEV_ROUTES=1): CREDENTIALS on the fixture persona's certificates — the real
- * content has none yet — in every state the section must hold (DESIGN.md §7.4): the fixture's
+ * Dev only (RETROGRADE_DEV_ROUTES=1): CREDENTIALS on the fixture persona's certificates (the real
+ * content had none until v2.8) in every state the section must hold (DESIGN.md §7.4): the fixture's
  * twelve (one with a logo), one, forty, very long titles with missing logos and no expiry, and
  * nothing at all. The verify results are the fixture's own: some reached, some not, some unchecked.
  * scripts/credentials-gate.mjs reads these pages.

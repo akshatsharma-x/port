@@ -13,7 +13,7 @@ import { DRY_CITATIONS, openAlexUrl, refreshCitations } from "../scripts/bake/ci
 import { LAYOUT_RADIUS, layoutGraph, SEED } from "../scripts/bake/layout-graph";
 import { CONCURRENCY, formatJson, resolveMode, type Fetch, type StepContext } from "../scripts/bake/lib";
 import { serializeSearchIndex } from "../scripts/bake/search-index";
-import { ARXIV_ABS, classify, DOI_HANDLE_API, dryVerify, verifyLinks, verifyTargets } from "../scripts/bake/verify";
+import { ARXIV_ABS, behindSignIn, classify, DOI_HANDLE_API, dryVerify, verifyLinks, verifyTargets } from "../scripts/bake/verify";
 
 /**
  * The bake (DESIGN.md §8.2): deterministic layouts, a committed graph.json that matches the
@@ -267,6 +267,25 @@ describe("verify — dead DOIs fail, dead credentials downgrade", () => {
     expect(certsAfter.find((c) => c.slug === certs[2]?.slug)?.verification).toBe("verified");
   });
 
+  it("a credential page behind a sign-in (LinkedIn) is never fetched: blocked, ON FILE, one warning (v2.8)", async () => {
+    const wall = "https://www.linkedin.com/in/someone/details/certifications/";
+    const walled = { ...content, certificates: content.certificates.map((c, i) => (i < 2 ? { ...c, verifyUrl: wall } : c)) };
+    // a sign-in page answers 200: were it fetched, it would pass for proof
+    const { fetch, calls } = fake((url, init) => (url.includes("linkedin.com") ? new Response("<title>Sign in</title>", { status: 200 }) : healthy(url, init)));
+    const { ctx, warnings } = context(fetch);
+    const { file, failures, summary } = await verifyLinks(walled, null, ctx);
+    expect(failures).toEqual([]);
+    expect(calls.filter((u) => u.includes("linkedin.com"))).toEqual([]);
+    for (const c of walled.certificates.slice(0, 2)) expect(file.results[`verifyUrl:${c.slug}`]).toMatchObject({ status: "blocked", httpStatus: null, checkedAt: TODAY });
+    expect(warnings.filter((w) => /need a sign-in/.test(w))).toHaveLength(1);
+    expect(summary).toMatch(/2 behind a sign-in/);
+    const after = derive(walled, { citations: DRY_CITATIONS, verify: file, graph: layoutGraph(model) }, NOW).certificates;
+    expect(after.filter((c) => c.verifyUrl === wall).every((c) => c.verification === "onFile")).toBe(true);
+    expect(behindSignIn("https://linkedin.com/x")).toBe(true);
+    expect(behindSignIn("https://notlinkedin.com/x")).toBe(false);
+    expect(behindSignIn("not a url")).toBe(false);
+  });
+
   it("no network: keeps earlier results, fails nothing", async () => {
     const previous: VerifyFile = {
       version: 1,
@@ -312,7 +331,7 @@ describe("search index — the terminal's view, inside its budget", () => {
     const paper = index.docs.find((x) => x.kind === "paper");
     expect(paper?.kind === "paper" && paper.bibtex.startsWith("@")).toBe(true);
     const cert = index.docs.find((x) => x.kind === "cert");
-    expect(cert?.kind === "cert" && cert.credentialId.length > 0).toBe(true);
+    expect(cert?.kind === "cert" && (cert.credentialId ?? "").length > 0).toBe(true);
     expect(index.metrics.research).toMatchObject({ citations: 246, hIndex: 6, i10: 4 });
     expect(index.metrics.research.provenance.sources).toEqual(["Placeholder"]);
   });

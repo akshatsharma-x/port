@@ -7,8 +7,10 @@
  *
  * Long IDs follow TD1's rule: the first nine characters in the number field, a filler where its check
  * digit would be, and the rest in the optional data followed by the check digit over the whole
- * number as written (an ID past 23 characters is cut there). An absent expiry is fillers, and its
- * check digit is what 7-3-1 makes of them (0).
+ * number as written (an ID past 23 characters is cut there). What isn't known is fillers, as ICAO
+ * 9303 writes an unknown part: an absent expiry or issue date, the day of a date known only to the
+ * month ("2026-07" → 2607<<), a credential without an ID (v2.8). A check digit over fillers is
+ * what 7-3-1 makes of them (0).
  */
 export const MRZ = { width: 30, code: "CR", weights: [7, 3, 1] as const, numberField: 9 } as const;
 
@@ -33,8 +35,8 @@ export function mrzText(s: string): string {
 
 const pad = (s: string, n: number): string => (s + "<".repeat(n)).slice(0, n);
 
-/** "2024-05-12" → "240512"; null → fillers. */
-export const mrzDate = (iso: string | null): string => (iso ? `${iso.slice(2, 4)}${iso.slice(5, 7)}${iso.slice(8, 10)}` : "<<<<<<");
+/** "2024-05-12" → "240512"; "2026-07" (the month only) → "2607<<"; null → fillers. */
+export const mrzDate = (iso: string | null): string => (iso ? `${iso.slice(2, 4)}${iso.slice(5, 7)}${iso.slice(8, 10) || "<<"}` : "<<<<<<");
 
 /**
  * An issuer's three letters: the initials of its words (not "of", "the", "and", "for"), then the
@@ -55,9 +57,9 @@ export function issuerCode(issuer: string): string {
 export const LEVEL_CODES = { foundational: "FND", associate: "ASC", professional: "PRO", expert: "EXP" } as const;
 
 export interface MrzInput {
-  credentialId: string;
+  credentialId: string | null;
   issuer: string;
-  issueDate: string;
+  issueDate: string | null;
   expiryDate: string | null;
   level: keyof typeof LEVEL_CODES;
 }
@@ -69,7 +71,7 @@ export function mrzLines(c: MrzInput): [string, string] {
   const head = MRZ.code + issuerCode(c.issuer);
   // what fits: nine in the number field, the rest in the optional data before its check digit;
   // the check digit is over the number as written here, so a reader can check it
-  const number = mrzText(c.credentialId).replace(/</g, "").slice(0, MRZ.width - head.length - 2);
+  const number = mrzText(c.credentialId ?? "").replace(/</g, "").slice(0, MRZ.width - head.length - 2);
   const field = pad(number.slice(0, MRZ.numberField), MRZ.numberField);
   const line1 = number.length > MRZ.numberField ? pad(`${head}${field}<${number.slice(MRZ.numberField)}${checkDigit(number)}`, MRZ.width) : pad(`${head}${field}${checkDigit(field)}`, MRZ.width);
   const issued = mrzDate(c.issueDate);

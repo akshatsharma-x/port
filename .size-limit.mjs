@@ -42,7 +42,8 @@ const budgets = [
   { name: "first-load JS · / (hard cap)", path: firstLoad(home), limit: "280 kB", ...gz },
   { name: "first-load JS · a case study", path: firstLoad(page("work/cognivault-ai.html")), limit: "230 kB", ...gz },
   { name: "first-load JS · a paper", path: firstLoad(page("research/food-waste-cold-chain-sci-2026.html")), limit: "230 kB", ...gz },
-  { name: "HTML · /", path: join(NEXT, "server/app/index.html"), limit: "60 kB", ...gz },
+  // 60 until the owner's content (DESIGN.md v2.8, §8.3): the wall's fifteen cards and eleven projects; Vercel serves it as Brotli, 42 KB
+  { name: "HTML · /", path: join(NEXT, "server/app/index.html"), limit: "70 kB", ...gz },
   { name: "stage runtime", path: runtime, limit: "250 kB", ...gz },
   ...Object.entries(SCENES).map(([id, marks]) => ({ name: `scene · ${id}`, path: carrying(...marks), limit: "35 kB", ...gz })),
   { name: "terminal", path: carrying("retrograde:shell-history"), limit: "30 kB", ...gz },

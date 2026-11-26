@@ -13,7 +13,22 @@ import { BakeError, CONCURRENCY, formatJson, isoDay, OUT, pool, probe, readJson,
  * A dead DOI or arXiv id fails the build: a paper must resolve. A credential whose URL is dead,
  * blocked or unreachable shows ON FILE instead of VERIFIED, with a warning (law 2: never claim a
  * check we didn't pass). Only failures observed in this run fail it, so offline builds always work.
+ *
+ * A credential page behind a sign-in (SIGN_IN_WALLS, v2.8) is never fetched: logged out, LinkedIn
+ * answers a bot with HTTP 999 and a browser with its sign-in page, a 200 that would pass for proof.
+ * It's recorded as blocked, so the card reads ON FILE; the link still opens for a signed-in visitor.
  */
+export const SIGN_IN_WALLS = ["linkedin.com"] as const;
+
+/** Whether a URL's host is one of SIGN_IN_WALLS (or a subdomain of one). */
+export function behindSignIn(url: string): boolean {
+  try {
+    const host = new URL(url).hostname;
+    return SIGN_IN_WALLS.some((w) => host === w || host.endsWith(`.${w}`));
+  } catch {
+    return false;
+  }
+}
 export const DOI_HANDLE_API = "https://doi.org/api/handles";
 export const ARXIV_ABS = "https://arxiv.org/abs";
 
@@ -93,8 +108,9 @@ export async function verifyLinks(
 
   const today = isoDay(ctx.now);
   let down = false;
+  const walled = new Set(targets.filter((t) => t.kind === "verifyUrl" && behindSignIn(t.target)).map((t) => t.key));
   const probes = await pool(targets, CONCURRENCY, async (t) => {
-    if (down) return null;
+    if (down || walled.has(t.key)) return null;
     const { url, init } = requestFor(t);
     const r = await probe(ctx.fetch, url, init);
     if (r.kind === "network" && t.kind === "doi") down = true; // the registry itself is unreachable: assume offline
@@ -105,6 +121,10 @@ export async function verifyLinks(
   const failures: string[] = [];
   let checked = 0;
   targets.forEach((t, i) => {
+    if (walled.has(t.key)) {
+      results[t.key] = { kind: t.kind, owner: t.owner, target: t.target, status: "blocked", httpStatus: null, checkedAt: today };
+      return;
+    }
     const r = probes[i];
     if (!r) {
       results[t.key] = carried(t);
@@ -126,10 +146,11 @@ export async function verifyLinks(
     else if (status !== "ok") ctx.warn(`verify: ${t.kind} ${t.target} (${t.owner}) is ${status}${http} — not counted as verified`);
   });
   if (down) ctx.warn("verify: doi.org unreachable — kept earlier results for the remaining checks");
+  if (walled.size) ctx.warn(`verify: ${walled.size} credential link${walled.size === 1 ? " needs" : "s need"} a sign-in (${SIGN_IN_WALLS.join(", ")}) — not fetched, they show ON FILE`);
 
   const file = VerifyFileSchema.parse({ version: 1, mode: "live", results });
   const ok = Object.values(results).filter((r) => r.status === "ok").length;
-  return { file, summary: `${checked}/${targets.length} checked · ${ok} ok${failures.length ? ` · ${failures.length} dead` : ""}`, failures };
+  return { file, summary: `${checked}/${targets.length} checked · ${ok} ok${walled.size ? ` · ${walled.size} behind a sign-in` : ""}${failures.length ? ` · ${failures.length} dead` : ""}`, failures };
 }
 
 export async function verifyStep(content: Content, ctx: StepContext): Promise<string> {

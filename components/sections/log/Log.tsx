@@ -27,27 +27,30 @@ export function Log() {
   const roles = d.experience;
   const cards = stageData(d).log.cards;
   const now = d.buildDate.slice(0, 7);
+  // a role still running ends now; one that starts after this build (the next role, confirmed) shows
+  // at least its own first month rather than a span that ends before it begins
+  const endOf = (r: { start: string; end: string }) => (r.end !== "present" ? r.end : now > r.start ? now : r.start);
   // the panel prints its dates as the printout does, ISO (§2.10); the scale's spoken label keeps the
   // month's name, which a screen reader says better than "2026-06"
   const dates = (start: string, end: string) => `${start} – ${end === "present" ? L.present : end}`;
   const spoken = (start: string, end: string) => `${month(start)} – ${end === "present" ? L.present : month(end)}`;
 
   // the scale: newest at the top, a month per step, each role's span and the playhead's stop on it
-  const top = Math.max(...roles.map((r) => monthIndex(r.end === "present" ? now : r.end)));
+  const top = Math.max(...roles.map((r) => monthIndex(endOf(r))));
   const bottom = Math.min(...roles.map((r) => monthIndex(r.start)));
   const span = Math.max(1, top - bottom + 1);
   const at = (m: number) => (top - m + 0.5) / span;
   const scaleRoles: ScaleRole[] = roles.map((r) => {
-    const end = monthIndex(r.end === "present" ? now : r.end);
+    const end = monthIndex(endOf(r));
     const start = monthIndex(r.start);
     return { slug: r.slug, label: `${r.company}, ${spoken(r.start, r.end)}`, from: at(end) - 0.5 / span, to: at(start) + 0.5 / span, stop: at((start + end) / 2) };
   });
-  const years = [...new Set(roles.flatMap((r) => [Number(r.start.slice(0, 4)), Number((r.end === "present" ? now : r.end).slice(0, 4))]))].sort((a, b) => b - a);
+  const years = [...new Set(roles.flatMap((r) => [Number(r.start.slice(0, 4)), Number(endOf(r).slice(0, 4))]))].sort((a, b) => b - a);
   const yearMarks = years.map((y) => ({
     year: y,
     at: at(Math.min(top, y * 12 + 11)),
     // the newest role in the deck that ran during that year
-    role: Math.max(0, roles.findIndex((r) => Number(r.start.slice(0, 4)) <= y && Number((r.end === "present" ? now : r.end).slice(0, 4)) >= y)),
+    role: Math.max(0, roles.findIndex((r) => Number(r.start.slice(0, 4)) <= y && Number(endOf(r).slice(0, 4)) >= y)),
   }));
   const ticks = Array.from({ length: span }, (_, k) => at(top - k));
 

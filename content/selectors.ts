@@ -222,7 +222,12 @@ export function derive(c: Content, o: Overlays, now: Date) {
       const verification: CredentialVerification = !cert.verifyUrl ? "onFile" : result?.status === "ok" ? "verified" : !result || result.status === "skipped" ? "unchecked" : "onFile";
       return { ...cert, expired, verification, check: result ?? null };
     })
-    .sort((a, b) => (a.issueDate < b.issueDate ? 1 : -1));
+    // newest first (a month-only date sorts as that month's start), undated last, ties in content order
+    .sort((a, b) => {
+      const x = a.issueDate ?? "";
+      const y = b.issueDate ?? "";
+      return x === y ? 0 : x < y ? 1 : -1;
+    });
   const groupBy = (key: "issuer" | "domain") =>
     unique(certificates.map((x) => x[key])).map((value) => ({ value, slugs: certificates.filter((x) => x[key] === value).map((x) => x.slug) }));
   const credentials = {

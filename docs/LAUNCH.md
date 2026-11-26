@@ -57,7 +57,7 @@ benchmarkIndex 4,474–4,570.
 `BASE_URL=… node scripts/audit/links.mjs` — **29 links: 28 resolve, 1 behind a bot wall, 0 broken.**
 
 - External: GitHub 200; LinkedIn 999 (its wall for any script; the profile resolves in a browser).
-- DOIs: none yet; arXiv ids: none yet; certificate verify URLs: none yet (no certificates). The bake's verify step checks each one the moment it's added, and a dead DOI or arXiv id fails the build.
+- DOIs: none yet; arXiv ids: none yet. Certificate verify URLs: fifteen since 2026-11-26, all the owner's LinkedIn certifications page, which needs a sign-in, so the bake never fetches it and the cards read ON FILE (`SIGN_IN_WALLS`, DESIGN v2.8). The bake's verify step checks each other one the moment it's added, and a dead DOI or arXiv id fails the build.
 - Internal: every page in the sitemap, the 404, the eight share cards, the icons, the manifest, robots.txt, sitemap.xml and the publication list — all 200 (the 404 a 404).
 
 ## 5. Spelling

@@ -132,8 +132,8 @@ function record(ctx: Context, d: SearchDoc): Line[] {
       break;
     case "cert": {
       const K = ctx.ix.labels.card;
-      rows.push([C.issuer, d.issuer], [C.level, ctx.ix.labels.levels[d.level as keyof typeof ctx.ix.labels.levels] ?? d.level], [K.id, d.credentialId]);
-      rows.push([K.issued, d.issueDate], [K.expires, d.expiryDate ?? K.noExpiry], [K.proves, d.proves]);
+      rows.push([C.issuer, d.issuer], [C.level, ctx.ix.labels.levels[d.level as keyof typeof ctx.ix.labels.levels] ?? d.level], [K.id, d.credentialId ?? K.notListed]);
+      rows.push([K.issued, d.issueDate ?? K.notListed], [K.expires, d.expiryDate ?? K.noExpiry], [K.proves, d.proves]);
       rows.push([S(ctx).verify.check, stampOf(ctx, d)]);
       next = [`verify ${d.slug}`];
       break;
@@ -281,7 +281,7 @@ export const COMMANDS: Record<CommandName, Command> = {
         case "certs": {
           const c = docs(ctx, "cert");
           if (!c.length) return out(say(L.noCerts, "dim"));
-          return out(...table(c.map((d) => [d.slug, d.issueDate, stampOf(ctx, d), d.title]), [C.slug, C.date, C.status, C.title]));
+          return out(...table(c.map((d) => [d.slug, d.issueDate ?? ctx.ix.labels.card.notListed, stampOf(ctx, d), d.title]), [C.slug, C.date, C.status, C.title]));
         }
         case "awards": {
           const a = docs(ctx, "award");
@@ -359,7 +359,7 @@ export const COMMANDS: Record<CommandName, Command> = {
       const K = ctx.ix.labels.card;
       const rows: [string, string][] = [
         [S(ctx).cat.issuer, c.issuer],
-        [K.id, c.credentialId],
+        [K.id, c.credentialId ?? K.notListed],
         [S(ctx).verify.check, stampOf(ctx, c)],
       ];
       const lw = labelWidth(rows.map((r) => r[0]));

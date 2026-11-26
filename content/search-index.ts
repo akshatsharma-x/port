@@ -75,8 +75,9 @@ export type SearchDoc =
       issuer: string;
       level: string;
       proves: string;
-      credentialId: string;
-      issueDate: string;
+      credentialId: string | null;
+      /** a day or only the month; null when the credential is listed without one */
+      issueDate: string | null;
       expiryDate: string | null;
       verifyUrl: string | null;
       verification: string;

@@ -5,7 +5,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import sharp from "sharp";
 import { describe, expect, it } from "vitest";
-import { IdCard, stampOf } from "@/components/sections/credentials/IdCard";
+import { idCardHtml, stampOf } from "@/components/sections/credentials/IdCard";
 import { buildDate, derived, overlays } from "@/content/derive";
 import { parseContent, type VerifyFile } from "@/content/schema";
 import { derive } from "@/content/selectors";
@@ -39,7 +39,7 @@ describe("the machine-readable zone (ICAO 9303, 7-3-1)", () => {
       expect(l1.slice(0, 2)).toBe(MRZ.code);
       expect(l1.slice(2, 5)).toBe(issuerCode(c.issuer));
       // the number: nine in its field, then either its check digit, or a filler and the rest with the check digit after it
-      const number = mrzText(c.credentialId).replace(/</g, "");
+      const number = mrzText(c.credentialId ?? "").replace(/</g, "");
       if (l1[14] === "<") {
         const rest = l1.slice(15).replace(/<+$/, "");
         expect(Number(rest.slice(-1))).toBe(checkDigit(l1.slice(5, 14) + rest.slice(0, -1)));
@@ -49,6 +49,20 @@ describe("the machine-readable zone (ICAO 9303, 7-3-1)", () => {
       expect(Number(l2[6])).toBe(checkDigit(l2.slice(0, 6)));
       expect(l2.slice(8, 14)).toBe(mrzDate(c.expiryDate));
       expect(Number(l2[14])).toBe(checkDigit(l2.slice(8, 14)));
+      expect(Number(l2[29])).toBe(compositeDigit(l1, l2));
+    }
+  });
+
+  it("writes what a listing leaves out as fillers, check digits intact (v2.8): no ID, a month-only date, no date", () => {
+    expect(mrzDate("2026-07")).toBe("2607<<");
+    expect(mrzDate("2024-05-12")).toBe("240512");
+    for (const issueDate of ["2025-03", null]) {
+      const [l1, l2] = mrzLines({ credentialId: null, issuer: "Red Hat", issueDate, expiryDate: null, level: "foundational" });
+      expect([l1.length, l2.length]).toEqual([MRZ.width, MRZ.width]);
+      expect(l1 + l2).toMatch(/^[A-Z0-9<]+$/);
+      expect(l1.slice(5, 15)).toBe("<<<<<<<<<0"); // an empty number field, and 7-3-1 over fillers
+      expect(l2.slice(0, 6)).toBe(issueDate ? "2503<<" : "<<<<<<");
+      expect(Number(l2[6])).toBe(checkDigit(l2.slice(0, 6)));
       expect(Number(l2[29])).toBe(compositeDigit(l1, l2));
     }
   });
@@ -186,8 +200,24 @@ describe("the bake: the foil's diffraction grain", () => {
 describe("a card's weight in the page (the HTML budget, §8.3)", () => {
   it("costs about a kilobyte of gzip a certificate, both faces and its guilloche", () => {
     const L = derived.site.labels.credentials;
-    const html = fixture.certificates.map((c) => renderToStaticMarkup(createElement(IdCard, { c, L }))).join("");
+    const html = fixture.certificates.map((c) => idCardHtml(c, L)).join("");
     const perCard = gzipSync(html).length / fixture.certificates.length;
     expect(perCard).toBeLessThan(1_000);
+  });
+
+  it("is written as React would write it (v2.8): React's escaping, one <li> a card, both faces", () => {
+    const L = derived.site.labels.credentials;
+    const base = fixture.certificates[0] as (typeof fixture.certificates)[number];
+    const tricky = { ...base, title: `Tom & Jerry's "<Basics>"`, issuer: "A&B <Co>" };
+    const html = idCardHtml(tricky, L);
+    expect(html).toContain(renderToStaticMarkup(createElement("h3", { className: "cred-title", id: `cred-${tricky.slug}` }, tricky.title)));
+    expect(html).toContain(renderToStaticMarkup(createElement("p", { className: "cred-issuer" }, tricky.issuer)));
+    expect(html.startsWith(`<li class="cred" data-slug="${tricky.slug}"`)).toBe(true);
+    expect(html.match(/<li class="cred"/g)).toHaveLength(1);
+    for (const face of ["cred-face cred-front", "cred-face cred-back"]) expect(html).toContain(face);
+    // what a listing leaves out (v2.8): no serial on the front, "Not listed" on the back
+    const bare = idCardHtml({ ...base, credentialId: null, issueDate: null }, L);
+    expect(bare).not.toContain("cred-serial");
+    expect(bare.match(new RegExp(L.back.notListed, "g"))).toHaveLength(2);
   });
 });

@@ -102,14 +102,22 @@ describe("the commands — lib/shell/commands.ts, over the site's own index", ()
     expect(text("stack")).toContain(`${derived.skills.all.length} across`);
   });
 
-  it("ls counts each kind truly — and says certificates are none yet, never 0 (§10 #46)", () => {
+  it("ls counts each kind truly — the credentials too, since they arrived (2026-11-26; never 0 before, §10 #46)", () => {
     const index = text("ls");
     expect(index).toContain(`papers/      ${derived.publications.length}`);
     expect(index).toContain(`projects/    ${derived.projects.length}`);
-    expect(derived.certificates.length).toBe(0);
-    expect(index).toMatch(/certs\/\s+none yet/);
-    expect(text("ls certs")).toBe(S.ls.noCerts);
-    expect(text("verify")).toBe(S.ls.noCerts);
+    expect(derived.certificates.length).toBeGreaterThan(0);
+    expect(index).toMatch(new RegExp(`certs/\\s+${derived.certificates.length}\\b`));
+    const certs = text("ls certs");
+    for (const c of derived.certificates) expect(certs).toContain(c.slug);
+    // what a listing leaves out (v2.8) says so, never "null"
+    const L = derived.site.labels.credentials.back;
+    expect(certs).not.toMatch(/\bnull\b/);
+    const bare = derived.certificates.find((c) => c.credentialId === null && c.issueDate === null);
+    if (bare) expect(text(`cat ${bare.slug}`)).toContain(L.notListed);
+    const noId = derived.certificates.find((c) => c.credentialId === null);
+    if (noId) expect(text(`verify ${noId.slug}`)).toContain(L.notListed);
+    expect(text("verify")).not.toBe(S.ls.noCerts);
     for (const p of derived.publications) expect(text("ls papers")).toContain(p.slug);
     expect(execute("ls proj", ctx()).error).toBeFalsy();
     const bad = execute("ls pappers", ctx());
@@ -183,7 +191,7 @@ describe("the commands — lib/shell/commands.ts, over the site's own index", ()
   it("neofetch: the portrait beside the sheet when there's room, above it when there isn't", () => {
     const wide = execute("neofetch", ctx({ columns: 100 })).lines.map(plain);
     expect(wide[0]?.startsWith(ix.portrait[0] ?? "")).toBe(true);
-    expect(wide.join("\n")).toContain(S.neofetch.noCerts);
+    expect(wide.find((l) => l.includes(`${S.neofetch.certs} `))).toContain(String(derived.certificates.length));
     const narrow = execute("neofetch", ctx({ columns: 40 })).lines.map(plain);
     expect(narrow[0]).toBe(ix.portrait[0]);
   });

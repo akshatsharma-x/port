@@ -4,7 +4,7 @@ import type { Derived } from "@/content/selectors";
 import { readout } from "@/lib/credentials";
 import { CredentialsEnhance } from "./CredentialsEnhance";
 import { CredDefs } from "./Defs";
-import { IdCard } from "./IdCard";
+import { idCardHtml } from "./IdCard";
 import { Records } from "./Records";
 
 /**
@@ -51,11 +51,8 @@ export function Credentials({ d }: { d: Derived }) {
               {L.tilt.ask}
             </button>
           </Grid>
-          <ul className="cred-wall">
-            {certs.map((c) => (
-              <IdCard key={c.slug} c={c} L={L} />
-            ))}
-          </ul>
+          {/* the cards as one string of server HTML (v2.8, IdCard.tsx): carried once in the RSC payload, not hydrated */}
+          <ul className="cred-wall" dangerouslySetInnerHTML={{ __html: certs.map((c) => idCardHtml(c, L)).join("") }} />
           <p className="cred-none t-small" data-cred-none="" hidden>
             {L.none}
           </p>

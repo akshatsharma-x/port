@@ -1,30 +1,60 @@
 {
   "version": 1,
   "covers": {
-    "cognivault-ai": {
-      "source": "title-card",
-      "inputHash": "05e525d8",
-      "bytes": {"640":8669,"768":11665,"1024":15921,"master":32021}
+    "nexus": {
+      "source": "screenshot",
+      "inputHash": "d2380110",
+      "bytes": {"640":14290,"768":18180,"1024":26847,"master":67626}
     },
-    "quizmuj": {
-      "source": "title-card",
-      "inputHash": "9ef256ec",
-      "bytes": {"640":7766,"768":10940,"1024":14033,"master":28970}
+    "researchx": {
+      "source": "screenshot",
+      "inputHash": "4e6c35ff",
+      "bytes": {"640":7531,"768":9586,"1024":13275,"master":34682}
     },
     "resume-screening": {
+      "source": "screenshot",
+      "inputHash": "db657f58",
+      "bytes": {"640":13476,"768":16640,"1024":24264,"master":64883}
+    },
+    "quizmuj": {
+      "source": "screenshot",
+      "inputHash": "d04ecce2",
+      "bytes": {"640":19459,"768":25196,"1024":36526,"master":89374}
+    },
+    "bbc-news-retrieval": {
+      "source": "screenshot",
+      "inputHash": "c3fd01df",
+      "bytes": {"640":20663,"768":26270,"1024":37707,"master":91292}
+    },
+    "vistara": {
+      "source": "screenshot",
+      "inputHash": "9d0a34c2",
+      "bytes": {"640":11182,"768":14667,"1024":22205,"master":52486}
+    },
+    "cabinmuj": {
+      "source": "screenshot",
+      "inputHash": "dc1b7372",
+      "bytes": {"640":14710,"768":18607,"1024":26820,"master":63798}
+    },
+    "myhub": {
+      "source": "screenshot",
+      "inputHash": "636394f4",
+      "bytes": {"640":15038,"768":19120,"1024":27939,"master":70342}
+    },
+    "cognivault-ai": {
       "source": "title-card",
-      "inputHash": "50510006",
-      "bytes": {"640":11682,"768":15451,"1024":19828,"master":41998}
+      "inputHash": "006d4540",
+      "bytes": {"640":8669,"768":11665,"1024":15921,"master":32021}
     },
     "churn-prediction": {
       "source": "title-card",
-      "inputHash": "8171203d",
-      "bytes": {"640":11773,"768":14991,"1024":18884,"master":39474}
+      "inputHash": "6f6a0bdb",
+      "bytes": {"640":11765,"768":14991,"1024":18884,"master":39490}
     },
     "wcag-analyzer": {
       "source": "title-card",
-      "inputHash": "9308ca97",
-      "bytes": {"640":11797,"768":14498,"1024":18762,"master":39698}
+      "inputHash": "0f6ee790",
+      "bytes": {"640":11797,"768":14498,"1024":18805,"master":40073}
     }
   }
 }

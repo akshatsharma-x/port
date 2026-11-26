@@ -330,7 +330,9 @@ const jumpTo = (page, y) =>
   const man = (await output(page, "man retrograde")).join("\n");
   await run(page, "neofetch");
   const neo = (await output(page, "neofetch")).join("\n");
-  check("man retrograde explains the name and the camera's retrograde loop; neofetch: the portrait beside the spec sheet", L.man.retrograde.blocks.every((b) => man.includes(b.heading)) && /retrograde loop/.test(man) && index.portrait.length > 0 && neo.includes(index.portrait.find((l) => l.trim()).trim()) && neo.includes(p.name) && neo.includes(L.neofetch.noCerts), { manLines: man.split("\n").length });
+  // the owner's credentials since v2.8: neofetch counts them (before, it said there were none yet)
+  const certCount = index.docs.filter((d) => d.kind === "cert").length;
+  check("man retrograde explains the name and the camera's retrograde loop; neofetch: the portrait beside the spec sheet, the credentials counted", L.man.retrograde.blocks.every((b) => man.includes(b.heading)) && /retrograde loop/.test(man) && index.portrait.length > 0 && neo.includes(index.portrait.find((l) => l.trim()).trim()) && neo.includes(p.name) && (certCount ? neo.split("\n").some((l) => l.includes(L.neofetch.certs) && l.includes(String(certCount))) : neo.includes(L.neofetch.noCerts)), { manLines: man.split("\n").length, certCount });
   await run(page, "date");
   const date = await output(page, "date");
   await run(page, "uptime");

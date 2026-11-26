@@ -2,15 +2,15 @@
   "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
   "version": "0.2",
   "language": "en",
-  "files": ["content/data.ts", "content/no-signal.ts"],
+  "files": ["content/data.ts",  "content/no-signal.ts"],
   "words": [
     "Akshat", "akshatsharma", "Sharma", "Manipal", "Kolkata", "TRAI", "Truechip", "Engazewell", "Cognivault", "quizmuj",
-    "CGPA", "SDLC", "LNNS", "Scopus", "ORCID", "dblp", "researchgate", "huggingface",
-    "FAISS", "FAPI", "fastapi", "langchain", "langgraph", "Keras", "Streamlit", "GSAP", "Hackathon",
-    "cplusplus", "nextdotjs", "nodedotjs", "socketdotio",
-    "bibtex", "booktitle", "inproceedings", "foodwaste",
-    "automatable", "explainability", "keycap", "neofetch", "prograde",
-    "résumé", "résumés"
+    "CGPA", "SDLC", "LNNS", "Scopus", "ORCID", "dblp", "researchgate", "huggingface", "FAISS", "FAPI", "fastapi",
+    "langchain", "langgraph", "Keras", "Streamlit", "GSAP", "Hackathon", "cplusplus", "nextdotjs", "nodedotjs",
+    "socketdotio", "bibtex", "booktitle", "inproceedings", "foodwaste", "automatable", "explainability", "keycap",
+    "neofetch", "prograde", "résumé", "résumés", "ResearchX", "CabinMUJ", "MyHUB", "Vistara", "Fintech", "Tavily",
+    "Replanner", "checkpointed", "Adyashas", "lemmatized", "NLTK", "Plotly", "TREC", "ONNX", "NPTEL", "Simplilearn",
+    "CodeChef", "GeeksforGeeks", "Geeksfor", "Kodein", "Kharagpur"
   ],
-  "ignoreRegExpList": ["/\\bdoi:\\S+/", "/https?:\\/\\/\\S+/"]
+  "ignoreRegExpList": ["/\\bdoi:\\S+/", "/https?:\\/\\/\\S+/", "/credentialId: \"[^\"]+\"/"]
 }

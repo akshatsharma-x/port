@@ -475,7 +475,7 @@ for (const [tier, spec] of Object.entries(TIERS)) {
     vt: getComputedStyle(document.querySelector("[data-projection-hero] img")).viewTransitionName,
     cls: window.__cls,
   }));
-  check("a case study visited directly: its h1 and title, Context · Problem · Approach · Outcome · Stack in order (no role, links or papers until there are some)", doc.h1 === "Customer Churn Prediction" && doc.title.startsWith(doc.h1) && JSON.stringify(doc.h2) === JSON.stringify(["Context", "Problem", "Approach", "Outcome", "Stack"]) && doc.desc.length > 0 && doc.hero.length > 0, { h2: doc.h2, title: doc.title });
+  check("a case study visited directly: its h1 and title, Context · Problem · Approach · Outcome · Stack · Links in order (its repo since v2.8; no role or papers until there are some)", doc.h1 === "Customer Churn Prediction" && doc.title.startsWith(doc.h1) && JSON.stringify(doc.h2) === JSON.stringify(["Context", "Problem", "Approach", "Outcome", "Stack", "Links"]) && doc.desc.length > 0 && doc.hero.length > 0, { h2: doc.h2, title: doc.title });
   check("…the Outcome: one LED figure and its tiles, from the project's own numbers", doc.led.includes("97%") && doc.tile.includes("0.98"), { led: doc.led, tile: doc.tile });
   check("…CLS 0 on its load", doc.cls === 0, { cls: doc.cls });
   // prev / next: SLIDE ADVANCE

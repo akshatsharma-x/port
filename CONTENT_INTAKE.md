@@ -184,10 +184,10 @@ Up to 40 keycaps; at most 6 `primary` (the accent keys). Group them into a handf
 slug:          ______________________   kebab-case
 title:         ______________________   ≤ 120
 issuer:        ______________________   e.g. Amazon Web Services
-issueDate:     ____-__-__
+issueDate:     ____-__-__  or  ____-__  or  none   the day, or only the month when that's all it lists
 expiryDate:    ____-__-__  or  none
-credentialId:  ______________________   exactly as the issuer prints it
-verifyUrl:     https://______________   public, logged-out — or none (shows ON FILE)
+credentialId:  ______________________   exactly as the issuer prints it — or none (the card reads "Not listed")
+verifyUrl:     https://______________   public, logged-out — or none (shows ON FILE). A LinkedIn page needs a sign-in, so it shows ON FILE too
 skillsCovered: ______________________   1–8
 domain:        ______________________   ≤ 32 · e.g. Cloud
 level:         ______________________   foundational | associate | professional | expert
